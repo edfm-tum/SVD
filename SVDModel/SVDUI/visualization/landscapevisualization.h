@@ -55,10 +55,10 @@ public:
 
 public slots:
     /// renders the expression and sets the render type to "Expression"
-    bool renderExpression(QString expression);
+    QString renderExpression(QString expression);
 
     /// renders the content of the cell variable
-    bool renderVariable(QString variableName, QString description);
+    QString renderVariable(QString variableName, QString description);
 
     /// update the rendering
     void update();

@@ -374,8 +374,12 @@ void MainWindow::on_actioncreate_output_docs_triggered()
 
 void MainWindow::on_pbRenderExpression_clicked()
 {
-    if (mLandscapeVis->isValid())
-        mLandscapeVis->renderExpression(ui->lExpression->text());
+    if (mLandscapeVis->isValid()) {
+        QString err_msg = mLandscapeVis->renderExpression(ui->lExpression->text());
+        if (!err_msg.isEmpty()) {
+            QMessageBox::critical(this, "Error in expression", QString("An error occured: %1").arg(err_msg));
+        }
+    }
 }
 
 
@@ -772,8 +776,11 @@ void MainWindow::on_visVariables_currentItemChanged(QTreeWidgetItem *current, QT
     spdlog::get("main")->debug("Clicked on {}", key);
     CellWrapper cw(nullptr);
     ui->visVariable->setChecked(true);
-    mLandscapeVis->renderVariable(QString::fromStdString( cw.getVariablesList()[ukey] ),
-                                  QString::fromStdString(cw.getVariablesMetaData()[ukey].second) );
+    QString err_msg = mLandscapeVis->renderVariable(QString::fromStdString( cw.getVariablesList()[ukey] ),
+                                                    QString::fromStdString(cw.getVariablesMetaData()[ukey].second) );
+    if (!err_msg.isEmpty()) {
+        QMessageBox::critical(this, "Error in expression", QString("An error occured: %1").arg(err_msg));
+    }
 
 
 }

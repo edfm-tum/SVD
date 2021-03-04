@@ -153,10 +153,10 @@ void LandscapeVisualization::setViewString(int camera, QString str)
         mGraph->setCameraString(camera, str);
 }
 
-bool LandscapeVisualization::renderExpression(QString expression)
+QString LandscapeVisualization::renderExpression(QString expression)
 {
     if (!isValid())
-        return false;
+        return QString();
 
     mCurrentType = RenderExpression;
 
@@ -172,7 +172,7 @@ bool LandscapeVisualization::renderExpression(QString expression)
         timer.start();
         mExpression.setExpression(expression.toStdString());
         if (mExpression.isEmpty())
-            return false;
+            return QString();
 
         mLegend->setCaption(QString::fromStdString(mExpression.expression()));
         mLegend->setDescription("user defined expression.");
@@ -180,20 +180,20 @@ bool LandscapeVisualization::renderExpression(QString expression)
 
         spdlog::get("main")->info("Rendered expression '{}' ({} ms)", expression.toStdString(), timer.elapsed());
 
-        return true;
+        return QString();
 
     } catch (const std::exception &e) {
         spdlog::get("main")->error("Visualization error: {}", e.what());
-        return false;
+        return e.what();
     }
 
 
 }
 
-bool LandscapeVisualization::renderVariable(QString variableName, QString description)
+QString LandscapeVisualization::renderVariable(QString variableName, QString description)
 {
     if (!isValid())
-        return false;
+        return QString();
 
     mCurrentType = RenderVariable;
 
@@ -209,7 +209,7 @@ bool LandscapeVisualization::renderVariable(QString variableName, QString descri
         timer.start();
         mExpression.setExpression(variableName.toStdString());
         if (mExpression.isEmpty())
-            return false;
+            return QString();
 
         mLegend->setCaption(QString::fromStdString(mExpression.expression()));
         mLegend->setDescription(description);
@@ -217,11 +217,11 @@ bool LandscapeVisualization::renderVariable(QString variableName, QString descri
 
         spdlog::get("main")->info("Rendered variable '{}' ({} ms)", variableName.toStdString(), timer.elapsed());
 
-        return true;
+        return QString();
 
     } catch (const std::exception &e) {
         spdlog::get("main")->error("Visualization error: {}", e.what());
-        return false;
+        return e.what();
     }
 
 }

@@ -159,6 +159,7 @@ void FileReader::readHeader()
        mValues.push_back(0.);
        replace_string(mFields[i], "\"", ""); // drop quotes
        replace_string(mFields[i], "\r", ""); // drop CR (when reading windows files on linux)
+       mFields[i] = trimmed(mFields[i]); // drop trailing / leading spaces
     }
 
     // Note: in gcc calling tellg() seems to invalidate the stream loading process (i.e. the next loaded line is truncated).

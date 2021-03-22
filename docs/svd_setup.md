@@ -3,6 +3,9 @@
 ## [Configuring the landscape](configuring_the_landscape.md)
 The page covers the spatial setup of the simulated landscape.
 
+## [Guide to data preparatoin](SVD_data_preparation.md)
+The page provides a high level guide to data preparation with R.
+
 ## [States](states.md)
 Definition of the unique states of SVD and accompanying meta data for states.
 

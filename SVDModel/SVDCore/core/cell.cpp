@@ -188,7 +188,7 @@ void Cell::dumpDebugData()
     auto lg = spdlog::get("main");
     PointF coord =  Model::instance()->landscape()->grid().cellCenterPoint( Model::instance()->landscape()->grid().indexOf(this) );
     lg->info("Cell {} at {}/{}m:", static_cast<void*>(this), coord.x(), coord.y());
-    lg->info("Current state ID: {}, {}, residence time: {}", mStateId, mState->asString(), mResidenceTime);
+    lg->info("Current state ID: {}, {}, residence time: {}", mStateId, mState ? mState->asString() : "Invalid State", mResidenceTime);
     lg->info("external seed type: {}", mExternalSeedType);
     lg->info("Next state-id: {},  update time: {}", mNextStateId, mNextUpdateTime);
 

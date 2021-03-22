@@ -27,6 +27,7 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 std::string Tools::mProjectDir;
 std::vector< std::pair<std::string, std::string > > Tools::mPathReplace;
@@ -48,13 +49,15 @@ Tools::Tools()
 
 bool Tools::fileExists(const std::string &fileName)
 {
+    std::wifstream infile(fileName);
+    return infile.good();
     // https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
-    if (FILE *file = fopen(fileName.c_str(), "r")) {
-            fclose(file);
-            return true;
-        } else {
-            return false;
-        }
+//    if (FILE *file = fopen(fileName.c_str(), "r")) {
+//            fclose(file);
+//            return true;
+//        } else {
+//            return false;
+//        }
 }
 
 std::string Tools::path(const std::string &fileName)

@@ -23,6 +23,7 @@ It is a [research tool](svd_papers.md) and released under a GPL open source lice
 
 ## Using SVD
 * [SVD user interface](svdUI.md)
+* [Guide to input data preparation](SVD_data_preparation.md)
 
 ## Reference documentation
 * [configuration file](project_file.md)

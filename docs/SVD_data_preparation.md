@@ -1,8 +1,3 @@
----
-title: "SVD Data preparation"
-output: html_document
----
-
 ## Setting up a project for SVD
 
 An efficient way to set up the required spatial and tabular data is to use R as much as possible. For text files (such as the project configuration file), use a powerful editor such as Notepad++ that is capable of syntax highlighting. Using a spreadsheet program such as Excel is fine, but it is advisable to create the actual input files for SVD in R (e.g., by editing Excel, importing Excel into R, writing input files in R).

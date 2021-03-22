@@ -3,7 +3,7 @@
 ## [Configuring the landscape](configuring_the_landscape.md)
 The page covers the spatial setup of the simulated landscape.
 
-## [Guide to data preparatoin](SVD_data_preparation.md)
+## [Guide to data preparation](SVD_data_preparation.md)
 The page provides a high level guide to data preparation with R.
 
 ## [States](states.md)

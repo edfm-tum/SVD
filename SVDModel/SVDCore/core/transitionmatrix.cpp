@@ -20,6 +20,9 @@
 
 #include "spdlog/spdlog.h"
 
+#include "model.h"
+#include "states.h"
+
 #include "strtools.h"
 #include "filereader.h"
 #include "randomgen.h"
@@ -40,7 +43,12 @@ bool TransitionMatrix::load(const std::string &filename)
     auto ik = rdr.columnIndex("key");
     auto it = rdr.columnIndex("targetId");
     auto ip = rdr.columnIndex("p");
+    auto ipmin = rdr.columnIndex("pmin");
+    auto ipmax = rdr.columnIndex("pmax");
     auto iexpr = rdr.columnIndex("expression");
+    bool has_pminmax = ipmin != std::string::npos && ipmax != std::string::npos;
+    if (has_pminmax)
+        spdlog::get("setup")->debug("Transition matrix includes pmin / pmax columns.");
     int n=0;
     while (rdr.next()) {
         // read line
@@ -53,6 +61,16 @@ bool TransitionMatrix::load(const std::string &filename)
 
         auto &e = mTM[ {id, key} ];
         e.push_back(STransitionItem(target, p));
+        if (has_pminmax) {
+            double pmin = rdr.value(ipmin);
+            double pmax = rdr.value(ipmax);
+            if (pmin<0. || pmin>1. || pmax<0. || pmax>1.)
+                throw logic_error_fmt("TransitionMatrix: invalid probability for pmin/pmax ({}/{}). Allowed is the range 0..1", pmin, pmax);
+            if (pmax > 0.) {
+                e.back().pmin = pmin;
+                e.back().pmax = pmax;
+            }
+        }
         if (iexpr != std::numeric_limits<std::size_t>::max() )
             if (!rdr.valueString(iexpr).empty()) {
                 //CellWrapper wrap(nullptr);
@@ -63,6 +81,25 @@ bool TransitionMatrix::load(const std::string &filename)
     }
 
     // TODO: check transition matrix: states have to be valid, p should sum up to 1
+    std::stringstream ss;
+    for (const auto &sk : mTM) {
+        state_t st = static_cast<state_t>(sk.first.first);
+        const auto &s = Model::instance()->states()->stateById(st);
+
+        ss << fmt::format("State: #{}: '{}' (key: '{}')", st, s.name(), sk.first.second) << std::endl;
+        for (const auto &item : sk.second) {
+            const auto &s_target = Model::instance()->states()->stateById(item.state);
+            ss << fmt::format("|- #{}: '{}': p={}", item.state, s_target.name(), item.prob);
+            if (item.has_minmax())
+                ss << fmt::format(" pmin/pmax: {}/{}", item.pmin, item.pmax);
+            if (item.expr)
+                ss << fmt::format(" expr: '{}'", item.expr->expression());
+            ss << std::endl;
+        }
+        ss << "====================" << std::endl;
+    }
+    spdlog::get("setup")->debug("Transition matrix dump: \n{}", ss.str());
+
 
     spdlog::get("setup")->debug("Loaded transition matrix for {} states from file '{}' (processed {} records).", mTM.size(), filename, n);
     return true;
@@ -76,13 +113,18 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
     }
 
     const auto &prob = it->second;
-    if (prob.size() == 1)
+    if (prob.size() == 1 && prob.front().prob == 1.)
         return prob.front().state;
     // choose a state probabilistically
     bool has_expr = false;
+    bool has_self = false;
     double p_sum = 0.;
     for (const auto &item : prob) {
         p_sum+=item.prob;
+
+        if (item.state == stateId)
+            has_self = true;
+
         if (item.expr) {
             has_expr=true;
             if (!cell)
@@ -100,21 +142,53 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
         for (const auto &item : prob) {
             *cp = item.prob;
             if (item.expr) {
-                *cp *= std::max( item.expr->calculate(*cell), 0.); // multiply base probability with result of the expression, do not allow negative probability
+                auto pexpr = std::max( item.expr->calculate(*cell), 0.); // multiply base probability with result of the expression, do not allow negative probability
+                if (!item.has_minmax())
+                    *cp *= pexpr;
+                else
+                    *cp = item.pmin + (item.pmax-item.pmin) * std::min(pexpr, 1.); // value between pmin and pmax
             }
             p_sum+= *cp++;
         }
-        double p = nrandom(0, p_sum);
+        if (p_sum>1. && !has_self)
+            throw logic_error_fmt("TransitionMatrix: the sum of probababilities for states (excl.self) are > 1. ");
+
+        // see almost identical code below
+        double p;
+        if (has_self) {
+            p = nrandom(0, p_sum);
+        } else {
+            p = drandom();
+            if (p>p_sum)
+                return stateId; // no change
+        }
         p_sum = 0.;
         for (size_t i=0;i<ps.size();++i) {
             p_sum += ps[i];
             if (p < p_sum)
                 return prob[i].state;
         }
+        if (!has_self)
+            return stateId;
+        throw logic_error_fmt("TransitionMatrix: no valid target found for state {}, key {}", stateId, key);
 
     }
+    if (p_sum>1. && !has_self)
+        throw logic_error_fmt("TransitionMatrix: the sum of probababilities for states (excl.self) are > 1. ");
+    double p;
 
-    double p = nrandom(0, p_sum);
+    /*  Two options:
+     *  (a) (a prob for remaining the same state is provided): probs are scaled (incl. expressions)
+     *  (b) (no prob for remaining): no scaling, all other paths can be scaled, the rest (up to 1) is "remain"
+     * */
+    if (has_self) {
+        p = nrandom(0, p_sum);
+    } else {
+        p = drandom(); // 0..1
+        if (p > p_sum)
+            return stateId; // no change (shortcut)
+    }
+
     p_sum = 0.;
 
     for (const auto &item : prob) {
@@ -122,5 +196,8 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
         if (p < p_sum)
             return item.state;
     }
+    if (!has_self)
+        return stateId; // same state
+
     throw logic_error_fmt("TransitionMatrix: no valid target found for state {}, key {}", stateId, key);
 }

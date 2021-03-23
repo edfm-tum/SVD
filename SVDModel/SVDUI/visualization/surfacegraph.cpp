@@ -218,6 +218,9 @@ void SurfaceGraph::setCameraString(int cameraPreset, QString str)
 
 void SurfaceGraph::queryPositionChanged(const QVector3D &pos)
 {
+    if (!m_topography)
+        return;
+
     QVector3D world_pos = m_topography->getCoordsFromRelative(pos);
     //spdlog::get("main")->info("Grid: x: {}, y: {}, z: {} World: x: {}, y: {}, z: {} ", pos.x(), pos.y(), pos.z(), world_pos.x(), world_pos.y(), world_pos.z());
     emit pointSelected(world_pos);

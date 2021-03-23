@@ -40,9 +40,11 @@ public:
     bool isValid(state_t stateId, int key=0) { return mTM.find({stateId, key}) != mTM.end(); }
 private:
     struct STransitionItem {
-      STransitionItem(state_t astate, double aprob): state(astate), prob(aprob) {}
+      STransitionItem(state_t astate, double aprob): state(astate), prob(aprob), pmin(-1.), pmax(-1.) {}
+      bool has_minmax() const { return pmax>0.; }
       state_t state;
       double prob;
+      double pmin, pmax;
       std::unique_ptr<Expression> expr;
     };
     /// storage for transition matrix: key: state + numerical key, content: list of target states + probabilties

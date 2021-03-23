@@ -43,6 +43,7 @@ public:
     const std::string &compositionString() const { return mComposition; }
     int function() const { return mFunction; }
     int structure() const {return mStructure; }
+    const std::string &name() const  { return mName; }
     const std::string &colorName() const { return mColorName; }
     std::string asString() const;
 

@@ -699,22 +699,27 @@ void MainWindow::populateInspector(QVector3D point)
         return;
     CellWrapper cw(&cell);
 
-    // loop over all elements of the inspector and
-    ui->visCellData->topLevelItem(0);
-    QTreeWidgetItemIterator it(ui->visCellData);
-    while (*it) {
-        int idx = (*it)->data(0, Qt::UserRole+0).toInt();
-        if (idx >= 0) {
-            double val = cw.value(static_cast<size_t>(idx));
-            (*it)->setText(1, QString::number(val));
-        }
-        if (idx<-1) {
-            switch (-idx) {
-            case 2: (*it)->setText(1, QString::fromStdString(cell.state()->asString()));  break;
-
+    try {
+        // loop over all elements of the inspector and fill the list
+        ui->visCellData->topLevelItem(0);
+        QTreeWidgetItemIterator it(ui->visCellData);
+        while (*it) {
+            int idx = (*it)->data(0, Qt::UserRole+0).toInt();
+            if (idx >= 0) {
+                double val = cw.value(static_cast<size_t>(idx));
+                (*it)->setText(1, QString::number(val));
             }
+            if (idx<-1) {
+                switch (-idx) {
+                case 2: (*it)->setText(1, QString::fromStdString(cell.state()->asString()));  break;
+
+                }
+            }
+            ++it;
         }
-        ++it;
+    } catch(const std::exception &e) {
+        spdlog::get("main")->error("An error occured retrieving UI data: {}", e.what());
+
     }
 }
 

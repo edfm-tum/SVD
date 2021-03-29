@@ -8,9 +8,9 @@ The implementation of fire spread is done in rounds. In each round, first the pr
 
 The probability of fire spread from a burning cell to one of its neighboring cells is based on the approach of FireBGC v2 (Keane et al., 2011) and the specific implementation in iLand (Seidl et al., 2014). The fire spread distance *d~spread~* (m) is influenced by wind speed and wind direction as well as the slope on the DEM, with fires spreading further upslope and downwind (Keane et al., 2011). Since fire can only spread from cell to cell, *d~spread~* is transformed into the probability of reaching the focus cell *p~spread~* (Eq. S3-1).
 
-+----------------------------------------------------------+------------+
-| $p_{spread}=p_{dist}^{1\over{d_{spread}/d_{cell}}}$      | (Eq. S3-1) |
-+----------------------------------------------------------+------------+
+|                                                     |            |
+|-----------------------------------------------------|------------|
+| $p_{spread}=p_{dist}^{1\over{d_{spread}/d_{cell}}}$ | (Eq. S3-1) |
 
 with *d~cell~* the distance to the focus cell (100m for immediate neighbors, and 141.42m for diagonal neighbors), and *p~dist~* a parameter specifying the probability that the fire reaches a distance of *d~spread~* when it would have to spread across multiple cells. Fire spotting is currently not implemented.
 
@@ -18,13 +18,10 @@ with *d~cell~* the distance to the focus cell (100m for immediate neighbors, and
 
 The fire module requires module-specific attributes for each state in SVD. These attributes are defined by a table defined with the `stateFile` setting. The table must have the following columns:
 
-+------------+--------------------------------------------------------------------------------+
-| Attribute  | Description                                                                    |
-+============+================================================================================+
-| pSeverity  | probability of a high-severity burn.                                           |
-+------------+--------------------------------------------------------------------------------+
-| pBurn      | probability [0..1] that a cell in the current state burns when reached by fire |
-+------------+--------------------------------------------------------------------------------+
+| Attribute | Description                                                                    |
+|-----------|--------------------------------------------------------------------------------|
+| pSeverity | probability of a high-severity burn.                                           |
+| pBurn     | probability [0..1] that a cell in the current state burns when reached by fire |
 
 The post-fire transition is defined by the transition matrix in `transitionFile`. Note that different transitions can be defined for low- and high-severity fire. High severity is encoded by `key=1` in the matrix (see [matrix module](module_matrix.md) for details).
 
@@ -32,23 +29,15 @@ The post-fire transition is defined by the transition matrix in `transitionFile`
 
 Fires are not started by SVD, but are triggered externally by a time series of fires (`ignitionFile`). The file has the following columns:
 
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | Column        | Description                                                                                                                       |
-+===============+===================================================================================================================================+
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------|
 | year          | Simulation year of the ignition. The first year is 1, the second year 2, etc. Not related to the year of the climate time series. |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | x             | x-coordinate of the ignition point in local metric coordinates                                                                    |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | y             | y-coordinate of the ignition point                                                                                                |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | max_size      | maximum fire size in ha                                                                                                           |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | windspeed     | wind speed (m/s)                                                                                                                  |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | winddirection | wind direction in degrees (0 = north, 90=east, ...)                                                                               |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 | id            | unique id of the fire event (not mandatory)                                                                                       |
-+---------------+-----------------------------------------------------------------------------------------------------------------------------------+
 
 : Fire ignition file
 
@@ -81,7 +70,7 @@ In addition to the `enabled` and `type` setting, the fire module has the followi
 
     Probability that the fire does not spread after burning a cell.
 
-    ### `spreadDistProb` (numeric)
+-   \#\#\# `spreadDistProb` (numeric)
 
     The parameter *p~dist~* used in the calculation of fire spread probabilities (see text above). Higher values translate to higher probabilities of fire spread from one cell to another.
 

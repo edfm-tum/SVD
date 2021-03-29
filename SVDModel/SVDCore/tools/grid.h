@@ -949,7 +949,8 @@ template<> inline bool Grid<double>::loadGridFromGeoTIFF(const std::string &file
     GeoTIFF tif;
     tif.loadImage(fileName);
     // fill grid with the contents of the file, but first set up the grid
-    RectF rect(tif.ox(), tif.oy(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() + tif.nrow()*tif.cellsize());
+//    RectF rect(tif.ox(), tif.oy(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() + tif.nrow()*tif.cellsize());
+    RectF rect(tif.ox(), tif.oy() - tif.nrow()*tif.cellsize(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() );
     setup(rect, tif.cellsize());
     tif.copyToDoubleGrid(this);
     return true;
@@ -960,7 +961,8 @@ template<> inline bool Grid<float>::loadGridFromGeoTIFF(const std::string &fileN
     GeoTIFF tif;
     tif.loadImage(fileName);
     // fill grid with the contents of the file, but first set up the grid
-    RectF rect(tif.ox(), tif.oy(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() + tif.nrow()*tif.cellsize());
+    // Note: Y coord inverse, y from tif = upper edge
+    RectF rect(tif.ox(), tif.oy() - tif.nrow()*tif.cellsize(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() );
     setup(rect, tif.cellsize());
     tif.copyToFloatGrid(this);
     return true;
@@ -972,7 +974,8 @@ template<> inline bool Grid<int>::loadGridFromGeoTIFF(const std::string &fileNam
     GeoTIFF tif;
     tif.loadImage(fileName);
     // fill grid with the contents of the file, but first set up the grid
-    RectF rect(tif.ox(), tif.oy(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() + tif.nrow()*tif.cellsize());
+//    RectF rect(tif.ox(), tif.oy(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() + tif.nrow()*tif.cellsize());
+    RectF rect(tif.ox(), tif.oy() - tif.nrow()*tif.cellsize(), tif.ox() + tif.ncol()*tif.cellsize(), tif.oy() );
     setup(rect, tif.cellsize());
     tif.copyToIntGrid(this);
     return true;

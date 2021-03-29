@@ -62,7 +62,7 @@ int GeoTIFF::loadImage(const std::string &fileName)
         if (!values)
             throw logic_error_fmt("GeoTIF '{}' does not contain required tags (tie points).", fileName);
         for (size_t i=0; i<tag_count;++i) {
-            lg->debug("TIFF: TiePoints Value {}: {}", i, values[i]);
+            lg->debug("TIFF: TiePoints Value {}: {:f}", i, values[i]);
         }
         mOx = values[0];
         mOy = values[1];
@@ -90,7 +90,7 @@ int GeoTIFF::loadImage(const std::string &fileName)
         mNrow = FreeImage_GetHeight(dib);
 
 
-        lg->info("Loaded TIF '{}', x/y: {}/{}, cellsize: {}, width: {}, height: {}, datatype {}, {} bits per cell", fileName, mOx, mOy, mCellsize, mNcol, mNrow, FreeImage_GetImageType(dib), FreeImage_GetBPP(dib));
+        lg->info("Loaded TIF '{}', x/y: {:f}/{:f}, cellsize: {}, width: {}, height: {}, datatype {}, {} bits per cell", fileName, mOx, mOy, mCellsize, mNcol, mNrow, FreeImage_GetImageType(dib), FreeImage_GetBPP(dib));
         return 0;
 
     } else {

@@ -79,11 +79,11 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
                 return;
             }
             mDem.loadGridFromFile(filename);
-            mMinHeight = mDem.min();
+            mMinHeight = std::max( mDem.min(), 0.f);
             mMaxHeight = mDem.max();
 
             lg->info("Loaded the DEM (visualization.dem) '{}'. Dimensions: {} x {}, with cell size: {}m. Min/max height: {}/{} ", filename, mDem.sizeX(), mDem.sizeY(), mDem.cellsize(), mMinHeight, mMaxHeight);
-            lg->info("Metric rectangle with {}x{}m. Left-Right: {}m - {}m, Top-Bottom: {}m - {}m.  ", mDem.metricRect().width(), mDem.metricRect().height(), mDem.metricRect().left(), mDem.metricRect().right(), mDem.metricRect().top(), mDem.metricRect().bottom());
+            lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", mDem.metricRect().width(), mDem.metricRect().height(), mDem.metricRect().left(), mDem.metricRect().right(), mDem.metricRect().top(), mDem.metricRect().bottom());
 
             graph->setup(mDem, mMinHeight, mMaxHeight);
         }

@@ -51,7 +51,7 @@ void Landscape::setup()
     grid.loadGridFromFile(grid_file_name);
 
     lg->info("Loaded the grid (landscape.grid) '{}'. Dimensions: {} x {}, with cell size: {}m. ", grid_file_name, grid.sizeX(), grid.sizeY(), grid.cellsize());
-    lg->info("Metric rectangle with {}x{}m. Left-Right: {}m - {}m, Top-Bottom: {}m - {}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
+    lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
     if (lg->should_log(spdlog::level::trace)) {
         // some statistics:
         lg->trace("The grid contains '{}' not-null values.", grid.countNotNull());
@@ -124,7 +124,7 @@ void Landscape::setup()
             return;
         }
         dem.loadGridFromFile(filename);
-        lg->debug("Loaded a digital elevation model (DEM) from '{}'. Cellsize: {}m, Left-Right: {}m - {}m, Top-Bottom: {}m - {}m.", filename, dem.cellsize(), dem.metricRect().left(), dem.metricRect().right(), dem.metricRect().top(), dem.metricRect().bottom());
+        lg->debug("Loaded a digital elevation model (DEM) from '{}'. Cellsize: {}m, Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.", filename, dem.cellsize(), dem.metricRect().left(), dem.metricRect().right(), dem.metricRect().top(), dem.metricRect().bottom());
     }
 
 
@@ -145,7 +145,7 @@ void Landscape::setup()
             if (!dem.isEmpty()) {
                 PointF p = mGrid.cellCenterPoint(cell_index);
                 if (!dem.coordValid(p))
-                    throw logic_error_fmt("The digital elevation model '{}' is not valid for the point {}/{} (which is within the project area)!", filename, p.x(), p.y());
+                    throw logic_error_fmt("The digital elevation model '{}' is not valid for the point {:f}/{:f} (which is within the project area)!", filename, p.x(), p.y());
                 a->setElevation( dem[p] );
             }
             ++mNCells;
@@ -226,12 +226,12 @@ void Landscape::setupInitialState()
         Grid<int> state_grid;
         state_grid.loadGridFromFile(grid_file);
         lg->debug("Loaded initial *state* grid '{}'. Dimensions: {} x {}, with cell size: {}m. ", grid_file, state_grid.sizeX(), state_grid.sizeY(), state_grid.cellsize());
-        lg->debug("Metric rectangle with {}x{}m. Left-Right: {}m - {}m, Top-Bottom: {}m - {}m.  ", state_grid.metricRect().width(), state_grid.metricRect().height(), state_grid.metricRect().left(), state_grid.metricRect().right(), state_grid.metricRect().top(), state_grid.metricRect().bottom());
+        lg->debug("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", state_grid.metricRect().width(), state_grid.metricRect().height(), state_grid.metricRect().left(), state_grid.metricRect().right(), state_grid.metricRect().top(), state_grid.metricRect().bottom());
 
         Grid<int> restime_grid;
         restime_grid.loadGridFromFile(restime_grid_file);
         lg->debug("Loaded initial *residenceTime* grid '{}'. Dimensions: {} x {}, with cell size: {}m. ", restime_grid_file, restime_grid.sizeX(), restime_grid.sizeY(), restime_grid.cellsize());
-        lg->debug("Metric rectangle with {}x{}m. Left-Right: {}m - {}m, Top-Bottom: {}m - {}m.  ", restime_grid.metricRect().width(), restime_grid.metricRect().height(), restime_grid.metricRect().left(), restime_grid.metricRect().right(), restime_grid.metricRect().top(), restime_grid.metricRect().bottom());
+        lg->debug("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", restime_grid.metricRect().width(), restime_grid.metricRect().height(), restime_grid.metricRect().left(), restime_grid.metricRect().right(), restime_grid.metricRect().top(), restime_grid.metricRect().bottom());
 
         int n_affected=0;
         int n_errors=0;

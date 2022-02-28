@@ -73,6 +73,7 @@ public:
     double localStateAverage(size_t stateId);
     double intermediateStateAverage(size_t stateId);
     double globalStateAverage(size_t stateId);
+    double minimumDistanceTo(size_t stateId);
 
 private:
     static std::vector<std::string> mVariableList;

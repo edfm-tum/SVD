@@ -87,6 +87,7 @@ public:
     double stateFrequencyLocal(state_t stateId) const;
     double stateFrequencyIntermediate(state_t stateId) const;
     double stateFrequencyGlobal(state_t stateId) const;
+    double minimumDistanceTo(state_t stateId) const;
 private:
     void dumpDebugData();
     int mCellIndex; ///< index of the grid cell within the landscape grid

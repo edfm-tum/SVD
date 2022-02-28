@@ -64,8 +64,12 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
     try {
         if (Model::instance()->settings().valueString("visualization.dem").empty()) {
             // setup an empty DEM (flat landscape)
-
-            mDem.setup( Model::instance()->landscape()->grid().metricRect(), 100.);
+            if (Model::instance()->landscape()->NCells() < 10000000 ) {
+                mDem.setup( Model::instance()->landscape()->grid().metricRect(), 100.);
+            } else {
+                lg->debug("Creating a smaller DEM with 1km resolution because the landscape is *very* large.");
+                mDem.setup( Model::instance()->landscape()->grid().metricRect(), 1000.);
+            }
             mDem.initialize(100.f); // a default value
             mMinHeight = 100.f;
             mMaxHeight = 100.f;
@@ -276,6 +280,10 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     double min_value = 0.;
     double max_value = 1000.; // defaults
 
+    double mean = 0., mean_non_zero = 0.;
+
+    int n=0, n_non_zero=0;
+
     if (auto_scale) {
         min_value = std::numeric_limits<double>::max();
         max_value = std::numeric_limits<double>::min();
@@ -283,11 +291,22 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
             if (!c.isNull()) {
                 cw.setData(&c);
                 value = mExpression.calculate(cw);
+                // calculate min/max values
                 min_value = std::min(min_value, value);
                 max_value = std::max(max_value, value);
+                // calc mean values
+                mean += value;
+                ++n;
+                if (value!=0.)
+                    ++n_non_zero;
             }
         }
     }
+
+    mean_non_zero = mean / (n_non_zero>0?n_non_zero:1);
+    mean /= n>0?n:1;
+
+
     mLegend->setAbsoluteValueRange(min_value, max_value);
     Palette *pal = (mLegend->currentPalette() == nullptr ? mContinuousPalette : mLegend->currentPalette() );
 
@@ -319,7 +338,10 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     }
     ++mRenderCount;
 
-    spdlog::get("main")->info("Rendered expression '{}', min-value: {}, max-value: {}, Render#: {}", mExpression.expression(), min_value, max_value, mRenderCount);
+    spdlog::get("main")->info("Rendered expression '{}', min-value: {}, max-value: {}, mean: {}, mean (of not 0 cells): {} Render#: {}",
+                              mExpression.expression(), min_value, max_value,
+                              mean, mean_non_zero,
+                              mRenderCount);
     mIsRendering = false;
 }
 

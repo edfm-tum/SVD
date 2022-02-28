@@ -183,6 +183,62 @@ double Cell::stateFrequencyIntermediate(state_t stateId) const
     return n>0 ? n_local / static_cast<double>(n) : 0.;
 }
 
+
+// distances from center point (X)
+// 4 4 3 4 4
+// 4 2 1 2 4
+// 3 1 X 1 3
+// 4 2 1 2 4
+// 4 4 3 4 4
+// 1..4: distance classes (50m, 100m, 150m, 200m)
+static std::vector<std::pair<Point, float> > dist2state = {
+    {{1,0},0.5f }, {{0,1},0.5f }, {{-1,0},0.5f }, {{0,-1},0.5f },  // distances 1
+    {{-1,-1},1.f }, {{1,-1},1.f }, {{-1,1},1.f }, {{1,1},1.f }, // distances 2
+    {{2,0},1.5f }, {{0,2},1.5f }, {{-2,0},1.5f }, {{0, -2},1.50f }, // distances 3
+    {{-2,-2},2.f }, {{-1,-2},2.f }, {{1,-2},2.f }, {{2,-2},2.f }, {{-2,-1},2.f }, {{2,-1},2.f }, // distances 4 (upper half)
+    {{-2, 2},2.f }, {{-1, 2},2.f }, {{1, 2},2.f }, {{2, 2},2.f }, {{-2, 1},2.f }, {{2, 1},2.f } // distances 4 (lower half)
+};
+
+double Cell::minimumDistanceTo(state_t stateId) const
+{
+    auto &grid =  Model::instance()->landscape()->grid();
+    Point center = grid.indexOf(this);
+    // TODO
+    for (const auto &p : dist2state) {
+        if (grid.isIndexValid(center + p.first)) {
+            Cell &c = grid.valueAtIndex(center + p.first);
+            if (!c.isNull() && c.state()!=nullptr)
+                if (c.stateId() == stateId) {
+                    // found a distance
+                    return p.second;
+                }
+        }
+    }
+
+    // brute force
+    const int max_n = 10;
+    float min_dist_sq = max_n*max_n;
+    for (int y=-max_n; y<=max_n; ++y)
+        for (int x=-max_n; x<=max_n; ++x)
+            // look in a circle
+            if (x*x + y*y <= max_n*max_n) {
+                if (grid.isIndexValid(center + Point(x,y))) {
+                    Cell &c = grid.valueAtIndex(center + Point(x,y));
+                    if (!c.isNull() && c.state()!=nullptr)
+                        if (c.stateId() == stateId) {
+                            // found a  pixel: (x-0.5)*(x-0.5)=x^2-x+0.25
+                            min_dist_sq = std::min(min_dist_sq, x*x-x+0.25f + y*y-y+0.25f);
+                        }
+                }
+            }
+    float min_dist = sqrt(min_dist_sq); // training data goes to 1250m distance, unit here is 100m steps
+    return min_dist; // value in "cells"
+
+}
+
+
+
+
 void Cell::dumpDebugData()
 {
     auto lg = spdlog::get("main");

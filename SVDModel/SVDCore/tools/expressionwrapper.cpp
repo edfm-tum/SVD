@@ -302,3 +302,8 @@ double CellWrapper::globalStateAverage(size_t stateId)
 
     return shist[stateId] / static_cast<double>( Model::instance()->landscape()->NCells() );
 }
+
+double CellWrapper::minimumDistanceTo(size_t stateId)
+{
+    return mData->minimumDistanceTo(static_cast<state_t>(stateId));
+}

@@ -84,8 +84,8 @@ static std::vector<std::string> mathFuncList={"sin", "cos", "tan",
                                        "exp", "ln", "sqrt",
                                        "min", "max", "if",
                                        "incsum", "polygon", "mod", "sigmoid", "rnd", "rndg", "limit",  "round", "in",
-                                             "localNB", "intermediateNB", "globalNB"};
-const int  MaxArgCount[21]={1,1,1,1,  1, 1,   -1, -1, 3, 1, -1, 2, 4, 2, 2, 3, 1, -1,    -1,-1,-1};
+                                             "localNB", "intermediateNB", "globalNB", "distance"};
+const int  MaxArgCount[22]={1,1,1,1,  1, 1,   -1, -1, 3, 1, -1, 2, 4, 2, 2, 3, 1, -1,    -1,-1,-1,-1};
 #define    AGGFUNCCOUNT 6
 static std::string AggFuncList[AGGFUNCCOUNT]={"sum", "avg", "max", "min", "stddev", "variance"};
 
@@ -602,6 +602,10 @@ double Expression::execute(double *varlist, ExpressionWrapper *object, bool *rLo
                 *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 3, p, (int)exec->Value);
                 p-=(int) (exec->Value-1);
                 break;
+            case 21: // distance()
+                *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 4, p, (int)exec->Value);
+                p-=(int) (exec->Value-1);
+                break;
             }
             p++;
             break;
@@ -818,12 +822,15 @@ double Expression::udfNeighborhood(ExpressionWrapper *object, int neighbor_class
     if (!wrap) return 0.;
     double *p = Stack - (ArgCount-1);
     double result = 0.;
+    if (neighbor_class == 4)
+        result = 1000000; // cells
     while (p <= Stack) {
         size_t stateId = static_cast<size_t>( *p );
         switch (neighbor_class) {
         case 1: result += wrap->localStateAverage(stateId); break;
         case 2: result += wrap->intermediateStateAverage(stateId); break;
         case 3: result +=  wrap->globalStateAverage(stateId); break;
+        case 4: result = std::min(result, wrap->minimumDistanceTo(stateId)); break;
         default: break;
         }
         ++p;

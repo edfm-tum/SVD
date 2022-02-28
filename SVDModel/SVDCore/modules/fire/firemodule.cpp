@@ -127,7 +127,7 @@ void FireModule::run()
     int n_ignited=0;
     for (auto i=range.first; i!=range.second; ++i) {
         SIgnition &ignition = i->second;
-        lg->debug("FireModule: ignition at {}/{} with max-size {} ha.", ignition.x, ignition.y, ignition.max_size);
+        lg->debug("FireModule: ignition at {:f}/{:f} with max-size {} ha.", ignition.x, ignition.y, ignition.max_size);
         if (!grid.coordValid(ignition.x, ignition.y)) {
             lg->debug("Coordinates invalid. Skipping.");
             continue;

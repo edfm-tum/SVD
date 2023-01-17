@@ -19,6 +19,8 @@
 #ifndef CLIMATE_H
 #define CLIMATE_H
 
+#include <cstddef>
+#include <string>
 #include <vector>
 #include <unordered_map>
 #include <set>

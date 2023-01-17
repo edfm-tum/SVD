@@ -11,7 +11,8 @@ QT      += core
 TARGET = Predictor
 TEMPLATE = lib
 CONFIG += staticlib
-CONFIG += c++11
+# c++11: for Eigen c++14
+CONFIG += c++14
 win32 {
 ### tensorflow compiled locally
 INCLUDEPATH += ../../../tensorflow ../../../tensorflow/tensorflow/contrib/cmake/build  ../../../tensorflow/tensorflow/contrib/cmake/build/external/eigen_archive
@@ -19,7 +20,8 @@ INCLUDEPATH += ../../../tensorflow/tensorflow/contrib/cmake/build/external/nsync
 INCLUDEPATH += ../../../tensorflow/third_party/eigen3 ../../../tensorflow/tensorflow/contrib/cmake/build/protobuf/src/protobuf/src
 }
 unix {
-INCLUDEPATH += /usr/include/tensorflow-cpp
+# INCLUDEPATH += /usr/include/tensorflow-cpp
+INCLUDEPATH += /usr/local/include/tensorflow
 }
 # SVD modules
 INCLUDEPATH += ../SVDCore ../SVDCore/core ../SVDCore/tools ../SVDCore/third_party ../SVDCore/outputs

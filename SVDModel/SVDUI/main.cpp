@@ -18,6 +18,7 @@
 ********************************************************************************************/
 #include "mainwindow.h"
 #include <QApplication>
+#include <locale.h>
 
 #include "spdlog/spdlog.h"
 #include "signal.h"
@@ -61,6 +62,10 @@ int main(int argc, char *argv[])
     atexit (exitHandler);
 
     QApplication a(argc, argv);
+
+    // set linux to use c-locale (i.e. atof("0.9") -> should be 0.9 even on German machines)
+    setlocale(LC_ALL, "C");
+
     MainWindow w;
     w.show();
 

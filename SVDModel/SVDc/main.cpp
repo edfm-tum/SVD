@@ -1,4 +1,5 @@
 #include <QCoreApplication>
+#include <locale.h>
 
 #include <QTimer>
 #include "../SVDUI/version.h"
@@ -7,6 +8,9 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    // set linux to use c-locale (i.e. atof("0.9") -> should be 0.9 even on German machines)
+    setlocale(LC_ALL, "C");
+
 
     printf("SVD console (%s - #%s)\n", currentVersion(), gitVersion());
     printf("This is the console version of SVD, the Scaling Vegetation Dynamics model.\n");

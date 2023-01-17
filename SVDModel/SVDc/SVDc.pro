@@ -56,7 +56,10 @@ LIBS += -L../../SVDModel/SVDCore/third_party/FreeImage -lFreeImage
 linux-g++ {
 PRE_TARGETDEPS += ../SVDCore/libSVDCore.a
 PRE_TARGETDEPS += ../Predictor/libPredictor.a
-PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
+
+# pre-compiled (local)
+# PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
+PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
 LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 #LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so

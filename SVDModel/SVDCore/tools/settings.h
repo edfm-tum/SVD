@@ -19,6 +19,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <stdexcept>
+#include <cstddef>
 #include <vector>
 #include <map>
 #include <string>

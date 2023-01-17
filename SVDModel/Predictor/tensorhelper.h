@@ -1,11 +1,16 @@
 #ifndef TENSORHELPER_H
 #define TENSORHELPER_H
 
+#ifdef COMPILER_MSVC
 #pragma warning(push, 0)
+#endif
 
 #include "tensorflow/core/framework/tensor.h"
 
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
+#endif
+
 #include <stdint.h>
 
 /// Some array conversion tools.

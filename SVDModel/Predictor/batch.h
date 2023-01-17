@@ -19,6 +19,7 @@
 #ifndef BATCH_H
 #define BATCH_H
 
+#include <cstddef>
 #include <list>
 #include <atomic>
 #include <vector>

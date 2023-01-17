@@ -35,7 +35,7 @@ The tricky part is the compilation of the `Predictor` sub-project as this requir
 TensorFlow installation (for include files) and a compiled version of TensorFlow in a DLL. 
 Check the `Predictor.pro` file which includes some links for further information.
 
-Contact Werner Rammer (werner.rammer@boku.ac.at) for help.
+Contact Werner Rammer (werner.rammer@tum.de) for help.
 
 ### Compiling TensorFlow
 
@@ -44,3 +44,27 @@ and will likely (have to) touch the issue again. At this point I hope to add a p
 
 A compiled and GPU-enabled version of tensorflow.dll can be found in the `executable` folder.
 
+### Use of precompiled Tensorflow binaries in Linux
+
+https://github.com/ika-rwth-aachen/libtensorflow_cc
+
+Follow the instructions to download and install `libtensorflow_cc`.
+
+other installs
+
+FreeImage - package
+https://freeimage.sourceforge.io/
+
+Is used in SVD for loading and saving GeoTIFF files.
+
+```
+sudo apt-get install libfreeimage-dev
+```
+
+OpenGL
+Used for rendering the landscape
+
+```
+sudo apt-get install libgl-dev
+sudo apt-get install libgl1-mesa-dev
+```

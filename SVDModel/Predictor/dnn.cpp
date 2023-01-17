@@ -37,7 +37,10 @@
 
 #include <queue>
 
+#ifdef COMPILER_MSVC
 #pragma warning(push, 0)
+#endif
+
 //Some includes with unfixable warnings: https://stackoverflow.com/questions/2541984/how-to-suppress-warnings-in-external-headers-in-visual-c
 
 #include "tensorflow/cc/ops/const_op.h"
@@ -59,7 +62,9 @@
 #include "tensorflow/core/util/command_line_flags.h"
 #include "tensorflow/core/framework/op_kernel.h"
 
+#ifdef COMPILER_MSVC
 #pragma warning(pop)
+#endif
 
 // CUDA Profiling
 // #define CUDA_PROFILING

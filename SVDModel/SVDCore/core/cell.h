@@ -109,7 +109,7 @@ private:
         restime_t restime[NSteps];
         History() {for (int i=0;i<NSteps;++i) { state[i]=0; restime[i]=0; }}
         void push(state_t newstate, restime_t newtime) {
-            for (int i=NSteps-1;i>=0;--i) {
+            for (int i=NSteps-2;i>=0;--i) {
                 restime[i+1] = restime[i];
                 state[i+1] = state[i];
             }

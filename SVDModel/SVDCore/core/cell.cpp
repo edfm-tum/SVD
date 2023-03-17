@@ -62,6 +62,8 @@ void Cell::update()
     if (year+1 >= mNextUpdateTime) {
         // change the state of the current cell
         if (mNextStateId != stateId()) {
+            mHistory.push(mNextStateId, mResidenceTime); // save to history
+            // the actual update:
             setState( mNextStateId );
             setResidenceTime( 0 );
         } else {

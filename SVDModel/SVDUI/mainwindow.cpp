@@ -485,7 +485,7 @@ void MainWindow::readSettings()
 {
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QCoreApplication::setOrganizationName("SVD");
-    QCoreApplication::setOrganizationDomain("svd.boku.ac.at");
+    QCoreApplication::setOrganizationDomain("edfm.ls.tum.de");
     QCoreApplication::setApplicationName("SVD");
     QSettings settings;
     qDebug() << "reading settings from" << settings.fileName();
@@ -697,7 +697,7 @@ void MainWindow::populateInspector(QVector3D point)
     const auto &cell = grid(static_cast<double>(point.x()), static_cast<double>(point.y()));
     if (cell.isNull())
         return;
-    CellWrapper cw(&cell);
+    CellWrapper cw(&cell.cell());
 
     try {
         // loop over all elements of the inspector and fill the list
@@ -711,7 +711,7 @@ void MainWindow::populateInspector(QVector3D point)
             }
             if (idx<-1) {
                 switch (-idx) {
-                case 2: (*it)->setText(1, QString::fromStdString(cell.state()->asString()));  break;
+                case 2: (*it)->setText(1, QString::fromStdString(cell.cell().state()->asString()));  break;
 
                 }
             }

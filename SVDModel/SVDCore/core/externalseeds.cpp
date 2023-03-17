@@ -129,7 +129,7 @@ int ExternalSeeds::setupFromStates(FileReader &rdr, Grid<int> &eseed)
            if (eseed.coordValid(p)) {
                int mix_type = eseed[p];
                if (mix_type==0) {
-                   grid[i].setExternalSeedType(0); // species non-forested state
+                   grid[i].cell().setExternalSeedType(0); // species non-forested state
                    continue;
                }
                if (item_map.find(mix_type) == item_map.end()) {
@@ -137,7 +137,7 @@ int ExternalSeeds::setupFromStates(FileReader &rdr, Grid<int> &eseed)
                    throw std::logic_error("Error in setup of exernal seeds (check the log).");
                }
                state_t s = item_map[mix_type].randomState();
-               grid[i].setExternalState(s);
+               grid[i].cell().setExternalState(s);
            }
 
         }
@@ -198,7 +198,7 @@ int ExternalSeeds::setupFromSpeciesShares(FileReader &rdr, Grid<int> &eseed)
                    lg->error("Error: mixture type '{}' is not a valid mixture type (found at: {}/{}m)", mix_type,p.x(),p.y() );
                    throw std::logic_error("Error in setup of exernal seeds (check the log).");
                }
-               grid[i].setExternalSeedType(mix_type);
+               grid[i].cell().setExternalSeedType(mix_type);
            }
 
         }

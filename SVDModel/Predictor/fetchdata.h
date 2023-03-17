@@ -56,7 +56,7 @@ private:
     void fetchResidenceTime(Cell *cell, BatchDNN* batch, size_t slot);
     void fetchNeighbors(Cell *cell, BatchDNN* batch, size_t slot);
     void fetchSite(Cell *cell, BatchDNN* batch, size_t slot);
-    void fetchDistanceOutside(Cell *cell, BatchDNN* batch, size_t slot);
+    void fetchDistanceOutside(Cell *cell, BatchDNN* batch, size_t slot); // should be FetchDataFunction
     // columns
     int i_distance;
     int i_nitrogen;

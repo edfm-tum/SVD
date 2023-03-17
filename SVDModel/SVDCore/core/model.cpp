@@ -108,12 +108,9 @@ bool Model::setup()
 void Model::finalizeYear()
 {
     // increment residence time for all pixels (updated pixels go from 0 -> 1)
-    for (Cell &c : landscape()->grid()) {
-        if (!c.isNull()) {
-            c.update();
+    for (Cell &c : landscape()->cells())
+        c.update();
 
-        }
-    }
 
     mStates->updateStateHistogram();
 

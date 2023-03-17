@@ -287,7 +287,7 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     if (auto_scale) {
         min_value = std::numeric_limits<double>::max();
         max_value = std::numeric_limits<double>::min();
-        for (Cell &c : grid) {
+        for (Cell &c : Model::instance()->landscape()->cells()) {
             if (!c.isNull()) {
                 cw.setData(&c);
                 value = mExpression.calculate(cw);
@@ -318,9 +318,9 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
 
     for (int y = grid.sizeY()-1; y>=0; --y) {
         for (int x=0; x<grid.sizeX(); ++x, ++line) {
-            const Cell &c = grid(x,y);
+            const GridCell &c = grid(x,y);
             if (!c.isNull()) {
-                cw.setData(&c);
+                cw.setData(&c.cell());
                 value = mExpression.calculate(cw);
                 *line = alpha & pal->color(value);
             } else {
@@ -360,9 +360,9 @@ void LandscapeVisualization::doRenderState()
 
     for (int y = grid.sizeY()-1; y>=0; --y) {
         for (int x=0; x<grid.sizeX(); ++x, ++line) {
-            const Cell &c = grid(x,y);
+            const GridCell &c = grid(x,y);
             if (!c.isNull()) {
-                *line = mStatePalette->color(c.state()->id());
+                *line = mStatePalette->color(c.cell().state()->id());
             } else {
                 *line = fill_color;
             }
@@ -482,13 +482,23 @@ void LandscapeVisualization::setupStateColors()
                                "#CED847","#982EEE","#99F1D6","#C0EDD7","#404191","#C73BAF","#E84C36","#56F6C1","#E28C72","#A08CB1","#C7C5F2","#54A4A7","#BA38CA","#AF5895","#4586AD",
                                "#D1787E","#9ABFEC","#61E1F5","#7B615D","#E79FE0","#EAD1EE","#7BBC6A","#C353F1","#B4CE89","#C7CBCC"};
 
+    // colors from "Werner's nomenclature of colors" (see for example https://www.c82.net/werner/#colors, r-package recolorize)
+    const QStringList werner_cols = {"#F1E9CE","#F2E8CF","#EDE6D0","#F2EACC","#F4E9CB","#F3EBCE","#E7E1CA","#E2DEC7","#CCC8B7","#BFBCB0","#BEBEB3","#B7B6AC","#BAB292","#9D9E9A","#8B8E84","#5B5C62",
+                                     "#555252","#423F45","#454445","#433938","#433736","#262125","#242021","#28203F","#1C1A49","#4F648D","#383867","#5D6B90","#657ABC","#6F89B0","#7995B6","#70B5A9",
+                                     "#729CA3","#8AA1A6","#D1D5D3","#8591AE","#3B2F53","#3A334B","#6D6D95","#594C78","#533653","#463859","#C0BBC1","#787580","#4A475C","#B8BFB0","#B2B599","#989D85",
+                                     "#5D6162","#61AD87","#A5B6A7","#AEBA98","#94B879","#7E8D55","#33441E","#7C8736","#8F9949","#C2C291","#68765B","#AB924B","#C8C870","#CCC151","#EBDE9A","#AC9649",
+                                     "#DCC465","#E6D158","#EAD766","#D09C2C","#A46729","#A87E36","#F0D696","#D7C485","#F1D38D","#F0CC84","#F3DBA7","#E0A838","#ECBC72","#D27D3F","#924630","#BE7349",
+                                     "#BB603C","#C86C4B","#A75637","#B63E37","#B54A3B","#CD6E57","#711518","#EAC49E","#EEDAC3","#EECFC0","#CE536C","#B84A71","#B7757C","#622841","#7B4949","#403133",
+                                     "#8D7570","#4E3635","#6E3B31","#864835","#593C39","#613A36","#7B4B3B","#946A44","#C49E6D","#523F33","#8C785A","#9C856C","#776151","#463C32"};
+
     Palette *pal = new Palette();
     QVector<QString> color_names;
     QVector<int> factor_values;
     QVector<QString> factor_labels;
     for (const auto &s : states) {
         if (s.colorName().empty())
-            color_names.push_back( default_cols[color_names.length() % default_cols.size()] );
+            //color_names.push_back( default_cols[color_names.length() % default_cols.size()] );
+            color_names.push_back( werner_cols[color_names.length() % werner_cols.size()] );
         else
             color_names.push_back(QString::fromStdString(s.colorName()));
         factor_values.push_back(s.id());

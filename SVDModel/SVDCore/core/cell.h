@@ -28,15 +28,14 @@ public:
     // constructors
     Cell() : mCellIndex(-1), mStateId(-1), mResidenceTime(-1), mNextUpdateTime(-1),
         mNextStateId(-1),  mExternalSeedType(-1), mIsUpdated(false),
-        mElevation(0.f), mState(nullptr), mEnvCell(nullptr) {}
+        mState(nullptr), mEnvCell(nullptr) {}
 
     Cell(state_t state, restime_t res_time=0): mCellIndex(-1), mStateId(state), mResidenceTime(res_time), mNextUpdateTime(0),
         mNextStateId(-1), mExternalSeedType(-1), mIsUpdated(false),
-        mElevation(0.f), mEnvCell(nullptr) { setState(state); }
+        mEnvCell(nullptr) { setState(state); }
     /// establish the link to the environment cell
     void setEnvironmentCell(const EnvironmentCell *ec) { mEnvCell = ec; }
     void setCellIndex(int cell_index) { mCellIndex = cell_index; }
-    void setElevation(float elevation_m) { mElevation = elevation_m; }
 
     // access
     /// isNull() returns true if the cell is not an actively simulated cell
@@ -52,7 +51,8 @@ public:
     int nextUpdate() const {return mNextUpdateTime; }
     /// the index is the position of the cell within the landscape
     int cellIndex() const { return mCellIndex; }
-    float elevation() const { return mElevation; }
+    /// elevation (m) of the cell (from a elevation model)
+    float elevation() const;
 
     /// ptr of the environment cell
     const EnvironmentCell *environment() const { return mEnvCell; }
@@ -97,15 +97,29 @@ private:
     state_t mNextStateId; ///< the new state scheduled at mNextUpdateTime
     int mExternalSeedType; ///< if the cell is outside of the project area, this type refers to the forest type
     bool mIsUpdated; ///< flag indicating that the state is already updated (e.g. by management)
-    float mElevation; ///< elevation (m) of the cell (from a elevation model)
 
     const State *mState; ///< ptr to the State the cell currently is in
     const EnvironmentCell *mEnvCell; ///< ptr to the environment
 
+    // state history
 
+    struct History {
+        enum {NSteps=3};
+        state_t state[NSteps];
+        restime_t restime[NSteps];
+        History() {for (int i=0;i<NSteps;++i) { state[i]=0; restime[i]=0; }}
+        void push(state_t newstate, restime_t newtime) {
+            for (int i=NSteps-1;i>=0;--i) {
+                restime[i+1] = restime[i];
+                state[i+1] = state[i];
+            }
+            restime[0] = newtime;
+            state[0] = newstate;
+        }
+    } mHistory;
 
-    static std::vector<Point> mLocalNeighbors;
-    static std::vector<Point> mMediumNeighbors;
+    static const std::vector<Point> mLocalNeighbors;
+    static const std::vector<Point> mMediumNeighbors;
 
 };
 

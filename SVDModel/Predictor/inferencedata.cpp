@@ -29,7 +29,8 @@ void InferenceData::fetchData(Cell *cell, BatchDNN *batch, size_t slot)
     mResidenceTime = cell->residenceTime();
     mNextState = 0;
     mNextTime = 0;
-    mIndex = static_cast<int>( cell - Model::instance()->landscape()->grid().begin() );
+    mIndex = cell->cellIndex();
+    //static_cast<int>( cell - Model::instance()->landscape()->grid().begin() );
 
     mBatch = batch;
     mSlot = slot;
@@ -51,7 +52,7 @@ void InferenceData::setResult(state_t state, restime_t time)
 void InferenceData::writeResult()
 {
     // write back:
-    Cell &cell = Model::instance()->landscape()->grid()[mIndex];
+    Cell &cell = Model::instance()->landscape()->cells()[mIndex];
     cell.setNextStateId(mNextState);
     cell.setNextUpdateTime(mNextTime);
 
@@ -65,7 +66,7 @@ const EnvironmentCell &InferenceData::environmentCell() const
 
 const Cell &InferenceData::cell() const
 {
-    return Model::instance()->landscape()->grid()[mIndex];
+    return Model::instance()->landscape()->cells()[mIndex];
 }
 
 std::string InferenceData::dumpTensorData()

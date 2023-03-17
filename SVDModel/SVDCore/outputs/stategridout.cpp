@@ -52,16 +52,16 @@ void StateGridOut::execute()
     auto &grid = Model::instance()->landscape()->grid();
     if (has_ending(file_name, ".tif") || has_ending(file_name, ".TIF")) {
         // save as tif
-        if (!gridToGeoTIFF<Cell>( grid, file_name,
-                                  [](const Cell &c) -> double {if(c.isNull())
+        if (!gridToGeoTIFF<GridCell>( grid, file_name,
+                                  [](const GridCell &c) -> double {if(c.isNull())
                                   return std::numeric_limits<double>::lowest();
                                   else
-                                  return static_cast<double>(c.state()->id()); }) )
+                                  return static_cast<double>(c.cell().state()->id()); }) )
             throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);
 
     } else {
         // save as esri ascii raster
-        std::string result = gridToESRIRaster<Cell>(grid, [](const Cell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.stateId()); });
+        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.cell().stateId()); });
         if (!writeFile(file_name, result))
             throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);
     }

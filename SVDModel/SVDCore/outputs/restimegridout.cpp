@@ -51,7 +51,7 @@ void ResTimeGridOut::execute()
     std::string file_name = mPath;
     find_and_replace(file_name, "$year$", to_string(year));
     auto &grid = Model::instance()->landscape()->grid();
-    std::string result = gridToESRIRaster<Cell>(grid, [](const Cell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.residenceTime()); });
+    std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.cell().residenceTime()); });
     if (!writeFile(file_name, result))
         throw std::logic_error("ResTimeGridOut: couldn't write output file: " + file_name);
 

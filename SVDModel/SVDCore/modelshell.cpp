@@ -78,26 +78,26 @@ std::string ModelShell::run_test_op(std::string what)
 {
     if (what=="grid_state") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<Cell>(grid, [](const Cell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.stateId()); });
+        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.cell().stateId()); });
         return result;
     }
     if (what=="grid_restime") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<Cell>(grid, [](const Cell &c)
+        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c)
         { if (c.isNull())
                 return std::string("-9999");
             else
-                return std::to_string(c.residenceTime()); }
+                return std::to_string(c.cell().residenceTime()); }
         );
         return result;
     }
     if (what=="grid_next") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<Cell>(grid, [](const Cell &c)
+        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c)
         { if (c.isNull())
                 return std::string("-9999");
             else
-                return std::to_string(c.nextUpdate()); }
+                return std::to_string(c.cell().nextUpdate()); }
         );
         return result;
     }
@@ -115,9 +115,9 @@ std::string ModelShell::run_test_op(std::string what)
 
     if (what=="ext_seed") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<Cell>(grid, [](const Cell &c)
+        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c)
         {
-                return std::to_string(c.externalSeedType()); }
+                return std::to_string(c.cell().externalSeedType()); }
         );
         return result;
     }
@@ -341,7 +341,7 @@ void ModelShell::internalRun()
         // check for each cell if we need to do something; if yes, then
         // fill a InferenceData item within a batch of data
         // allPackagesBuilt() is called when completed
-        packageFuture = QtConcurrent::map(mModel->landscape()->grid(), [this](Cell &cell){ this->evaluateCell(&cell); });
+        packageFuture = QtConcurrent::map(mModel->landscape()->cells(), [this](Cell &cell){ this->evaluateCell(&cell); });
         packageWatcher.setFuture(packageFuture);
 
         // run the modules

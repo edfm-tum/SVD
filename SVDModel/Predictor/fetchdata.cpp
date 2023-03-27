@@ -44,6 +44,8 @@ FetchData *FetchData::createFetchObject(InputTensorItem *def)
     case InputTensorItem::Climate:
     case InputTensorItem::State:
     case InputTensorItem::ResidenceTime:
+    case InputTensorItem::ResTimeHistory:
+    case InputTensorItem::StateHistory:
     case InputTensorItem::SiteNPKA:
     case InputTensorItem::Scalar:
     case InputTensorItem::DistanceOutside:
@@ -231,6 +233,8 @@ void FetchDataStandard::fetchDistanceOutside(Cell *cell, BatchDNN* batch, size_t
 void FetchDataVars::setup(const Settings *settings, const std::string &key, const InputTensorItem &item)
 {
     // expects as many expressions as 'sizeX', one-dimensional, and datatype float
+    // the expressions are given as a string with the "transformation" key, and each
+    // expression is within curly braces: {expr1}, {expr2}, {expr3}, ... {exprN}
     auto lg = spdlog::get("setup");
     std::string tlist = settings->valueString(key + ".transformations");
     lg->debug("Set up expressions: {}", tlist);
@@ -360,13 +364,13 @@ float FetchDataFunction::calculateDistToSeedSource(Cell *cell)
 
     size_t target = static_cast<size_t>(cell->state()->value(mD2S_target));
 
-    Point center = grid.indexOf(cell);
+    Point center = grid.indexOf(cell->cellIndex());
 
     for (const auto &p : dist2seeds) {
         if (grid.isIndexValid(center + p.first)) {
-            Cell &c = grid.valueAtIndex(center + p.first);
-            if (!c.isNull() && c.state()!=nullptr)
-                if (static_cast<size_t>(c.state()->value(mD2S_seed_source)) == target) {
+            GridCell &c = grid.valueAtIndex(center + p.first);
+            if (!c.isNull() && c.cell().state()!=nullptr)
+                if (static_cast<size_t>(c.cell().state()->value(mD2S_seed_source)) == target) {
                     // found a distance
                     return p.second / 1000.f;
                 }
@@ -378,9 +382,9 @@ float FetchDataFunction::calculateDistToSeedSource(Cell *cell)
     for (int y=-12; y<=12; ++y)
         for (int x=-12; x<=12; ++x)
             if (grid.isIndexValid(center + Point(x,y))) {
-                Cell &c = grid.valueAtIndex(center + Point(x,y));
-                if (!c.isNull() && c.state()!=nullptr)
-                    if (static_cast<size_t>(c.state()->value(mD2S_seed_source)) == target) {
+                GridCell &c = grid.valueAtIndex(center + Point(x,y));
+                if (!c.isNull() && c.cell().state()!=nullptr)
+                    if (static_cast<size_t>(c.cell().state()->value(mD2S_seed_source)) == target) {
                         // found a seed pixel: (x-0.5)*(x-0.5)=x^2-x+0.25
                         min_dist_sq = std::min(min_dist_sq, x*x-x+0.25f + y*y-y+0.25f);
                     }

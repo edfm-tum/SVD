@@ -25,8 +25,12 @@
 #include "strtools.h"
 #include "randomgen.h"
 
+// pointer to container for
+std::vector<Cell> *GridCell::mCellVector = nullptr;
+
 Landscape::Landscape()
 {
+    GridCell::mCellVector = &mCells;
 }
 
 void Landscape::setup()
@@ -98,12 +102,14 @@ void Landscape::setup()
         env_hash.insert(std::pair<int, EnvironmentCell*>(c.id(), &c));
 
     EnvironmentCell **ec=mEnvironmentGrid.begin();
+    size_t n_cells_valid = 0;
     int *iptr=grid.begin();
     try {
         for (; iptr!=grid.end(); ++iptr, ++ec) {
             if (!grid.isNull(*iptr)) {
                 EnvironmentCell *cell = env_hash.at(*iptr);
                 *ec = cell;
+                ++n_cells_valid;
             } else {
                 *ec = nullptr;
             }
@@ -114,7 +120,6 @@ void Landscape::setup()
     }
 
     // load a DEM (if available)
-    Grid<float> dem;
     std::string filename = Model::instance()->settings().valueString("visualization.dem","");
     if (!filename.empty()) {
         filename = Tools::path(filename);
@@ -123,30 +128,39 @@ void Landscape::setup()
             lg->error("DEM is provided, but the file is not available ('{}').", filename);
             return;
         }
-        dem.loadGridFromFile(filename);
-        lg->debug("Loaded a digital elevation model (DEM) from '{}'. Cellsize: {}m, Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.", filename, dem.cellsize(), dem.metricRect().left(), dem.metricRect().right(), dem.metricRect().top(), dem.metricRect().bottom());
+        mDEM.loadGridFromFile(filename);
+        lg->debug("Loaded a digital elevation model (DEM) from '{}'. Cellsize: {}m, Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.", filename, mDEM.cellsize(), mDEM.metricRect().left(), mDEM.metricRect().right(), mDEM.metricRect().top(), mDEM.metricRect().bottom());
     }
 
 
     // now set up the landscape cells
-    // the grid has the same size:
+    // default for GridCell is an index of -1, i.e. isNull() == true
     mGrid.setup(mEnvironmentGrid.metricRect(), mEnvironmentGrid.cellsize());
+    // actual storage of the cells. Since we now already how many cells we'll have, we can instantiate the cells.
+    mCells.clear();
+    mCells.resize(n_cells_valid);
 
-    Cell *a=mGrid.begin();
-    int cell_index = 0;
+
+    GridCell *a=mGrid.begin();
+    int grid_cell_index = 0; // index on the spatial grid
+    int cell_index = 0; // index in mCells array
     mNCells = 0;
-    for (EnvironmentCell **ec=mEnvironmentGrid.begin(); ec!=mEnvironmentGrid.end(); ++ec, ++a, ++cell_index)
+    for (EnvironmentCell **ec=mEnvironmentGrid.begin(); ec!=mEnvironmentGrid.end(); ++ec, ++a, ++grid_cell_index)
         if (*ec) {
-            a->setCellIndex(cell_index);
+            // setting the index makes a cell valid (index is the index in the mCells array)
+            a->index = cell_index++;
+            // a call to cell() returns mCells[a->index]
+            Cell &cp = a->cell();
+            cp.setCellIndex(grid_cell_index);
             // set to invalid state (different from NULL which is outside of the project area)
-            a->setInvalid();
+            cp.setInvalid();
             // establish link to the environment
-            a->setEnvironmentCell(*ec);
-            if (!dem.isEmpty()) {
-                PointF p = mGrid.cellCenterPoint(cell_index);
-                if (!dem.coordValid(p))
+            cp.setEnvironmentCell(*ec);
+            if (!mDEM.isEmpty()) {
+                PointF p = mGrid.cellCenterPoint(grid_cell_index);
+                if (!mDEM.coordValid(p))
                     throw logic_error_fmt("The digital elevation model '{}' is not valid for the point {:f}/{:f} (which is within the project area)!", filename, p.x(), p.y());
-                a->setElevation( dem[p] );
+
             }
             ++mNCells;
         }
@@ -171,15 +185,14 @@ void Landscape::setupInitialState()
         throw std::logic_error("Key 'initialState.mode': '" + mode + "' is invalid. Valid values are: " + join(valid_modes));
 
 
-    int n_affected = 0;
+
     if (mode == "random") {
-        for (Cell *c = grid().begin(); c!=grid().end(); ++c)
-            if (!c->isNull()) {
-                c->setState( Model::instance()->states()->randomState().id() );
-                c->setResidenceTime(static_cast<restime_t>(irandom(0,10)));
-                ++n_affected;
-            }
-        lg->debug("Landscape states initialized randomly ({} affected cells).", n_affected);
+        for (auto &c : cells()) {
+            c.setState( Model::instance()->states()->randomState().id() );
+            c.setResidenceTime(static_cast<restime_t>(irandom(0,10)));
+        }
+
+        lg->debug("Landscape states initialized randomly ({} affected cells).", cells().size());
         return;
     }
 
@@ -190,7 +203,7 @@ void Landscape::setupInitialState()
         if (i_state<0 || i_restime<0)
             throw std::logic_error("Initialize landscape state: mode is 'file' and the 'landscape.file' does not contain the columns 'initialStateId' and/or 'initialResidenceTime'.");
 
-        Cell *cell = grid().begin();
+        GridCell *cell = grid().begin();
         bool error = false;
         int n_affected=0;
         for (EnvironmentCell **ec=mEnvironmentGrid.begin(); ec!=mEnvironmentGrid.end(); ++ec, ++cell)
@@ -202,8 +215,8 @@ void Landscape::setupInitialState()
                     error = true;
                     lg->error("State: {} not valid (at {}/{})", t, grid().indexOf(cell).x(), grid().indexOf(cell).y());
                 } else {
-                    cell->setState(t);
-                    cell->setResidenceTime(res_time);
+                    cell->cell().setState(t);
+                    cell->cell().setResidenceTime(res_time);
                     ++n_affected;
                 }
             }
@@ -257,8 +270,8 @@ void Landscape::setupInitialState()
                         if (n_errors<120) // make sure we get at least some of those errors....
                             lg->error("Init landscape: state '{}' (at {}/{}) is not a valid stateId.", state, p.x(), p.y());
                     } else {
-                        grid()[i].setResidenceTime(restime);
-                        grid()[i].setState(state);
+                        grid()[i].cell().setResidenceTime(restime);
+                        grid()[i].cell().setState(state);
                         ++n_affected;
                     }
                 }

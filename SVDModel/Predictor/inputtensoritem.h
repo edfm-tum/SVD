@@ -31,12 +31,14 @@ struct InputTensorItem {
         Climate = 1,
         State = 2,
         ResidenceTime = 3,
-        Neighbors = 4,
-        Variable = 5,
-        Scalar = 6,
-        DistanceOutside = 7,
-        SiteNPKA = 8, // old static NPKA site
-        Function = 9
+        StateHistory = 4,
+        ResTimeHistory = 5,
+        Neighbors = 6,
+        Variable = 7,
+        Scalar = 8,
+        DistanceOutside = 9,
+        SiteNPKA = 10, // old static NPKA site
+        Function = 11
     };
 
     /// supported data types (values copied from tensorflow types.pb.h (build/tensorflow/core/framework)

@@ -111,10 +111,8 @@ void States::updateStateHistogram()
     std::fill(mStateHistogram.begin(), mStateHistogram.end(), 0);
 
     // count every state on the landscape
-    auto &grid = Model::instance()->landscape()->grid();
-    for (Cell *c=grid.begin(); c!=grid.end(); ++c)
-        if (!c->isNull())
-            mStateHistogram[static_cast<size_t>(c->stateId())]++;
+    for (auto &c : Model::instance()->landscape()->cells())
+        mStateHistogram[static_cast<size_t>(c.stateId())]++;
 }
 
 const State &States::randomState() const

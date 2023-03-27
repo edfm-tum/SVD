@@ -20,7 +20,7 @@
 #include "model.h"
 
 // 37 values, roughly a circle with 7px diameter
-std::vector<Point> Cell::mMediumNeighbors = {
+const std::vector<Point> Cell::mMediumNeighbors = {
               {-1,-3}, {0,-3}, {1,-3},
         {-2,-2}, {-1,-2},{0,-2},{1,-2},{2,-2},
     {-3,-1}, {-2,-1},{-1,-1},{0,-1},{1,-1},{2,-1},{3,-1},
@@ -32,7 +32,7 @@ std::vector<Point> Cell::mMediumNeighbors = {
 };
 
 // local neighbors: the moore neighborhood (8 values)
-std::vector<Point> Cell::mLocalNeighbors = {
+const std::vector<Point> Cell::mLocalNeighbors = {
     {-1,-1}, { 0,-1}, { 1,-1},
     {-1, 0},          { 1, 0},
     {-1, 1}, { 0, 1}, { 1, 1}
@@ -40,6 +40,11 @@ std::vector<Point> Cell::mLocalNeighbors = {
 
 
 
+
+float Cell::elevation() const
+{
+    return Model::instance()->landscape()->elevationOf(cellIndex());
+}
 
 bool Cell::needsUpdate() const
 {
@@ -57,6 +62,8 @@ void Cell::update()
     if (year+1 >= mNextUpdateTime) {
         // change the state of the current cell
         if (mNextStateId != stateId()) {
+            mHistory.push(mNextStateId, mResidenceTime); // save to history
+            // the actual update:
             setState( mNextStateId );
             setResidenceTime( 0 );
         } else {
@@ -105,13 +112,13 @@ std::vector<double> Cell::neighborSpecies() const
 {
     auto &grid =  Model::instance()->landscape()->grid();
     size_t n_species = Model::instance()->species().size();
-    Point center = grid.indexOf(this);
+    Point center = grid.indexOf(cellIndex());
     std::vector<double> result(n_species*2, 0.);
     // local neighbors
     double n_local = 0.;
     for (const auto &p : mLocalNeighbors) {
-        if (grid.isIndexValid(center + p)) {
-            Cell &cell = grid.valueAtIndex(center + p);
+        if (grid.isIndexValid(center + p) && !grid.valueAtIndex(center + p).isNull()) {
+            Cell &cell = grid.valueAtIndex(center + p).cell();
             if ((cell.state() && cell.state()->type()==State::Forest) || cell.externalSeedType()>=0) {
                 // note for external seeds:
                 // if the cell is in 'species-shares' mode, then state() is null
@@ -130,8 +137,8 @@ std::vector<double> Cell::neighborSpecies() const
     // mid-range neighbors
     double n_mid = 0.;
     for (const auto &p : mMediumNeighbors) {
-        if (grid.isIndexValid(center + p)) {
-            Cell &cell = grid.valueAtIndex(center + p);
+        if (grid.isIndexValid(center + p) && !grid.valueAtIndex(center + p).isNull()) {
+            Cell &cell = grid.valueAtIndex(center + p).cell();
             if ((cell.state() && cell.state()->type()==State::Forest) || cell.externalSeedType()>=0) {
                 const auto &shares = cell.state()? cell.state()->speciesShares() : Model::instance()->externalSeeds().speciesShares(cell.externalSeedType());
                 for (size_t i=0; i<n_species;++i)
@@ -150,12 +157,12 @@ std::vector<double> Cell::neighborSpecies() const
 double Cell::stateFrequencyLocal(state_t stateId) const
 {
     auto &grid =  Model::instance()->landscape()->grid();
-    Point center = grid.indexOf(this);
+    Point center = grid.indexOf(cellIndex());
     int n_local = 0;
     int n = 0;
     for (const auto &p : mLocalNeighbors) {
-        if (grid.isIndexValid(center + p)) {
-            Cell &cell = grid.valueAtIndex(center + p);
+        if (grid.isIndexValid(center + p) && !grid.valueAtIndex(center + p).isNull()) {
+            Cell &cell = grid.valueAtIndex(center + p).cell();
             if (cell.stateId() == stateId)
                 ++n_local;
             }
@@ -168,12 +175,12 @@ double Cell::stateFrequencyLocal(state_t stateId) const
 double Cell::stateFrequencyIntermediate(state_t stateId) const
 {
     auto &grid =  Model::instance()->landscape()->grid();
-    Point center = grid.indexOf(this);
+    Point center = grid.indexOf(cellIndex());
     int n_local = 0;
     int n = 0;
     for (const auto &p : mMediumNeighbors) {
-        if (grid.isIndexValid(center + p)) {
-            Cell &cell = grid.valueAtIndex(center + p);
+        if (grid.isIndexValid(center + p) && !grid.valueAtIndex(center + p).isNull()) {
+            Cell &cell = grid.valueAtIndex(center + p).cell();
             if (cell.stateId() == stateId)
                 ++n_local;
             }
@@ -202,11 +209,11 @@ static std::vector<std::pair<Point, float> > dist2state = {
 double Cell::minimumDistanceTo(state_t stateId) const
 {
     auto &grid =  Model::instance()->landscape()->grid();
-    Point center = grid.indexOf(this);
+    Point center = grid.indexOf(cellIndex());
     // TODO
     for (const auto &p : dist2state) {
-        if (grid.isIndexValid(center + p.first)) {
-            Cell &c = grid.valueAtIndex(center + p.first);
+        if (grid.isIndexValid(center + p.first) && !grid.valueAtIndex(center + p.first).isNull()) {
+            Cell &c = grid.valueAtIndex(center + p.first).cell();
             if (!c.isNull() && c.state()!=nullptr)
                 if (c.stateId() == stateId) {
                     // found a distance
@@ -222,8 +229,8 @@ double Cell::minimumDistanceTo(state_t stateId) const
         for (int x=-max_n; x<=max_n; ++x)
             // look in a circle
             if (x*x + y*y <= max_n*max_n) {
-                if (grid.isIndexValid(center + Point(x,y))) {
-                    Cell &c = grid.valueAtIndex(center + Point(x,y));
+                if (grid.isIndexValid(center + Point(x,y)) && !grid.valueAtIndex(center + Point(x,y)).isNull()) {
+                    Cell &c = grid.valueAtIndex(center + Point(x,y)).cell();
                     if (!c.isNull() && c.state()!=nullptr)
                         if (c.stateId() == stateId) {
                             // found a  pixel: (x-0.5)*(x-0.5)=x^2-x+0.25
@@ -242,7 +249,7 @@ double Cell::minimumDistanceTo(state_t stateId) const
 void Cell::dumpDebugData()
 {
     auto lg = spdlog::get("main");
-    PointF coord =  Model::instance()->landscape()->grid().cellCenterPoint( Model::instance()->landscape()->grid().indexOf(this) );
+    PointF coord =  Model::instance()->landscape()->grid().cellCenterPoint( Model::instance()->landscape()->grid().indexOf(cellIndex()) );
     lg->info("Cell {} at {}/{}m:", static_cast<void*>(this), coord.x(), coord.y());
     lg->info("Current state ID: {}, {}, residence time: {}", mStateId, mState ? mState->asString() : "Invalid State", mResidenceTime);
     lg->info("external seed type: {}", mExternalSeedType);

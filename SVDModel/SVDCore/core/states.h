@@ -38,7 +38,9 @@ public:
     void setName(const std::string &name) { mName = name; }
     void setColorName(const std::string &color) {mColorName = color; }
 
+    /// the handling module for a state
     StateType type() const { return mType; }
+    /// unique state id
     state_t id() const { return mId; }
     const std::string &compositionString() const { return mComposition; }
     int function() const { return mFunction; }

@@ -132,7 +132,7 @@ void FireModule::run()
             lg->debug("Coordinates invalid. Skipping.");
             continue;
         }
-        Cell &c = grid.valueAt(ignition.x, ignition.y);
+        GridCell &c = grid.valueAt(ignition.x, ignition.y);
         if (c.isNull()) {
             lg->debug("Ignition point not in project area. Skipping.");
             continue;
@@ -186,7 +186,7 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
                 for (int ix=ixmin; ix<=ixmax; ++ix) {
                     if (mGrid(ix, iy).spread == 1.f) {
                         // value = 1.f -> the cell burned and is spreading
-                        float elev_origin = Model::instance()->landscape()->grid()(ix,iy).elevation();
+                        float elev_origin = Model::instance()->landscape()->elevationAt(mGrid.cellCenterPoint(Point(ix, iy)));
                         // direction codes: (1..8, N, E, S, W, NE, SE, SW, NW)
                         calculateSpreadProbability(ign, Point(ix-1, iy+1), elev_origin, 8); // NW
                         calculateSpreadProbability(ign, Point(ix  , iy+1), elev_origin, 1); // N
@@ -254,13 +254,14 @@ bool FireModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
 {
     auto &grid = Model::instance()->landscape()->grid();
     auto &c = mGrid[Point(ix, iy)];
-    auto &s = grid[Point(ix, iy)];
-    if (s.isNull()) {
+    auto &gs = grid[Point(ix, iy)];
+    if (gs.isNull()) {
         c.spread = -1.f;
         if (round==1)
             lg->debug("Stopped at ignition: invalid cell!");
         return false;
     }
+    auto &s = gs.cell();
 
     // If a cell is already altered *during* this year (e.g. by a previous)
     // fire, then the state used here is still the old (i.e. unburned) state.
@@ -407,7 +408,8 @@ void FireModule::calculateSpreadProbability(const SIgnition &fire_event,  const 
     double spread_metric; // distance that fire supposedly spreads
 
     // calculate the slope from the curent point (pixel_from) to the spreading cell (pixel_to)
-    float h_to = Model::instance()->landscape()->grid()[point].elevation();
+    float h_to = Model::instance()->landscape()->elevationAt(mGrid.cellCenterPoint(point));
+    //float h_to = Model::instance()->landscape()->grid()[point].elevation();
     if (h_to==0.f) {
         lg->debug("Invalid elevation (value = 0) at point '{}m/{}m'", mGrid.cellCenterPoint(point).x(), mGrid.cellCenterPoint(point).y());
         return;

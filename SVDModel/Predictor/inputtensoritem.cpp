@@ -30,6 +30,8 @@ static std::map< std::string, InputTensorItem::DataContent> data_contents = {
     {"Climate",       InputTensorItem::Climate},
     {"State",         InputTensorItem::State},
     {"ResidenceTime", InputTensorItem::ResidenceTime},
+    {"StateHistory",         InputTensorItem::StateHistory},
+    {"ResidenceTimeHistory", InputTensorItem::ResTimeHistory},
     {"Neighbors",     InputTensorItem::Neighbors},
     {"Var",          InputTensorItem::Variable},
     {"Scalar",          InputTensorItem::Scalar},

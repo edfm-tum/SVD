@@ -25,6 +25,7 @@ class Session;
 class Tensor;
 class Status;
 class Input;
+class GraphDef;
 }
 class Batch; // forward
 
@@ -78,6 +79,8 @@ private:
     tensorflow::Session *session;
     tensorflow::Session *top_k_session;
 
+    tensorflow::Status loadGraph(std::string graph_file_name, tensorflow::Session* session);
+    void dumpTensorInfo(tensorflow::GraphDef &graph_def, std::string name_tensor);
 
     /// select randomly an index 0..n-1, with values the weights.
     int chooseProbabilisticIndex(float *values, int n, int skip_index=-1);

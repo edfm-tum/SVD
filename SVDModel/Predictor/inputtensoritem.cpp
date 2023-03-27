@@ -65,7 +65,7 @@ InputTensorItem::~InputTensorItem()
 
 InputTensorItem::InputTensorItem(std::string aname, std::string atype, size_t andim, size_t asizex, size_t asizey, std::string acontent)
 {
-    name=aname;
+    name=aname + ":0";
     type = datatypeFromString(atype);
     ndim = andim;
     sizeX = asizex;

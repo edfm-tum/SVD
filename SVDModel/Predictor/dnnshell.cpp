@@ -89,7 +89,7 @@ void DNNShell::setup(QString fileName)
 
         while (RunState::instance()->modelState() == ModelRunState::Creating) {
             lg->trace("waiting for Model thread ...");
-            QThread::msleep(50);
+            QThread::msleep(200);
             QCoreApplication::processEvents();
         }
 

@@ -71,7 +71,19 @@ void Climate::setup()
         while (next != end) {
           std::smatch match = *next;
           lg->debug("climate transformation: for indices '{}' apply '{}'.", match.str(1), match.str(2));
-          auto indices = split(match.str(1),',');
+          std::vector<std::string> indices;
+          // match.str(1) -> wenn 1-10 -> in 1,2,3,4,5,..10 umwandeln
+          if (match.str(1).find('-') != std::string::npos) {
+              auto parts = split(match.str(1), '-');
+              if (parts.size() != 2)
+                  throw logic_error_fmt("Climate-transformation: cannot parse: {}", match.str(1));
+              for (auto i = std::stoull(parts[0]) ; i < std::stoull( parts[1] ); ++i)
+                  indices.push_back(to_string(i));
+
+          } else {
+              // assume a comma separated list of indices
+              indices = split(match.str(1),',');
+          }
           auto expr = match.str(2);
           for (auto sidx : indices) {
               auto idx = std::stoull( sidx ); // to unsigned long long

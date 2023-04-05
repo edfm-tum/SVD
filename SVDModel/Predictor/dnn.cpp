@@ -454,7 +454,7 @@ void DNN::setupInput()
     }
     std::string metafilename = Tools::path(Model::instance()->settings().valueString("dnn.metadata"));
     if (!Tools::fileExists(metafilename))
-        throw std::logic_error("The metadata file for the DNN (" + metafilename + ") does not exist (specified as 'dnn.metadata')!");
+        throw std::logic_error("The metadata file for the DNN (" + metafilename + ") does not exist (specified in 'dnn.metadata')!");
 
     Settings mg;
     mg.loadFromFile(metafilename);
@@ -473,10 +473,11 @@ void DNN::setupInput()
 
     for (auto &s : sections) {
         mg.requiredKeys("input."+s, {"enabled", "dim", "sizeX", "sizeY", "dtype", "type"});
+        bool has_name = mg.hasKey("input." + s + ".tensorName");
         if (!mg.valueBool("input." + s + ".enabled"))
             continue;
 
-        InputTensorItem item(s,
+        InputTensorItem item(has_name ? mg.valueString("input."+ s +".tensorName") : s, // use name property if provided
                              mg.valueString("input."+ s +".dtype"),
                              mg.valueUInt("input." + s + ".dim"),
                              mg.valueUInt("input." + s + ".sizeX"),

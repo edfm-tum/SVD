@@ -88,6 +88,12 @@ public:
     double stateFrequencyIntermediate(state_t stateId) const;
     double stateFrequencyGlobal(state_t stateId) const;
     double minimumDistanceTo(state_t stateId) const;
+
+    /// get history for state/residence time
+    const state_t *stateHistory() const { return mHistory.state; }
+    const restime_t *resTimeHistory() const { return mHistory.restime; }
+    /// the number of elements the state / restime history stores
+    static size_t historySize() { return History::NSteps; }
 private:
     void dumpDebugData();
     int mCellIndex; ///< index of the grid cell within the landscape grid

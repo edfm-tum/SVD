@@ -87,8 +87,10 @@ void DNNShell::setup(QString fileName)
         // wait for the model thread to complete model setup before
         // setting up the inputs (which may need data from the model)
 
+        int nwait=0;
         while (RunState::instance()->modelState() == ModelRunState::Creating) {
-            lg->trace("waiting for Model thread ...");
+            if (++nwait < 10 || (nwait < 100 && nwait % 5 == 0) || nwait % 50 == 0)
+            lg->trace("waiting for Model thread ... ({}s)", (nwait/5.));
             QThread::msleep(200);
             QCoreApplication::processEvents();
         }

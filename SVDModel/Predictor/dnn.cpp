@@ -86,12 +86,14 @@ using tensorflow::int32;
 Status DNN::loadGraph(string graph_file_name,
                  tensorflow::Session* session) {
   tensorflow::GraphDef graph_def;
+
   Status load_graph_status =
       ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
   if (!load_graph_status.ok()) {
     return tensorflow::errors::NotFound("Failed to load compute graph at '",
                                         graph_file_name, "'");
   }
+
   //session->reset(tensorflow::NewSession(tensorflow::SessionOptions()));
   Status session_create_status = session->Create(graph_def);
   if (!session_create_status.ok()) {
@@ -171,6 +173,11 @@ bool DNN::setupDNN(size_t aindex)
 #else
     mDummyDNN = false;
     tensorflow::SessionOptions opts;
+    tensorflow::ConfigProto* config = &opts.config;
+
+    tensorflow::GraphDef graph_def;
+
+
     // log of device placement if log level debug is on
     if (lg->should_log(spdlog::level::debug))
         opts.config.set_log_device_placement(true);
@@ -180,12 +187,47 @@ bool DNN::setupDNN(size_t aindex)
     lg->debug("Available GPUs: '{}'", opts.config.gpu_options().visible_device_list());
 
     opts.config.mutable_gpu_options()->set_allow_growth(true); // do not allocate all the RAM
+
     //opts.config.mutable_gpu_options()->set_visible_device_list("0");
+    //opts.config.gpu_options().visible_device_list()
+
+    //(*config->mutable_device_count())["GPU"] = 4;
+    auto device_count = config->device_count();
+    lg->debug("device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
+
+
+    setenv("CUDA_VISIBLE_DEVICES", to_string(aindex).c_str(), 1);
+    //lg->debug("CUDA_VISBLE_DEVICES = {}", getenv("CUDA_VISIBLE_DEVICES"));
+
+    //if (aindex == 1) {
+        //std::string devices = "2";
+        //opts.config.mutable_gpu_options()->set_visible_device_list(devices);
+    //}
+
+
+
+    Status load_graph_status =
+        ReadBinaryProto(tensorflow::Env::Default(), file, &graph_def);
+    if (!load_graph_status.ok()) {
+      // return tensorflow::errors::NotFound("Failed to load compute graph at '", file, "'");
+    }
+
+
+    //tensorflow::graph::SetDefaultDevice("2", &graph_def);
+
+
+
 
     session = tensorflow::NewSession(opts); // no specific options: tensorflow::SessionOptions()
 
+    device_count = config->device_count();
+    lg->debug("post device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
+
     lg->trace("attempting to load the graph...");
-    Status load_graph_status = loadGraph(file, session);
+
+    load_graph_status = session->Create(graph_def);
+
+    //Status load_graph_status = loadGraph(file, session);
     if (!load_graph_status.ok()) {
         lg->error("Error loading the graph: {}", load_graph_status.error_message().data());
         return false;

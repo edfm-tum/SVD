@@ -22,6 +22,7 @@ TEMPLATE = app
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
@@ -102,11 +103,12 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 # pre-compiled (local)
 # PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
 PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
+#PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
 
 LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 
-LIBS += -lfreeimage
+LIBS += -lfreeimage -lprotobuf
 # FreeImage on Linux: see https://codeyarns.com/2014/02/11/how-to-install-and-use-freeimage/
 # basically sudo apt-get install libfreeimage3 libfreeimage-dev
 #LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage

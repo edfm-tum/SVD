@@ -25,7 +25,7 @@
 
 #pragma warning(push, 0)
 //Some includes with unfixable warnings: https://stackoverflow.com/questions/2541984/how-to-suppress-warnings-in-external-headers-in-visual-c
-
+//#include "tensorflow/core/platform/status.h"
 #include "tensorflow/cc/ops/const_op.h"
 #include "tensorflow/cc/ops/image_ops.h"
 #include "tensorflow/cc/ops/standard_ops.h"
@@ -630,10 +630,11 @@ Blas GEMM launch failed --> close python session with active tensorflow!!
 
     Tensor indices;
     Tensor scores;
-    run_status = getTopClasses(outputs[0], top_n, &indices, &scores);
-    if (!run_status.ok()) {
-        qWarning() << "Running top-k failed: " << run_status.error_message().data();
-        return QString::fromStdString(run_status.error_message());
+    bool run_status_ok = getTopClasses(outputs[0], top_n, &indices, &scores);
+    if (!run_status_ok) {
+        qWarning() << "Running top-k failed: "; //  << run_status.error_message().data();
+        return "Error TopK";
+        //return QString::fromStdString(run_status.error_message());
     }
 
     out << "Classifcation Results";
@@ -681,7 +682,7 @@ void PredictorTest::tensorTest()
 
 }
 
-Status PredictorTest::getTopClasses(const Tensor &classes, const int n_top, Tensor *indices, Tensor *scores)
+bool PredictorTest::getTopClasses(const Tensor &classes, const int n_top, Tensor *indices, Tensor *scores)
 {
     auto root = tensorflow::Scope::NewRootScope();
     using namespace ::tensorflow::ops;  // NOLINT(build/namespaces)
@@ -691,20 +692,29 @@ Status PredictorTest::getTopClasses(const Tensor &classes, const int n_top, Tens
     // This runs the GraphDef network definition that we've just constructed, and
     // returns the results in the output tensors.
     tensorflow::GraphDef graph;
-    TF_RETURN_IF_ERROR(root.ToGraphDef(&graph));
+    auto ret = root.ToGraphDef(&graph);
+    if (!ret.ok())
+        return false;
 
     std::unique_ptr<tensorflow::Session> session(
         tensorflow::NewSession(tensorflow::SessionOptions()));
-    TF_RETURN_IF_ERROR(session->Create(graph));
+    ret = session->Create(graph);
+    if (!ret.ok())
+        return false;
+
     // The TopK node returns two outputs, the scores and their original indices,
     // so we have to append :0 and :1 to specify them both.
     std::vector<Tensor> out_tensors;
-    TF_RETURN_IF_ERROR(session->Run({}, {output_name + ":0", output_name + ":1"},
-                                    {}, &out_tensors));
+    ret = session->Run({}, {output_name + ":0", output_name + ":1"},
+                                    {}, &out_tensors);
+
+    if (!ret.ok())
+        return false;
+
     *scores = out_tensors[0];
     *indices = out_tensors[1];
 
-    return Status::OK();
+    return true;
 
 
 

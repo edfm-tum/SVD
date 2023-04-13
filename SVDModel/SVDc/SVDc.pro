@@ -10,6 +10,7 @@ CONFIG -= app_bundle
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
@@ -60,10 +61,12 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 # pre-compiled (local)
 # PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
 PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
+#PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
+
 LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 #LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
-LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
+LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage -lprotobuf
 
 }
 

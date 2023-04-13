@@ -23,7 +23,7 @@
 namespace tensorflow { // forward declarations...
 class Session;
 class Tensor;
-class Status;
+//class Status;
 class Input;
 class GraphDef;
 }

@@ -185,6 +185,8 @@ std::vector<const std::vector<float> *> Climate::series(int start_year, size_t s
     std::vector<const std::vector<float> *> set(series_length);
     for (size_t i=0;i<series_length;++i)  {
         int year = mSequence[ istart + i ];
+        if (!hasSeries(year, climateId))
+            throw logic_error_fmt("Climate data not found: climateId: {}, year: {}!", climateId, year);
         set[i] = &singleSeries(year, climateId);
     }
     return set;

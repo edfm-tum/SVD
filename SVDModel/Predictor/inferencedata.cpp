@@ -35,6 +35,11 @@ void InferenceData::fetchData(Cell *cell, BatchDNN *batch, size_t slot)
     mBatch = batch;
     mSlot = slot;
 
+    if (!cell->state() || !cell->environment() || cell->isNull()) {
+        throw logic_error_fmt("InferenceData: invalid cell: index: {}, current state: {}, ptr-state: {}, ptr-env: {}",
+                              mIndex, mOldState, (void*)cell->state(), (void*)cell->environment());
+    }
+
     // now pull all the data
     //internalFetchData();
 }
@@ -52,7 +57,7 @@ void InferenceData::setResult(state_t state, restime_t time)
 void InferenceData::writeResult()
 {
     // write back:
-    Cell &cell = Model::instance()->landscape()->cells()[mIndex];
+    Cell &cell = Model::instance()->landscape()->cell(mIndex);
     cell.setNextStateId(mNextState);
     cell.setNextUpdateTime(mNextTime);
 
@@ -66,7 +71,7 @@ const EnvironmentCell &InferenceData::environmentCell() const
 
 const Cell &InferenceData::cell() const
 {
-    return Model::instance()->landscape()->cells()[mIndex];
+    return Model::instance()->landscape()->cell(mIndex);
 }
 
 std::string InferenceData::dumpTensorData()

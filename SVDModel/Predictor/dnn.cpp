@@ -192,11 +192,11 @@ bool DNN::setupDNN(size_t aindex)
     //opts.config.gpu_options().visible_device_list()
 
     //(*config->mutable_device_count())["GPU"] = 4;
-    auto device_count = config->device_count();
-    lg->debug("device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
+    //auto device_count = config->device_count();
+    //lg->debug("device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
 
 
-    setenv("CUDA_VISIBLE_DEVICES", to_string(aindex).c_str(), 1);
+    // setenv("CUDA_VISIBLE_DEVICES", to_string(aindex).c_str(), 1);
     //lg->debug("CUDA_VISBLE_DEVICES = {}", getenv("CUDA_VISIBLE_DEVICES"));
 
     //if (aindex == 1) {
@@ -220,8 +220,8 @@ bool DNN::setupDNN(size_t aindex)
 
     session = tensorflow::NewSession(opts); // no specific options: tensorflow::SessionOptions()
 
-    device_count = config->device_count();
-    lg->debug("post device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
+    //device_count = config->device_count();
+    //lg->debug("post device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
 
     lg->trace("attempting to load the graph...");
 

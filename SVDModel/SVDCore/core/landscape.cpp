@@ -270,9 +270,16 @@ void Landscape::setupInitialState()
                         if (n_errors<120) // make sure we get at least some of those errors....
                             lg->error("Init landscape: state '{}' (at {:f}/{:f}) is not a valid stateId.", state, p.x(), p.y());
                     } else {
-                        grid()[i].cell().setResidenceTime(restime);
-                        grid()[i].cell().setState(state);
-                        ++n_affected;
+                        auto &cell = grid()[i].cell();
+                        if (!cell.environment()) {
+                            ++n_errors;
+                            if (n_errors<120) // make sure we get at least some of those errors....
+                                lg->error("Init landscape: cell at {:f}/{:f}) has not a valid environment.", p.x(), p.y());
+                        } else {
+                            cell.setResidenceTime(restime);
+                            cell.setState(state);
+                            ++n_affected;
+                        }
                     }
                 }
             }

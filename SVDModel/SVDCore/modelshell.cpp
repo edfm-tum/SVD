@@ -274,10 +274,10 @@ void ModelShell::processedPackage(Batch *batch)
 
         // TODO: this is a bit too much: some handling in derived batch types (DNN), some in modules (handlers)
         batch->processResults();
+        mCellsProcesssed += batch->usedSlots();
 
         if (batch->module()) {
             batch->module()->processBatch(batch);
-            mCellsProcesssed += batch->usedSlots();
         }
 
     } catch(const std::exception &e) {

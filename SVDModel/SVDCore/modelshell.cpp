@@ -273,6 +273,7 @@ void ModelShell::processedPackage(Batch *batch)
     try {
 
         // TODO: this is a bit too much: some handling in derived batch types (DNN), some in modules (handlers)
+        lg->debug("ModelShell: now process batch {}.", batch->packageId() );
         batch->processResults();
         mCellsProcesssed += batch->usedSlots();
 
@@ -341,18 +342,21 @@ void ModelShell::internalRun()
         // check for each cell if we need to do something; if yes, then
         // fill a InferenceData item within a batch of data
         // allPackagesBuilt() is called when completed
+        setState(ModelRunState::Running, "update cells");
         packageFuture = QtConcurrent::map(mModel->landscape()->cells(), [this](Cell &cell){ this->evaluateCell(&cell); });
         packageWatcher.setFuture(packageFuture);
 
         // run the modules
+        setState(ModelRunState::Running, "running modules");
         mModel->runModules();
 
         // we can run the outputs conerning the current state right now (in parallel)
+        setState(ModelRunState::Running, "creating outputs");
         mModel->outputManager()->run("StateGrid");
         mModel->outputManager()->run("ResTimeGrid");
         mModel->outputManager()->run("StateHist");
 
-
+        setState(ModelRunState::Running, "update cells");
 }
 
 /// Main processing function for a single cell on the landscape
@@ -545,6 +549,7 @@ void ModelShell::cancel()
 
 void ModelShell::processEvents()
 {
+    lg->trace("ModelShell:processEvents called ({})", QThread::currentThreadId());
     QCoreApplication::processEvents();
 }
 

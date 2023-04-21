@@ -184,7 +184,10 @@ void DNNShell::dnnFinished(void *vbatch)
 
     lg->debug("finished data package {} [{}] (size={})", batch->packageId(), static_cast<void*>(batch), batch->usedSlots());
 
+    //dumpObjectInfo();
     emit workDone(batch);
+    QCoreApplication::processEvents();
+
     if (!isRunnig())
         RunState::instance()->dnnState() = ModelRunState::ReadyToRun;
 

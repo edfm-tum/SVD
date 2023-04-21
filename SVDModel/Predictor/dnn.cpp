@@ -196,8 +196,8 @@ bool DNN::setupDNN(size_t aindex)
     //lg->debug("device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
 
 
-    // setenv("CUDA_VISIBLE_DEVICES", to_string(aindex).c_str(), 1);
-    //lg->debug("CUDA_VISBLE_DEVICES = {}", getenv("CUDA_VISIBLE_DEVICES"));
+    setenv("CUDA_VISIBLE_DEVICES", to_string(aindex).c_str(), 1);
+    lg->debug("CUDA_VISBLE_DEVICES = {}", getenv("CUDA_VISIBLE_DEVICES"));
 
     //if (aindex == 1) {
         //std::string devices = "2";

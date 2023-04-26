@@ -371,6 +371,9 @@ void ModelShell::evaluateCell(Cell *cell)
     if (cell->needsUpdate()==false)
         return;
 
+    if (cell->stateId() == 0) // TODO: Check: WR2023-04-25: nur um fehlermeldung zu silencen
+        return;
+
     try {
 
         if (cell->state()==nullptr) {

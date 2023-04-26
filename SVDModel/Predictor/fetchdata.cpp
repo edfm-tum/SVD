@@ -208,14 +208,14 @@ void FetchDataStandard::fetchState(Cell *cell, BatchDNN* batch, size_t slot)
         TensorWrap2d<short int> *tw = static_cast<TensorWrap2d<short int>*>(t);
         short int *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
-        *p = cell->stateId() - 1;
+        *p = cell->stateId(); // TODO: check!
         return;
     }
     if (t->dataType() == InputTensorItem::DT_INT16) {
         TensorWrap2d<short int> *tw = static_cast<TensorWrap2d<short int>*>(t);
         short int *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
-        *p = cell->stateId() - 1;
+        *p = cell->stateId();
         return;
     }
 
@@ -223,7 +223,7 @@ void FetchDataStandard::fetchState(Cell *cell, BatchDNN* batch, size_t slot)
         TensorWrap2d<int32_t> *tw = static_cast<TensorWrap2d<int32_t>*>(t);
         int32_t *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
-        *p = cell->stateId() - 1;
+        *p = cell->stateId();
         return;
     }
     throw logic_error_fmt("FetchDataStandard:fetchState: invalid data type (allowed: uint16, int16, int32){}", "");

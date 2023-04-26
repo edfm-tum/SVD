@@ -390,6 +390,10 @@ Batch * DNN::run(Batch *abatch)
         batch->setError(true);
         return batch;
     }
+
+    //if (lg->should_log(spdlog::level::trace))
+    //    lg->trace("dnn.cpp: {}", batch->inferenceData(0).dumpTensorData());
+
     timr.print("main dnn");
     //timr.now();
 
@@ -459,7 +463,8 @@ Batch * DNN::run(Batch *abatch)
             *tstate++ = *ostate++;
             // the result of TopK is the *index* within the input of the operation
             // the StateId starts with 1, i.e. to convert from the index (0-based).
-            *tidx++ = Model::instance()->states()->stateByIndex(static_cast<size_t>(*oidx++)).id();
+            //*tidx++ = Model::instance()->states()->stateByIndex(static_cast<size_t>(*oidx++)).id();
+            *tidx++ = Model::instance()->states()->stateById(static_cast<state_t>(*oidx++)).id();
         }
 
         float *otime = out_time.example(i);

@@ -46,8 +46,8 @@ void InferenceData::fetchData(Cell *cell, BatchDNN *batch, size_t slot)
 
 void InferenceData::setResult(state_t state, restime_t time)
 {
-    if (state==0)
-        spdlog::get("main")->error("InferenceData::setResult, state=0!");
+    //if (state==0) TODO: Enable again (nur wegen warning!!)
+    //    spdlog::get("main")->error("InferenceData::setResult, state=0!");
     mNextState=state;
     // time is the number of years the next update should happen
     // we change to the absolute year:
@@ -78,7 +78,10 @@ std::string InferenceData::dumpTensorData()
 {
     std::stringstream ss;
     const std::list<InputTensorItem> &tdef = DNN::tensorDefinition();
+    // todo: cell->enviid, climid....
+
     ss << " **** Dump for example " << mSlot << " **** " << std::endl;
+    ss << " Context: cell-index: " << cell().cellIndex() << ", climateId:" << cell().environment()->climateId() << ", env.id:" << cell().environment()->id() << ", elevation: " << cell().elevation() << std::endl;
     for (const auto &def : tdef) {
         ss << "*****************************************" << std::endl;
         ss << "Tensor: '" << def.name << "', ";

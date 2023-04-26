@@ -146,3 +146,17 @@ void CameraControl::on_delayExecution_valueChanged(int arg1)
 {
     emit delayExecution(arg1);
 }
+
+void CameraControl::on_renderStride_valueChanged(int arg1)
+{
+    //mLandscapeVis->setStride(ui->renderStride->value());
+    //mLandscapeVis->update();
+}
+
+
+void CameraControl::on_pbChangeStride_clicked()
+{
+    mLandscapeVis->setStride(ui->renderStride->value());
+    mLandscapeVis->update();
+}
+

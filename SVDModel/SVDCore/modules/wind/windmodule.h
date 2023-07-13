@@ -16,30 +16,28 @@
 **    You should have received a copy of the GNU General Public License
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ********************************************************************************************/
-#ifndef FIREMODULE_H
-#define FIREMODULE_H
+#ifndef WINDMODULE_H
+#define WINDMODULE_H
 
 #include <map>
 
 #include "modules/module.h"
 
 #include "transitionmatrix.h"
-#include "states.h"
 #include "grid.h"
-#include "spdlog/spdlog.h"
 #include "expression.h"
 
-class FireOut; // forward
+class WindOut; // forward
 
-struct SFireCell {
-    SFireCell() = default;
+struct SWindCell {
+    SWindCell() = default;
     float spread { 0.F }; ///< spread flag during current fire event
     short int n_fire { 0 }; ///< counter how often cell burned
     short int n_high_severity {0}; ///< high severity counter
     short int last_burn {0}; ///< year when the cell burned the last time
 };
 
-struct SFireStat {
+struct SWindStat {
     int year; ///< year of the fire
     int Id; ///< unique identifier
     double x, y; ///<  ignition point (metric coords)
@@ -49,10 +47,10 @@ struct SFireStat {
 
 };
 
-class FireModule : public Module
+class WindModule : public Module
 {
 public:
-    FireModule(std::string module_name);
+    WindModule(std::string module_name);
     void setup() override;
     std::vector<std::pair<std::string, std::string> > moduleVariableNames() const override;
     double moduleVariable(const Cell *cell, size_t variableIndex) const override;
@@ -60,7 +58,7 @@ public:
     void run() override;
 
     // getters
-    const Grid<SFireCell> &fireGrid() { return mGrid; }
+    const Grid<SWindCell> &fireGrid() { return mGrid; }
 
 private:
 
@@ -80,7 +78,7 @@ private:
     };
     std::multimap< int, SIgnition > mIgnitions;
 
-    Grid<SFireCell> mGrid;
+    Grid<SWindCell> mGrid;
 
     void fireSpread(const SIgnition &ign);
     bool burnCell(int ix, int iy, int &rHighSeverity, int round);
@@ -91,20 +89,20 @@ private:
 
 
     // store for transition probabilites for burned cells
-    TransitionMatrix mFireMatrix;
+    TransitionMatrix mWindMatrix;
 
     double mExtinguishProb {0.}; ///< prob. that a burned pixel stops spreading
     double mSpreadToDistProb {0.}; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
-    Expression mFireSizeMultiplier; ///< scaling factor to change the fire size from the input file
+    Expression mWindSizeMultiplier; ///< scaling factor to change the fire size from the input file
 
     // index of variables
     size_t miBurnProbability{0};
     size_t miHighSeverity{0};
 
     // fire statistics
-    std::vector< SFireStat > mStats;
+    std::vector< SWindStat > mStats;
 
-    friend class FireOut;
+    friend class WindOut;
 };
 
 #endif // FIREMODULE_H

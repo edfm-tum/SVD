@@ -16,7 +16,7 @@
 **    You should have received a copy of the GNU General Public License
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ********************************************************************************************/
-#include "firemodule.h"
+#include "windmodule.h"
 
 #include "tools.h"
 #include "model.h"
@@ -27,21 +27,21 @@
 #define M_PI 3.141592653589793
 #endif
 
-FireModule::FireModule(std::string module_name): Module(module_name, State::None)
+WindModule::WindModule(std::string module_name): Module(module_name, State::None)
 {
 
 }
 
-void FireModule::setup()
+void WindModule::setup()
 {
     lg = spdlog::get("setup");
-    lg->info("Setup of FireModule '{}'", name());
+    lg->info("Setup of WindModule '{}'", name());
     auto settings = Model::instance()->settings();
-    settings.requiredKeys("modules.fire", {"transitionFile", "stateFile", "ignitionFile", "extinguishProb", "spreadDistProb", "fireSizeMultiplier"});
+    settings.requiredKeys("modules.wind", {"transitionFile", "stateFile", "ignitionFile", "extinguishProb", "spreadDistProb", "fireSizeMultiplier"});
 
     // set up the transition matrix
     std::string filename = settings.valueString("modules.fire.transitionFile");
-    mFireMatrix.load(Tools::path(filename));
+    mWindMatrix.load(Tools::path(filename));
 
     // set up additional fire parameter values per state
     filename = settings.valueString("modules.fire.stateFile");
@@ -50,7 +50,7 @@ void FireModule::setup()
     // check if variables are available
     for (auto a : {"pSeverity", "pBurn"})
         if (State::valueIndex(a) == -1)
-            throw logic_error_fmt("The FireModule requires the state property '{}' which is not available.", a);
+            throw logic_error_fmt("The WindModule requires the state property '{}' which is not available.", a);
 
     miBurnProbability = static_cast<size_t>(State::valueIndex("pBurn"));
     miHighSeverity = static_cast<size_t>(State::valueIndex("pSeverity"));
@@ -78,8 +78,8 @@ void FireModule::setup()
     mSpreadToDistProb = 1. - settings.valueDouble("modules.fire.spreadDistProb");
     std::string firesize_multiplier = settings.valueString("modules.fire.fireSizeMultiplier");
     if (!firesize_multiplier.empty()) {
-        mFireSizeMultiplier.setExpression(firesize_multiplier);
-        lg->info("fireSizeMultiplier is active (value: {}). The maximum fire size of fires will be scaled with this function (variable: max fire size (ha)).", mFireSizeMultiplier.expression());
+        mWindSizeMultiplier.setExpression(firesize_multiplier);
+        lg->info("fireSizeMultiplier is active (value: {}). The maximum fire size of fires will be scaled with this function (variable: max fire size (ha)).", mWindSizeMultiplier.expression());
     }
 
 
@@ -88,21 +88,21 @@ void FireModule::setup()
     mGrid.setup(grid.metricRect(), grid.cellsize());
     lg->debug("Created fire grid {} x {} cells.", mGrid.sizeX(), mGrid.sizeY());
 
-    lg->info("Setup of FireModule '{}' complete.", name());
+    lg->info("Setup of WindModule '{}' complete.", name());
 
     lg = spdlog::get("modules");
 
 }
 
-std::vector<std::pair<std::string, std::string> > FireModule::moduleVariableNames() const
+std::vector<std::pair<std::string, std::string> > WindModule::moduleVariableNames() const
 {
     return {{"fireSpread", "progress of the last fire (value is the iteration)"},
-        {"fireNFires", "cumulative number of fires"},
+        {"fireNWinds", "cumulative number of fires"},
         {"fireNHighSeverity", "cumulative number of high severity fires"},
         {"fireLastBurn", "the year of the last fire on a cell (or 0 if never burned)"}};
 }
 
-double FireModule::moduleVariable(const Cell *cell, size_t variableIndex) const
+double WindModule::moduleVariable(const Cell *cell, size_t variableIndex) const
 {
     auto &gr = mGrid[cell->cellIndex()];
     switch (variableIndex) {
@@ -119,7 +119,7 @@ double FireModule::moduleVariable(const Cell *cell, size_t variableIndex) const
     }
 }
 
-void FireModule::run()
+void WindModule::run()
 {
     // check if we have ignitions
     auto &grid = Model::instance()->landscape()->grid();
@@ -127,7 +127,7 @@ void FireModule::run()
     int n_ignited=0;
     for (auto i=range.first; i!=range.second; ++i) {
         SIgnition &ignition = i->second;
-        lg->debug("FireModule: ignition at {:f}/{:f} with max-size {} ha.", ignition.x, ignition.y, ignition.max_size);
+        lg->debug("WindModule: ignition at {:f}/{:f} with max-size {} ha.", ignition.x, ignition.y, ignition.max_size);
         if (!grid.coordValid(ignition.x, ignition.y)) {
             lg->debug("Coordinates invalid. Skipping.");
             continue;
@@ -140,26 +140,26 @@ void FireModule::run()
         ++n_ignited;
         fireSpread(ignition);
     }
-    lg->info("FireModule: end of year. #ignitions: {}.", n_ignited);
+    lg->info("WindModule: end of year. #ignitions: {}.", n_ignited);
 
     // fire output
-    Model::instance()->outputManager()->run("Fire");
+    Model::instance()->outputManager()->run("Wind");
 
 }
 
 
-void FireModule::fireSpread(const FireModule::SIgnition &ign)
+void WindModule::fireSpread(const WindModule::SIgnition &ign)
 {
     auto &grid = Model::instance()->landscape()->grid();
     Point index = grid.indexAt(PointF(ign.x, ign.y));
 
     // clear the spread flag for all cells
-    std::for_each(mGrid.begin(), mGrid.end(), [](SFireCell &c) { c.spread=0.f; });
+    std::for_each(mGrid.begin(), mGrid.end(), [](SWindCell &c) { c.spread=0.f; });
 
     mGrid[index].spread = 1.f; // initial value
     double size_multiplier = 1.;
-    if (!mFireSizeMultiplier.isEmpty()) {
-        size_multiplier = mFireSizeMultiplier.calculate(ign.max_size);
+    if (!mWindSizeMultiplier.isEmpty()) {
+        size_multiplier = mWindSizeMultiplier.calculate(ign.max_size);
         lg->debug("Modified fire size from '{}' to '{}' (fireSizeMultiplier).", ign.max_size, ign.max_size*size_multiplier);
     }
     int max_ha = static_cast<int>(ign.max_size * size_multiplier);
@@ -176,7 +176,7 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
     int n_burned_in_round, n_rounds = 1;
 
     if (!burnCell(index.x(), index.y(), n_highseverity_ha, n_rounds)) {
-        lg->debug("Fire: not spreading, stopped at ignition point.");
+        lg->debug("Wind: not spreading, stopped at ignition point.");
     } else {
         ++n_ha; // one cell already burned
         while (n_ha <= max_ha) {
@@ -225,7 +225,7 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
             }
 
             if (n_burned_in_round == 0) {
-                lg->debug("Fire: stopped, no more burning pixels found.");
+                lg->debug("Wind: stopped, no more burning pixels found.");
                 break;
             }
             n_rounds++;
@@ -236,8 +236,8 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
         } // end while
     } // end if (fire at ignition point)
 
-    lg->info("FireEvent. total burned (ha): {}, high severity (ha): {}, max-fire-size (ha): {}", n_ha, n_highseverity_ha, max_ha);
-    SFireStat stat;
+    lg->info("WindEvent. total burned (ha): {}, high severity (ha): {}, max-fire-size (ha): {}", n_ha, n_highseverity_ha, max_ha);
+    SWindStat stat;
     stat.year = Model::instance()->year();
     stat.Id = ign.Id;
     stat.x = ign.x;
@@ -250,7 +250,7 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
 
 
 // examine a single cell and eventually burn.
-bool FireModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
+bool WindModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
 {
     auto &grid = Model::instance()->landscape()->grid();
     auto &c = mGrid[Point(ix, iy)];
@@ -289,7 +289,7 @@ bool FireModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
 
     bool high_severity = drandom() < s.state()->value(miHighSeverity);
     // effect of fire: a transition to another state
-    state_t new_state = mFireMatrix.transition(s.stateId(), high_severity ? 1 : 0);
+    state_t new_state = mWindMatrix.transition(s.stateId(), high_severity ? 1 : 0);
     s.setNewState(new_state);
 
     // test for landcover change
@@ -322,7 +322,7 @@ bool FireModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
 ///  It was designed by RKeane (2/2/99) (calc.c)
 /// the downslope function is "not based on empirical data" (Keane in calc.c)
 /// return is the metric distance to spread (and not number of pixels)
-double FireModule::calcSlopeFactor(const double slope) const
+double WindModule::calcSlopeFactor(const double slope) const
 {
     double slopespread;       /* Slope spread rate in pixels / timestep   */
     static double firebgc_cellsize = 30.; /* cellsize for which this functions were originally designed */
@@ -350,7 +350,7 @@ double FireModule::calcSlopeFactor(const double slope) const
 /// function designed by R. Keane, 2/2/99
 /// @param direction direction (in degrees) of spread (0=north, 90=east, ...)
 /// @return spread (in meters)
-double FireModule::calcWindFactor(const SIgnition &fire_event, const double direction) const
+double WindModule::calcWindFactor(const SIgnition &fire_event, const double direction) const
 {
     const double firebgc_cellsize = 30.; /* cellsize for which this functions were originally designed */
     double windspread;         /* Wind spread rate in pixels / timestep   */
@@ -393,7 +393,7 @@ double FireModule::calcWindFactor(const SIgnition &fire_event, const double dire
     @param pixel_to pointer to the target pixel
     @param direction codes the direction from the origin point (1..8, N, E, S, W, NE, SE, SW, NW)
   */
-void FireModule::calculateSpreadProbability(const SIgnition &fire_event,  const Point &point, const float origin_elevation,  const int direction)
+void WindModule::calculateSpreadProbability(const SIgnition &fire_event,  const Point &point, const float origin_elevation,  const int direction)
 {
 
     if (!mGrid.isIndexValid(point) || Model::instance()->landscape()->grid()[point].isNull())

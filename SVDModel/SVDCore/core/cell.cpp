@@ -81,11 +81,12 @@ void Cell::update()
 
 void Cell::setState(state_t new_state)
 {
-    if (new_state==0) {
-        spdlog::get("main")->error("Attempting to set state=0! Details:");
-        dumpDebugData();
-        return;
-    }
+    // TODO: reconsider!
+//    if (new_state==0) {
+//        spdlog::get("main")->error("Attempting to set state=0! Details:");
+//        dumpDebugData();
+//        return;
+//    }
     mStateId = new_state;
     if (new_state<0)
         mState=nullptr;
@@ -250,7 +251,7 @@ void Cell::dumpDebugData()
 {
     auto lg = spdlog::get("main");
     PointF coord =  Model::instance()->landscape()->grid().cellCenterPoint( Model::instance()->landscape()->grid().indexOf(cellIndex()) );
-    lg->info("Cell {} at {}/{}m:", static_cast<void*>(this), coord.x(), coord.y());
+    lg->info("Cell {} at {:f}/{:f}m:", static_cast<void*>(this), coord.x(), coord.y());
     lg->info("Current state ID: {}, {}, residence time: {}", mStateId, mState ? mState->asString() : "Invalid State", mResidenceTime);
     lg->info("external seed type: {}", mExternalSeedType);
     lg->info("Next state-id: {},  update time: {}", mNextStateId, mNextUpdateTime);

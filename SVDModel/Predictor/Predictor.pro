@@ -61,7 +61,7 @@ win32:CONFIG(debug, debug|release): DEFINES +=  TF_DEBUG_MODE=0
 
 
 # GPU
-LIBS += -L../../tensorflow/lib14 -ltensorflow
+#LIBS += -L../../tensorflow/lib14 -ltensorflow
 # CPU library
 # LIBS += -L../../tensorflow/lib14cpu -ltensorflow
 

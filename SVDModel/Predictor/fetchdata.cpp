@@ -71,6 +71,8 @@ void FetchDataStandard::setup(const Settings * /*settings*/, const std::string &
         // check dimensions
     }
     switch (item.content) {
+
+    // legacy input for Nationalpark Kalkalpen
     case InputTensorItem::SiteNPKA:
         // required columns: availableNitrogen, soilDepth
         i_nitrogen = indexOf(EnvironmentCell::variables(), "availableNitrogen");
@@ -80,6 +82,8 @@ void FetchDataStandard::setup(const Settings * /*settings*/, const std::string &
             throw std::logic_error("Error in setup of SiteNPKA");
         }
         return;
+
+    // distance from edge of the landsacpe (NPKA)
     case InputTensorItem::DistanceOutside:
             i_distance = indexOf(EnvironmentCell::variables(), "distanceOutside");
             if (i_distance==-1 ) {
@@ -87,6 +91,43 @@ void FetchDataStandard::setup(const Settings * /*settings*/, const std::string &
                 throw std::logic_error("Error in setup of DistanceOutside");
             }
             return;
+
+    // state history
+    case InputTensorItem::StateHistory:
+        if (item.ndim!=1 || item.sizeX != Cell::historySize()) {
+            throw logic_error_fmt("Input StateHistory: invalid size: '{}'. Valid is: {}", item.sizeX, Cell::historySize());
+        }
+        if (item.type != InputTensorItem::DT_INT16)
+            throw logic_error_fmt("Input StateHistory: invalid data type '{}', allowed data type is int16", InputTensorItem::datatypeString(item.type));
+        return;
+
+    // history of residence times
+    case InputTensorItem::ResTimeHistory:
+        if (item.ndim!=1 || item.sizeX != Cell::historySize()) {
+            throw logic_error_fmt("Input ResidenceTimeHistory: invalid size: '{}'. Valid value is: {}", item.sizeX, Cell::historySize());
+        }
+        if (item.type != InputTensorItem::DT_FLOAT)
+            throw logic_error_fmt("Input ResTimeHistory: only float allowed as data type! (Provided: '{}'", InputTensorItem::datatypeString(item.type));
+        return;
+
+
+    // current state of a cell
+    case InputTensorItem::State:
+        if (item.type != InputTensorItem::DT_INT16 &&
+                item.type != InputTensorItem::DT_UINT16 &&
+                item.type != InputTensorItem::DT_INT32)
+            throw logic_error_fmt("Input State: invalid data type '{}', allowed data type is float", InputTensorItem::datatypeString(item.type));
+        return;
+
+    // current residence time of a cell
+    case InputTensorItem::ResidenceTime:
+        if (item.type != InputTensorItem::DT_FLOAT)
+            throw logic_error_fmt("Input ResidenceTime: invalid data type '{}', allowed data types are: uint16, int16, int32", InputTensorItem::datatypeString(item.type));
+        return;
+
+
+
+
     default: return;
     }
 
@@ -101,8 +142,15 @@ void FetchDataStandard::fetch(Cell *cell, BatchDNN *batch, size_t slot)
     case InputTensorItem::State:
         fetchState(cell, batch, slot);
         break;
+    case InputTensorItem::StateHistory:
+        fetchStateHistory(cell, batch, slot);
+        break;
+
     case InputTensorItem::ResidenceTime:
         fetchResidenceTime(cell, batch, slot);
+        break;
+    case InputTensorItem::ResTimeHistory:
+        fetchResTimeHistory(cell, batch, slot);
         break;
     case InputTensorItem::SiteNPKA:
         fetchSite(cell, batch, slot);
@@ -160,17 +208,25 @@ void FetchDataStandard::fetchState(Cell *cell, BatchDNN* batch, size_t slot)
         TensorWrap2d<short int> *tw = static_cast<TensorWrap2d<short int>*>(t);
         short int *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
-        *p = cell->stateId() - 1;
+        *p = cell->stateId(); // TODO: check!
         return;
     }
+    if (t->dataType() == InputTensorItem::DT_INT16) {
+        TensorWrap2d<short int> *tw = static_cast<TensorWrap2d<short int>*>(t);
+        short int *p = tw->example(slot);
+        // stateId starts with 1, the state tensor is 0-based
+        *p = cell->stateId();
+        return;
+    }
+
     if (t->dataType() == InputTensorItem::DT_INT32) {
         TensorWrap2d<int32_t> *tw = static_cast<TensorWrap2d<int32_t>*>(t);
         int32_t *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
-        *p = cell->stateId() - 1;
+        *p = cell->stateId();
         return;
     }
-    throw logic_error_fmt("FetchDataStandard:fetchState: invalid data type (allowed: uint16, int32){}", "");
+    throw logic_error_fmt("FetchDataStandard:fetchState: invalid data type (allowed: uint16, int16, int32){}", "");
 
 }
 
@@ -182,6 +238,30 @@ void FetchDataStandard::fetchResidenceTime(Cell *cell, BatchDNN* batch, size_t s
     // TODO: residence time, now fixed divide by 10
     *p = static_cast<float>(cell->residenceTime() / 10.f);
 }
+
+void FetchDataStandard::fetchStateHistory(Cell *cell, BatchDNN *batch, size_t slot)
+{
+    TensorWrapper *t = batch->tensor(mItem->index);
+    TensorWrap2d<state_t> *tw = static_cast<TensorWrap2d<state_t>*>(t);
+    const state_t *state_history = cell->stateHistory();
+    state_t *p = tw->example(slot);
+    for (size_t i = 0; i<cell->historySize(); ++i) {
+        *p++ = *state_history++;
+    }
+}
+
+void FetchDataStandard::fetchResTimeHistory(Cell *cell, BatchDNN *batch, size_t slot)
+{
+    TensorWrapper *t = batch->tensor(mItem->index);
+    TensorWrap2d<float> *tw = static_cast<TensorWrap2d<float>*>(t);
+    const restime_t *state_history = cell->resTimeHistory();
+    float *p = tw->example(slot);
+    for (size_t i = 0; i<cell->historySize(); ++i) {
+        *p++ = *state_history / 10.f; // divide by 10
+        state_history++;
+    }
+}
+
 
 void FetchDataStandard::fetchNeighbors(Cell *cell, BatchDNN* batch, size_t slot)
 {

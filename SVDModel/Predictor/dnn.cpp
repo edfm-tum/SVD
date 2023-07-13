@@ -83,23 +83,24 @@ using tensorflow::int32;
 
 // Reads a model graph definition from disk, and creates a session object you
 // can use to run it.
-Status LoadGraph(string graph_file_name,
+Status DNN::loadGraph(string graph_file_name,
                  tensorflow::Session* session) {
   tensorflow::GraphDef graph_def;
+
   Status load_graph_status =
       ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
   if (!load_graph_status.ok()) {
     return tensorflow::errors::NotFound("Failed to load compute graph at '",
                                         graph_file_name, "'");
   }
+
   //session->reset(tensorflow::NewSession(tensorflow::SessionOptions()));
   Status session_create_status = session->Create(graph_def);
   if (!session_create_status.ok()) {
     return session_create_status;
   }
 
-
-
+  dumpTensorInfo(graph_def, "dummy");
   return Status::OK();
 }
 
@@ -149,6 +150,8 @@ bool DNN::setupDNN(size_t aindex)
 
     mNResTimeCls = settings.valueUInt("dnn.restime.N");
 
+    std::string selected_gpu = settings.valueString("dnn.selectedGPU");
+
 
     lg->info("DNN file: '{}'", file);
 
@@ -172,23 +175,68 @@ bool DNN::setupDNN(size_t aindex)
 #else
     mDummyDNN = false;
     tensorflow::SessionOptions opts;
+    tensorflow::ConfigProto* config = &opts.config;
+
+    tensorflow::GraphDef graph_def;
+
+
     // log of device placement if log level debug is on
     if (lg->should_log(spdlog::level::debug))
         opts.config.set_log_device_placement(true);
 
     //opts.config.set_inter_op_parallelism_threads(16); // no big effect.... but uses more threads
     //opts.config.set_intra_op_parallelism_threads(16);
+    lg->debug("Available GPUs: '{}'", opts.config.gpu_options().visible_device_list());
+
     opts.config.mutable_gpu_options()->set_allow_growth(true); // do not allocate all the RAM
+
+    //opts.config.mutable_gpu_options()->set_visible_device_list("0");
+    //opts.config.gpu_options().visible_device_list()
+
+    //(*config->mutable_device_count())["GPU"] = 4;
+    //auto device_count = config->device_count();
+    //lg->debug("device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
+
+    if (!selected_gpu.empty())
+        setenv("CUDA_VISIBLE_DEVICES", selected_gpu.c_str(), 1);
+
+    lg->debug("CUDA_VISBLE_DEVICES = {} (dnn.selectedGPU was: {})", getenv("CUDA_VISIBLE_DEVICES"), selected_gpu);
+
+    //if (aindex == 1) {
+        //std::string devices = "2";
+        //opts.config.mutable_gpu_options()->set_visible_device_list(devices);
+    //}
+
+
+
+    Status load_graph_status =
+        ReadBinaryProto(tensorflow::Env::Default(), file, &graph_def);
+    if (!load_graph_status.ok()) {
+      // return tensorflow::errors::NotFound("Failed to load compute graph at '", file, "'");
+    }
+
+
+    //tensorflow::graph::SetDefaultDevice("2", &graph_def);
+
+
+
 
     session = tensorflow::NewSession(opts); // no specific options: tensorflow::SessionOptions()
 
+    //device_count = config->device_count();
+    //lg->debug("post device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
+
     lg->trace("attempting to load the graph...");
-    Status load_graph_status = LoadGraph(file, session);
+
+    load_graph_status = session->Create(graph_def);
+
+    //Status load_graph_status = loadGraph(file, session);
     if (!load_graph_status.ok()) {
         lg->error("Error loading the graph: {}", load_graph_status.error_message().data());
         return false;
     }
     lg->trace("Successfully loaded graph!");
+
 
     if (mTopK_tf) {
         lg->trace("build the top-k graph...");
@@ -345,6 +393,10 @@ Batch * DNN::run(Batch *abatch)
         batch->setError(true);
         return batch;
     }
+
+    //if (lg->should_log(spdlog::level::trace))
+    //    lg->trace("dnn.cpp: {}", batch->inferenceData(0).dumpTensorData());
+
     timr.print("main dnn");
     //timr.now();
 
@@ -414,7 +466,8 @@ Batch * DNN::run(Batch *abatch)
             *tstate++ = *ostate++;
             // the result of TopK is the *index* within the input of the operation
             // the StateId starts with 1, i.e. to convert from the index (0-based).
-            *tidx++ = Model::instance()->states()->stateByIndex(static_cast<size_t>(*oidx++)).id();
+            //*tidx++ = Model::instance()->states()->stateByIndex(static_cast<size_t>(*oidx++)).id();
+            *tidx++ = Model::instance()->states()->stateById(static_cast<state_t>(*oidx++)).id();
         }
 
         float *otime = out_time.example(i);
@@ -451,7 +504,7 @@ void DNN::setupInput()
     }
     std::string metafilename = Tools::path(Model::instance()->settings().valueString("dnn.metadata"));
     if (!Tools::fileExists(metafilename))
-        throw std::logic_error("The metadata file for the DNN (" + metafilename + ") does not exist (specified as 'dnn.metadata')!");
+        throw std::logic_error("The metadata file for the DNN (" + metafilename + ") does not exist (specified in 'dnn.metadata')!");
 
     Settings mg;
     mg.loadFromFile(metafilename);
@@ -470,10 +523,11 @@ void DNN::setupInput()
 
     for (auto &s : sections) {
         mg.requiredKeys("input."+s, {"enabled", "dim", "sizeX", "sizeY", "dtype", "type"});
+        bool has_name = mg.hasKey("input." + s + ".tensorName");
         if (!mg.valueBool("input." + s + ".enabled"))
             continue;
 
-        InputTensorItem item(s,
+        InputTensorItem item(has_name ? mg.valueString("input."+ s +".tensorName") : s, // use name property if provided
                              mg.valueString("input."+ s +".dtype"),
                              mg.valueUInt("input." + s + ".dim"),
                              mg.valueUInt("input." + s + ".sizeX"),
@@ -705,4 +759,46 @@ int DNN::chooseProbabilisticIndex(float *values, int n, int skip_index)
 }
 
 
+void DNN::dumpTensorInfo(tensorflow::GraphDef &graph_def, std::string name_tensor)
+{
 
+    int node_count = graph_def.node_size();
+    for (int i=0;i<node_count;++i) {
+        //graph_def.node(i).PrintDebugString();
+        //lg->trace("{}", graph_def.node(i).PrintDebugString());
+    }
+    /*int node_count = graph_def.node_size();
+    for (int i = 0; i < node_count; i++)
+    {
+            auto n = graph_def.node(i);
+            lg->trace("Layer: {}", n.name());
+            //cout<<"Names : "<< n.name() <<endl;
+
+    }
+
+    /*for (int i=0; i < graph_def.node_size(); ++i) {
+        if (graph_def.node(i).name() != name_tensor) {
+            lg->trace("Tensor: '{}'", graph_def.node(i).name());
+
+            /*
+            auto node = graph_def.node(i);
+            auto attr_map = node.attr();
+            for (auto it=attr_map.begin(); it != attr_map.end(); it++) {
+                auto key = it->first;
+                auto value = it->second;
+                if (value.has_shape()) {
+                    auto shape = value.shape();
+                    for (int i=0; i<shape.dim_size(); ++i) {
+                        auto dim = shape.dim(i);
+                        auto dim_size = dim.size();
+
+                        //lg->trace("Shape {}: dim-size: {}", i, dim_size);
+                        //tensor_shape.push_back(dim_size);
+                    }
+                }
+            }
+            * /
+        }
+    } */
+
+}

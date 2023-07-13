@@ -54,6 +54,8 @@ private:
     void fetchClimate(Cell *cell, BatchDNN* batch, size_t slot);
     void fetchState(Cell *cell, BatchDNN *batch, size_t slot);
     void fetchResidenceTime(Cell *cell, BatchDNN* batch, size_t slot);
+    void fetchStateHistory(Cell *cell, BatchDNN *batch, size_t slot);
+    void fetchResTimeHistory(Cell *cell, BatchDNN *batch, size_t slot);
     void fetchNeighbors(Cell *cell, BatchDNN* batch, size_t slot);
     void fetchSite(Cell *cell, BatchDNN* batch, size_t slot);
     void fetchDistanceOutside(Cell *cell, BatchDNN* batch, size_t slot); // should be FetchDataFunction

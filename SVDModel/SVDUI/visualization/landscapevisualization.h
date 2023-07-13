@@ -67,6 +67,7 @@ public slots:
     void saveView(int camera);
     void setFillColor(QColor col);
     void setAlpha(int alpha) { mAlpha = alpha; }
+    void setStride(int stride) {mStride = stride; mNeedNewTexture=true; }
 signals:
     void pointSelected(QVector3D world_coord); ///< coordinates of the point where a user clicks on the visualization
 
@@ -83,13 +84,15 @@ private:
     QRgb colorValue(double value) { return mColorLookup[ std::min(std::max(static_cast<int>(value*1000), 0), 999)]; }
     QColor mBGColor;
     int mAlpha;
+    bool mNeedNewTexture;
 
     QVector<QRgb> mColorLookup;
     QVector<QRgb> mStateColorLookup;
 
     QImage mRenderTexture;
     QImage mUpscaleRenderTexture;
-    int mUpscaleFactor;
+    double mUpscaleFactor;
+    int mStride; ///< how many px to skip?
 
     SurfaceGraph *mGraph;
     Grid<float> mDem;

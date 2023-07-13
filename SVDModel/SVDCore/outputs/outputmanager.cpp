@@ -86,8 +86,11 @@ bool OutputManager::run(const std::string &output_name)
     Output *o = find(output_name);
     if (o==nullptr)
         throw std::logic_error("Output Manager: invalid output '"+output_name+"' in run().");
-    if (o->enabled())
+    if (o->enabled()) {
+        spdlog::get("main")->trace("Starting execution of output '{}'", o->name());
         o->execute();
+        spdlog::get("main")->trace("Execution of output '{}' finished.", o->name());
+    }
     return o->enabled();
 }
 

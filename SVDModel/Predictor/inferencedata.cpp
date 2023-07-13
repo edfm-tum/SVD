@@ -35,14 +35,19 @@ void InferenceData::fetchData(Cell *cell, BatchDNN *batch, size_t slot)
     mBatch = batch;
     mSlot = slot;
 
+    if (!cell->state() || !cell->environment() || cell->isNull()) {
+        throw logic_error_fmt("InferenceData: invalid cell: index: {}, current state: {}, ptr-state: {}, ptr-env: {}",
+                              mIndex, mOldState, (void*)cell->state(), (void*)cell->environment());
+    }
+
     // now pull all the data
     //internalFetchData();
 }
 
 void InferenceData::setResult(state_t state, restime_t time)
 {
-    if (state==0)
-        spdlog::get("main")->error("InferenceData::setResult, state=0!");
+    //if (state==0) TODO: Enable again (nur wegen warning!!)
+    //    spdlog::get("main")->error("InferenceData::setResult, state=0!");
     mNextState=state;
     // time is the number of years the next update should happen
     // we change to the absolute year:
@@ -52,7 +57,7 @@ void InferenceData::setResult(state_t state, restime_t time)
 void InferenceData::writeResult()
 {
     // write back:
-    Cell &cell = Model::instance()->landscape()->cells()[mIndex];
+    Cell &cell = Model::instance()->landscape()->cell(mIndex);
     cell.setNextStateId(mNextState);
     cell.setNextUpdateTime(mNextTime);
 
@@ -66,14 +71,17 @@ const EnvironmentCell &InferenceData::environmentCell() const
 
 const Cell &InferenceData::cell() const
 {
-    return Model::instance()->landscape()->cells()[mIndex];
+    return Model::instance()->landscape()->cell(mIndex);
 }
 
 std::string InferenceData::dumpTensorData()
 {
     std::stringstream ss;
     const std::list<InputTensorItem> &tdef = DNN::tensorDefinition();
+    // todo: cell->enviid, climid....
+
     ss << " **** Dump for example " << mSlot << " **** " << std::endl;
+    ss << " Context: cell-index: " << cell().cellIndex() << ", climateId:" << cell().environment()->climateId() << ", env.id:" << cell().environment()->id() << ", elevation: " << cell().elevation() << std::endl;
     for (const auto &def : tdef) {
         ss << "*****************************************" << std::endl;
         ss << "Tensor: '" << def.name << "', ";

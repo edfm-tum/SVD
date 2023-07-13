@@ -239,12 +239,12 @@ void Landscape::setupInitialState()
         Grid<int> state_grid;
         state_grid.loadGridFromFile(grid_file);
         lg->debug("Loaded initial *state* grid '{}'. Dimensions: {} x {}, with cell size: {}m. ", grid_file, state_grid.sizeX(), state_grid.sizeY(), state_grid.cellsize());
-        lg->debug("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", state_grid.metricRect().width(), state_grid.metricRect().height(), state_grid.metricRect().left(), state_grid.metricRect().right(), state_grid.metricRect().top(), state_grid.metricRect().bottom());
+        lg->debug("Metric rectangle with {:f}x{:f}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", state_grid.metricRect().width(), state_grid.metricRect().height(), state_grid.metricRect().left(), state_grid.metricRect().right(), state_grid.metricRect().top(), state_grid.metricRect().bottom());
 
         Grid<int> restime_grid;
         restime_grid.loadGridFromFile(restime_grid_file);
         lg->debug("Loaded initial *residenceTime* grid '{}'. Dimensions: {} x {}, with cell size: {}m. ", restime_grid_file, restime_grid.sizeX(), restime_grid.sizeY(), restime_grid.cellsize());
-        lg->debug("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", restime_grid.metricRect().width(), restime_grid.metricRect().height(), restime_grid.metricRect().left(), restime_grid.metricRect().right(), restime_grid.metricRect().top(), restime_grid.metricRect().bottom());
+        lg->debug("Metric rectangle with {:f}x{:f}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", restime_grid.metricRect().width(), restime_grid.metricRect().height(), restime_grid.metricRect().left(), restime_grid.metricRect().right(), restime_grid.metricRect().top(), restime_grid.metricRect().bottom());
 
         int n_affected=0;
         int n_errors=0;
@@ -253,14 +253,14 @@ void Landscape::setupInitialState()
                 PointF p = grid().cellCenterPoint(i);
                 if (!state_grid.coordValid(p) || !restime_grid.coordValid(p)) {
                     ++n_errors;
-                    if (n_errors<100)
-                        lg->error("Init landscape: cell with index '{}' ({}/{}) not valid in state or residence time grid.", i, p.x(), p.y());
+                    if (n_errors<120)
+                        lg->error("Init landscape: cell with index '{}' ({:f}/{:f}) not valid coordinates in state or residence time grid.", i, p.x(), p.y());
                 } else {
                     int intstate = state_grid.valueAt(p);
                     if (intstate == state_grid.nullValue()) {
                         ++n_errors;
                         if (n_errors<120)
-                            lg->error("Init landscape: NA at {}/{}: not a valid stateId.",  p.x(), p.y());
+                            lg->error("Init landscape: NA at {:f}/{:f}: not a valid stateId.", p.x(), p.y());
                         continue;
                     }
                     state_t state = static_cast<state_t>(state_grid.valueAt(p));
@@ -268,17 +268,26 @@ void Landscape::setupInitialState()
                     if (!Model::instance()->states()->isValid(state)) {
                         ++n_errors;
                         if (n_errors<120) // make sure we get at least some of those errors....
-                            lg->error("Init landscape: state '{}' (at {}/{}) is not a valid stateId.", state, p.x(), p.y());
+                            lg->error("Init landscape: state '{}' (at {:f}/{:f}) is not a valid stateId.", state, p.x(), p.y());
                     } else {
-                        grid()[i].cell().setResidenceTime(restime);
-                        grid()[i].cell().setState(state);
-                        ++n_affected;
+                        auto &cell = grid()[i].cell();
+                        if (!cell.environment()) {
+                            ++n_errors;
+                            if (n_errors<120) // make sure we get at least some of those errors....
+                                lg->error("Init landscape: cell at {:f}/{:f}) has not a valid environment.", p.x(), p.y());
+                        } else {
+                            cell.setResidenceTime(restime);
+                            cell.setState(state);
+                            ++n_affected;
+                        }
                     }
                 }
             }
         }
-        if (n_errors>0)
+        if (n_errors>0) {
+            lg->error("Init landscape: '{}' errors (loaded cells total: {}). 120 are printed above.", n_errors, n_affected);
             throw std::logic_error("Error in setting up the initial landscape scape (from grid). Check the log.");
+        }
         lg->debug("Initial landscape setup finished, {} cells affected.", n_affected);
 
     } // mode==grid

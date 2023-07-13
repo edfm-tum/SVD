@@ -87,9 +87,11 @@ void DNNShell::setup(QString fileName)
         // wait for the model thread to complete model setup before
         // setting up the inputs (which may need data from the model)
 
+        int nwait=0;
         while (RunState::instance()->modelState() == ModelRunState::Creating) {
-            lg->trace("waiting for Model thread ...");
-            QThread::msleep(50);
+            if (++nwait < 10 || (nwait < 100 && nwait % 5 == 0) || nwait % 50 == 0)
+            lg->trace("waiting for Model thread ... ({}s)", (nwait/5.));
+            QThread::msleep(200);
             QCoreApplication::processEvents();
         }
 
@@ -182,7 +184,10 @@ void DNNShell::dnnFinished(void *vbatch)
 
     lg->debug("finished data package {} [{}] (size={})", batch->packageId(), static_cast<void*>(batch), batch->usedSlots());
 
+    //dumpObjectInfo();
     emit workDone(batch);
+    QCoreApplication::processEvents();
+
     if (!isRunnig())
         RunState::instance()->dnnState() = ModelRunState::ReadyToRun;
 

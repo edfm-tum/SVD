@@ -164,13 +164,13 @@ void BatchDNN::selectClasses()
         size_t index = chooseProbabilisticIndex(stateProbResult(i), mNTopK);
         state_t stateId = stateResult(i)[index];
 
-        if (stateId == 0 || rt == 0) {
-            spdlog::get("main")->error("bad data in batch {} with {} used slots. item {}: update-time: {}, update-state: {} (set state to 1)", packageId(), usedSlots(), i, inferenceData(i).nextTime(), inferenceData(i).nextState());
-            if (stateId==0)
-                stateId = 1;
-            if (rt == 0)
-                rt = 1;
-        }
+//        if (stateId == 0 || rt == 0) {
+//            spdlog::get("main")->error("bad data in batch {} with {} used slots. item {}: update-time: {}, update-state: {} (set state to 1)", packageId(), usedSlots(), i, inferenceData(i).nextTime(), inferenceData(i).nextState());
+//            if (stateId==0)
+//                stateId = 1;
+//            if (rt == 0)
+//                rt = 1;
+//        }
         id.setResult(stateId, rt);
 
     }

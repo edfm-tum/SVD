@@ -104,19 +104,44 @@ void GeoTIFF::copyToIntGrid(Grid<int> *grid)
 {
     if (!dib)
         throw std::logic_error("Copy TIF to grid: tif not loaded!");
-    if (FreeImage_GetImageType(dib) != FIT_INT32) {
-        throw logic_error_fmt("Copy TIF to grid: wrong data type, INT32 expected, got type {}", FreeImage_GetImageType(dib));
+    auto dtype = FreeImage_GetImageType(dib);
+    if (dtype != FIT_INT32 && dtype != FIT_UINT16 && dtype != FIT_INT16) {
+        throw logic_error_fmt("Copy TIF to grid: wrong data type, INT32, UINT16 or INT16 expected, got type {}", FreeImage_GetImageType(dib));
     }
     // the null value of grids (at least for INT) is weird; it is not the smallest possible value (−2,147,483,648), but instead −2,147,483,647.
     int null_value = grid->nullValue();
     int value_null = std::numeric_limits<LONG>::min()+2;
 
-    for(size_t y = 0; y < FreeImage_GetHeight(dib); y++) {
-        LONG *bits = (LONG*)FreeImage_GetScanLine(dib, y);
-        for(size_t x = 0; x < FreeImage_GetWidth(dib); x++) {
-            grid->valueAtIndex(x,y) = bits[x] < value_null ? null_value : bits[x];
+    if (dtype == FIT_INT32) {
+        for(size_t y = 0; y < FreeImage_GetHeight(dib); y++) {
+            LONG *bits = (LONG*)FreeImage_GetScanLine(dib, y);
+            for(size_t x = 0; x < FreeImage_GetWidth(dib); x++) {
+                grid->valueAtIndex(x,y) = bits[x] < value_null ? null_value : bits[x];
+            }
         }
     }
+
+    if (dtype == FIT_UINT16) {
+        value_null = std::numeric_limits<WORD>::max();
+        for(size_t y = 0; y < FreeImage_GetHeight(dib); y++) {
+            WORD *bits = (WORD*)FreeImage_GetScanLine(dib, y);
+            for(size_t x = 0; x < FreeImage_GetWidth(dib); x++) {
+                grid->valueAtIndex(x,y) = bits[x] == value_null ? null_value : bits[x];
+            }
+        }
+    }
+
+    if (dtype == FIT_INT16) {
+        value_null = std::numeric_limits<short>::min();
+        for(size_t y = 0; y < FreeImage_GetHeight(dib); y++) {
+            short *bits = (short*)FreeImage_GetScanLine(dib, y);
+            for(size_t x = 0; x < FreeImage_GetWidth(dib); x++) {
+                grid->valueAtIndex(x,y) = bits[x] == value_null ? null_value : bits[x];
+            }
+        }
+    }
+
+
 }
 
 void GeoTIFF::copyToDoubleGrid(Grid<double> *grid)

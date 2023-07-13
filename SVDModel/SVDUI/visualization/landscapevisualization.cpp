@@ -42,6 +42,8 @@ LandscapeVisualization::LandscapeVisualization(QObject *parent): QObject(parent)
     mCurrentType = RenderNone;
     mBGColor = QColor(127,127,127,127);
     mAlpha = 255; // opaque
+    mStride = 1; // show all
+    mNeedNewTexture = true;
 
 }
 
@@ -65,16 +67,21 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
         if (Model::instance()->settings().valueString("visualization.dem").empty()) {
             // setup an empty DEM (flat landscape)
             if (Model::instance()->landscape()->NCells() < 10000000 ) {
-                mDem.setup( Model::instance()->landscape()->grid().metricRect(), 100.);
-            } else {
+                mDem.setup( Model::instance()->landscape()->grid().metricRect(), 10000.); // was 100
+            } else if (Model::instance()->landscape()->NCells() < 100000000) {
                 lg->debug("Creating a smaller DEM with 1km resolution because the landscape is *very* large.");
                 mDem.setup( Model::instance()->landscape()->grid().metricRect(), 1000.);
+                mStride = 5;
+            } else {
+                lg->debug("Creating a smaller DEM with 1km resolution because the landscape is *very* large (continental scale).");
+                mDem.setup( Model::instance()->landscape()->grid().metricRect(), 10000.);
+                mStride = 10;
             }
             mDem.initialize(100.f); // a default value
             mMinHeight = 100.f;
             mMaxHeight = 100.f;
             graph->setup(mDem, mMinHeight, mMaxHeight);
-            lg->info("Created a dummy DEM, because no DEM was provided in 'visualization.dem'.");
+            lg->info("Created a dummy DEM, because no DEM was provided in 'visualization.dem'. Dimensions: {} x {}, with cell size: {}m.", mDem.sizeX(), mDem.sizeY(), mDem.cellsize());
         } else {
             // load DEM from raster file
             std::string filename = Tools::path(Model::instance()->settings().valueString("visualization.dem"));
@@ -313,11 +320,10 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     QRgb fill_color=mBGColor.rgba();
     QRgb alpha = qRgba(255,255,255, mAlpha);
 
-    const uchar *cline = mRenderTexture.scanLine(0);
-    QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(cline)); // write directly to the buffer (without a potential detach)
-
-    for (int y = grid.sizeY()-1; y>=0; --y) {
-        for (int x=0; x<grid.sizeX(); ++x, ++line) {
+    int line_y = 0;
+    for (int y = grid.sizeY()-1; y>=0; y-=mStride, ++line_y) {
+        QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(line_y))); // write directly to the buffer (without a potential detach)
+        for (int x=0; x<grid.sizeX(); x+=mStride, ++line) {
             const GridCell &c = grid(x,y);
             if (!c.isNull()) {
                 cw.setData(&c.cell());
@@ -332,9 +338,10 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     if (mUpscaleFactor == 1) {
         mGraph->topoSeries()->setTexture(mRenderTexture);
     } else {
-        mUpscaleRenderTexture = mRenderTexture.scaled(mUpscaleRenderTexture.size());
-        mGraph->topoSeries()->setTexture(mUpscaleRenderTexture);
-        spdlog::get("main")->debug("Render: Scaled texture: width {} height {}.  ", mUpscaleRenderTexture.size().width(), mUpscaleRenderTexture.size().height());
+        //mUpscaleRenderTexture = mRenderTexture.scaled(mUpscaleRenderTexture.size());
+        //mGraph->topoSeries()->setTexture(mUpscaleRenderTexture);
+        mGraph->topoSeries()->setTexture(mRenderTexture);
+        //spdlog::get("main")->debug("Render: Scaled texture: width {} height {}.  ", mUpscaleRenderTexture.size().width(), mUpscaleRenderTexture.size().height());
     }
     ++mRenderCount;
 
@@ -355,24 +362,30 @@ void LandscapeVisualization::doRenderState()
 
     QRgb fill_color=mBGColor.rgba();
 
-    const uchar *cline = mRenderTexture.scanLine(0);
-    QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(cline)); // write directly to the buffer (without a potential detach)
+    //const uchar *cline = mRenderTexture.scanLine(0);
+    //QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(cline)); // write directly to the buffer (without a potential detach)
 
-    for (int y = grid.sizeY()-1; y>=0; --y) {
-        for (int x=0; x<grid.sizeX(); ++x, ++line) {
+    int n_filled=0;
+    int line_y=0;
+    for (int y = grid.sizeY()-1; y>=0; y-=mStride, ++line_y) {
+        QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(line_y))); // write directly to the buffer (without a potential detach)
+        for (int x=0; x<grid.sizeX(); x+=mStride, ++line) {
             const GridCell &c = grid(x,y);
             if (!c.isNull()) {
                 *line = mStatePalette->color(c.cell().state()->id());
             } else {
                 *line = fill_color;
             }
+            ++n_filled;
         }
     }
+    spdlog::get("main")->debug("wrote {} values, size={}", n_filled, mRenderTexture.height()*mRenderTexture.width());
     if (mUpscaleFactor == 1) {
         mGraph->topoSeries()->setTexture(mRenderTexture);
     } else {
-        mUpscaleRenderTexture = mRenderTexture.scaled(mUpscaleRenderTexture.size());
-        mGraph->topoSeries()->setTexture(mUpscaleRenderTexture);
+        //mUpscaleRenderTexture = mRenderTexture.scaled(mUpscaleRenderTexture.size());
+        //mGraph->topoSeries()->setTexture(mUpscaleRenderTexture);
+        mGraph->topoSeries()->setTexture(mRenderTexture); // a larger texture works ok?
     }
     ++mRenderCount;
 
@@ -385,9 +398,11 @@ void LandscapeVisualization::doRenderState()
 void LandscapeVisualization::checkTexture()
 {
     mRenderTexture = mGraph->topoSeries()->texture();
-    if (mRenderTexture.isNull() || mRenderTexture.width() != mDem.sizeX() || mRenderTexture.height() != mDem.sizeX()) {
-        mRenderTexture = QImage(Model::instance()->landscape()->grid().sizeX(), Model::instance()->landscape()->grid().sizeY(),QImage::Format_ARGB32_Premultiplied);
+    if (mNeedNewTexture ||  mRenderTexture.isNull() || mRenderTexture.width() != mDem.sizeX() || mRenderTexture.height() != mDem.sizeX()) {
+        mRenderTexture = QImage(Model::instance()->landscape()->grid().sizeX()/mStride, Model::instance()->landscape()->grid().sizeY()/mStride,QImage::Format_ARGB32_Premultiplied);
         mUpscaleFactor = 1;
+        mNeedNewTexture = false;
+        spdlog::get("main")->debug("LandscapeVis: Created texture of size x/y {}/{}", mRenderTexture.width(), mRenderTexture.height());
         if (Model::instance()->landscape()->grid().sizeX() != mDem.sizeX()) {
             // for upscaling to DEM size
             mUpscaleRenderTexture = QImage(mDem.sizeX(), mDem.sizeY(), QImage::Format_ARGB32_Premultiplied);

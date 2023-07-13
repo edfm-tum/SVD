@@ -48,7 +48,7 @@ A compiled and GPU-enabled version of tensorflow.dll can be found in the `execut
 
 https://github.com/ika-rwth-aachen/libtensorflow_cc
 
-Follow the instructions to download and install `libtensorflow_cc`.
+Follow the instructions to download and install `libtensorflow_cc`.Take care to use the GPU version!
 
 other installs
 
@@ -67,4 +67,13 @@ Used for rendering the landscape
 ```
 sudo apt-get install libgl-dev
 sudo apt-get install libgl1-mesa-dev
+```
+
+To use GPU on Linux
+
+Install CUDA
+
+See e.g. https://neptune.ai/blog/installing-tensorflow-2-gpu-guide or https://www.tensorflow.org/install/pip
+```
+sudo apt install nvidia-cuda-toolkit
 ```

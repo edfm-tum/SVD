@@ -57,6 +57,10 @@ private slots:
     void on_alphaSlider_valueChanged(int value);
 
     void on_delayExecution_valueChanged(int arg1);
+    void on_renderStride_valueChanged(int arg1);
+
+    void on_pbChangeStride_clicked();
+
 signals:
     void delayExecution(int msecs);
 

@@ -31,20 +31,21 @@ class WindOut; // forward
 
 struct SWindCell {
     SWindCell() = default;
-    float spread { 0.F }; ///< spread flag during current fire event
-    short int n_fire { 0 }; ///< counter how often cell burned
-    short int n_high_severity {0}; ///< high severity counter
-    short int last_burn {0}; ///< year when the cell burned the last time
+    short int last_storm {0}; ///< year when the cell was affected the last time
+    short int n_storm {0}; ///< cumulative number of storms per pixel
 };
 
 struct SWindStat {
-    int year; ///< year of the fire
-    int Id; ///< unique identifier
-    double x, y; ///<  ignition point (metric coords)
-    int max_size; ///< maximum fire size (ha)
-    int ha_burned; ///< # of ha. burned
-    int ha_high_severity; ///< # of ha burned with high severity
-
+    int year {-1}; ///< year of the fire
+    int Id {-1}; ///< unique identifier
+    double x {0}, y {0}; ///<  starting point point (metric coords)
+    double proportion {0}; ///< proportion af affected cells (per event)
+    int n_forested {0}; ///< # of pixels forested in all affected regions
+    int regions_planned {0}; ///< planned regions (per event)
+    int regions_affected {0}; ///< realized # regions
+    int n_planned {0}; ///< number of ha planned to be affected (over all regions)
+    int n_affected {0}; ///< number of ha affected by the storm (over all regions)
+    double mean_susceptiblity {0}; ///< mean susceptibility of all px in all regions
 };
 
 class WindModule : public Module
@@ -58,7 +59,7 @@ public:
     void run() override;
 
     // getters
-    const Grid<SWindCell> &fireGrid() { return mGrid; }
+    const Grid<SWindCell> &windGrid() { return mGrid; }
 
 private:
 
@@ -66,43 +67,63 @@ private:
     std::shared_ptr<spdlog::logger> lg;
 
 
-    // store for ignitions
-    struct SIgnition {
-        SIgnition(int ayear, int id, double ax, double ay, double amax, double wspeed, double wdirection): year(ayear), Id(id), x(ax), y(ay), max_size(amax), wind_speed(wspeed), wind_direction(wdirection) {}
-       int year;
-       int Id; // unique id
-       double x, y; // cooridnates (meter)
-       double max_size; // maximum fire size in ha
-       double wind_speed; // current wind speed (m/2)
-       double wind_direction; // wind direction in degrees (0=north, 90=east, ...)
+    /// structure to store wind events
+    struct SWindEvent {
+        SWindEvent(int ayear, int id, double ax, double ay, int an_region, double aprop): year(ayear), Id(id), x(ax), y(ay), n_regions(an_region), prop_affected(aprop) {}
+       int year; ///< year of storm
+       int Id; ///< unique id
+       double x, y; ///< coordinates (meter)
+       int n_regions; ///< number of 10km regions affected
+       double prop_affected; ///<  proportion of cells affected (=severity)
     };
-    std::multimap< int, SIgnition > mIgnitions;
 
+    /// list of all wind events that should be simulated
+    std::multimap< int, SWindEvent > mWindEvents;
+
+    /// wind specific grid with stats
     Grid<SWindCell> mGrid;
 
+    Grid<double> mRegionalStormProb; ///< 10km grid with storm probabilities
+
+    /// susceptibility to windthrow (depending on state)
+    /// based on damage model by Schmidt et al 2010
+    double calculateSusceptibility(Cell &c) const;
+
+    void runWindEvent(const SWindEvent &event);
+    /// run wind event for a single region (area) and affect (up to) proportion of cells
+    SWindStat windImpactOnRegion(const RectF &area, double proportion, const SWindEvent &event);
+
+    /// sample probabilistically from the container and return a Point.
+    Point sampleFromRegionMap(std::map<Point, double> &map);
+/*
     void fireSpread(const SIgnition &ign);
     bool burnCell(int ix, int iy, int &rHighSeverity, int round);
 
     double calcSlopeFactor(const double slope) const;
     double calcWindFactor(const SIgnition &fire_event, const double direction) const;
     void calculateSpreadProbability(const SIgnition &fire_event, const Point &point, const float origin_elevation,  const int direction);
+*/
 
-
-    // store for transition probabilites for burned cells
+    // store for transition probabilites for affected cells
     TransitionMatrix mWindMatrix;
 
-    double mExtinguishProb {0.}; ///< prob. that a burned pixel stops spreading
-    double mSpreadToDistProb {0.}; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
-    Expression mWindSizeMultiplier; ///< scaling factor to change the fire size from the input file
+    //double mExtinguishProb {0.}; ///< prob. that a burned pixel stops spreading
+    //double mSpreadToDistProb {0.}; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
+    //Expression mWindSizeMultiplier; ///< scaling factor to change the fire size from the input file
+    double mPstopAfterImpact { 0.1 }; ///< probability that impacts stops spreading on a disturbed cell
+    double mPspreadUndisturbed { 0.1 }; ///< probability that impacts spread from a undisturbed cell
+    double mPfetchFactor { 0.1 }; ///< "fetch factor", i.e. increase in probability for impact on cells adjacent to disturbed cells
+    bool mSaveDebugGrids { false }; ///< save intermediate grids for debugging
 
     // index of variables
-    size_t miBurnProbability{0};
-    size_t miHighSeverity{0};
+    //size_t miBurnProbability{0};
+    //size_t miHighSeverity{0};
+    size_t miDamageProbability{0};
 
-    // fire statistics
+    /// storm statistics for outputs
     std::vector< SWindStat > mStats;
 
     friend class WindOut;
 };
 
-#endif // FIREMODULE_H
+#endif // WINDMODULE_H

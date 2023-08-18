@@ -197,10 +197,10 @@ bool DNN::setupDNN(size_t aindex)
     //auto device_count = config->device_count();
     //lg->debug("device-count GPU: {}, CPU: {}", device_count["GPU"], device_count["CPU"]);
 
-    if (!selected_gpu.empty())
-        setenv("CUDA_VISIBLE_DEVICES", selected_gpu.c_str(), 1);
+    //if (!selected_gpu.empty())
+    //    setenv("CUDA_VISIBLE_DEVICES", selected_gpu.c_str(), 1);
 
-    lg->debug("CUDA_VISBLE_DEVICES = {} (dnn.selectedGPU was: {})", getenv("CUDA_VISIBLE_DEVICES"), selected_gpu);
+    //lg->debug("CUDA_VISBLE_DEVICES = {} (dnn.selectedGPU was: {})", getenv("CUDA_VISIBLE_DEVICES"), selected_gpu);
 
     //if (aindex == 1) {
         //std::string devices = "2";

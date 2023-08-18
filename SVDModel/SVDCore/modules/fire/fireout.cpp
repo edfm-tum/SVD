@@ -75,9 +75,17 @@ void FireOut::execute()
         //std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c) { return std::to_string(c.last_burn); });
 
         // number of fires per cell:
-        std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c) { return std::to_string(c.n_fire); });
-        if (!writeFile(file_name, result))
-            throw std::logic_error("FireOut: couldn't write output grid file: " + file_name);
+        if (has_ending(file_name, ".tif") || has_ending(file_name, ".TIF")) {
+            // save as tif
+            if (!gridToGeoTIFF<SFireCell, short>( grid, file_name, GeoTIFF::DTSINT16,
+                                                [](const SFireCell &c){ return c.n_fire; }) )
+                throw std::logic_error("FireOut: couldn't write output file: " + file_name);
+
+        } else {
+            std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c) { return std::to_string(c.n_fire); });
+            if (!writeFile(file_name, result))
+                throw std::logic_error("FireOut: couldn't write output grid file: " + file_name);
+        }
 
 
     }

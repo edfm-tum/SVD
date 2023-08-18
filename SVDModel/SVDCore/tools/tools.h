@@ -32,6 +32,8 @@ public:
     /// returns the full path to 'fileName'. If a relative path if provided,
     /// it is resolved relative to the project directory
     static std::string path(const std::string &fileName);
+    /// get file size (bytes), -1 if file does not exists
+    static int fileSize(const std::string &fileName);
 
 
     // maintenance

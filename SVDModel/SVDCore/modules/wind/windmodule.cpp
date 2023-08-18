@@ -23,6 +23,9 @@
 #include "filereader.h"
 #include "randomgen.h"
 
+#include <queue>
+#include <stack>
+
 #ifndef M_PI
 #define M_PI 3.141592653589793
 #endif
@@ -37,43 +40,57 @@ void WindModule::setup()
     lg = spdlog::get("setup");
     lg->info("Setup of WindModule '{}'", name());
     auto settings = Model::instance()->settings();
-    settings.requiredKeys("modules.wind", {"transitionFile", "stateFile", "ignitionFile", "extinguishProb", "spreadDistProb", "fireSizeMultiplier"});
 
+    settings.requiredKeys("modules.wind", {"regionalProbabilityGrid", "stormEventFile", "stateFile",
+                                           "stopAfterImpact", "spreadUndisturbed", "fetchFactor", "saveDebugGrids" });
+
+    /*
     // set up the transition matrix
     std::string filename = settings.valueString("modules.fire.transitionFile");
     mWindMatrix.load(Tools::path(filename));
+*/
 
     // set up additional fire parameter values per state
-    filename = settings.valueString("modules.fire.stateFile");
+    std::string filename = settings.valueString("modules.wind.stateFile");
     Model::instance()->states()->loadProperties(Tools::path(filename));
 
     // check if variables are available
-    for (auto a : {"pSeverity", "pBurn"})
+    for (auto a : {"pDamage"})
         if (State::valueIndex(a) == -1)
             throw logic_error_fmt("The WindModule requires the state property '{}' which is not available.", a);
 
-    miBurnProbability = static_cast<size_t>(State::valueIndex("pBurn"));
-    miHighSeverity = static_cast<size_t>(State::valueIndex("pSeverity"));
-
+    miDamageProbability = static_cast<size_t>(State::valueIndex("pDamage"));
+/*
     // check if DEM is available
     if (settings.valueString("visualization.dem").empty())
         throw logic_error_fmt("The fire module requires a digital elevation model! {}", 0);
+*/
 
     // set up ignitions
-    filename = Tools::path(settings.valueString("modules.fire.ignitionFile"));
+    filename = Tools::path(settings.valueString("modules.wind.stormEventFile"));
     FileReader rdr(filename);
-    rdr.requiredColumns({"year", "x", "y", "max_size", "windspeed", "winddirection"});
-    size_t iyr=rdr.columnIndex("year"), ix=rdr.columnIndex("x"), iy=rdr.columnIndex("y"), is=rdr.columnIndex("max_size"), iws=rdr.columnIndex("windspeed"), iwd=rdr.columnIndex("winddirection");
+    rdr.requiredColumns({"year", "x", "y", "number_of_cells", "proportion_of_cell"});
+    size_t iyr=rdr.columnIndex("year"), ix=rdr.columnIndex("x"), iy=rdr.columnIndex("y"), in_cell=rdr.columnIndex("number_of_cells"), iprop=rdr.columnIndex("proportion_of_cell");
     size_t iid = rdr.columnIndex("id");
-    int fire_id = 0;
+    int storm_id = 0;
     while (rdr.next()) {
         int year = static_cast<int>(rdr.value(iyr));
-        fire_id = iid!=std::string::npos ? static_cast<int>(rdr.value(iid)) : fire_id + 1; // use provided Ids or a custom Id
-        mIgnitions.emplace(std::make_pair(year, SIgnition(year, fire_id, rdr.value(ix), rdr.value(iy), rdr.value(is), rdr.value(iws), rdr.value(iwd))));
+        storm_id = iid!=std::string::npos ? static_cast<int>(rdr.value(iid)) : storm_id + 1; // use provided Ids or a custom Id
+        mWindEvents.emplace(std::make_pair(year, SWindEvent(year, storm_id, rdr.value(ix), rdr.value(iy),
+                                                           rdr.value(in_cell), rdr.value(iprop))));
     }
-    lg->debug("Loaded {} ignitions from '{}'", mIgnitions.size(), filename);
+    lg->debug("Loaded {} storm events from '{}'", mWindEvents.size(), filename);
+
+    // setup parameters
+    mPstopAfterImpact = settings.valueDouble("modules.wind.stopAfterImpact");
+    mPspreadUndisturbed = settings.valueDouble("modules.wind.spreadUndisturbed");
+    mPfetchFactor = settings.valueDouble("modules.wind.fetchFactor");
+    mSaveDebugGrids = settings.valueBool("modules.wind.saveDebugGrids");
+
+    /*
 
     // set up parameters
+
     mExtinguishProb = settings.valueDouble("modules.fire.extinguishProb");
     mSpreadToDistProb = 1. - settings.valueDouble("modules.fire.spreadDistProb");
     std::string firesize_multiplier = settings.valueString("modules.fire.fireSizeMultiplier");
@@ -81,12 +98,17 @@ void WindModule::setup()
         mWindSizeMultiplier.setExpression(firesize_multiplier);
         lg->info("fireSizeMultiplier is active (value: {}). The maximum fire size of fires will be scaled with this function (variable: max fire size (ha)).", mWindSizeMultiplier.expression());
     }
+    */
+    std::string grid_file_name = Tools::path(settings.valueString("modules.wind.regionalProbabilityGrid"));
+    mRegionalStormProb.loadGridFromFile(grid_file_name);
+    lg->debug("Loaded regional wind probability grid: '{}'. Dimensions: {} x {}, with cell size: {}m.", grid_file_name, mRegionalStormProb.sizeX(), mRegionalStormProb.sizeY(), mRegionalStormProb.cellsize());
+    //lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
 
 
     // setup of the fire grid (values per cell)
-    auto grid = Model::instance()->landscape()->grid();
+    auto &grid = Model::instance()->landscape()->grid();
     mGrid.setup(grid.metricRect(), grid.cellsize());
-    lg->debug("Created fire grid {} x {} cells.", mGrid.sizeX(), mGrid.sizeY());
+    lg->debug("Created wind grid {} x {} cells.", mGrid.sizeX(), mGrid.sizeY());
 
     lg->info("Setup of WindModule '{}' complete.", name());
 
@@ -96,349 +118,328 @@ void WindModule::setup()
 
 std::vector<std::pair<std::string, std::string> > WindModule::moduleVariableNames() const
 {
-    return {{"fireSpread", "progress of the last fire (value is the iteration)"},
-        {"fireNWinds", "cumulative number of fires"},
-        {"fireNHighSeverity", "cumulative number of high severity fires"},
-        {"fireLastBurn", "the year of the last fire on a cell (or 0 if never burned)"}};
+    return {{"regionalProb", "wind event probability at regional scale (10km)"},
+        {"susceptibility", "state-dependent probability of wind damage"},
+        {"windNEvents", "cumulative number of wind events on cell"},
+        {"windLastEvent", "the year of the last storm event on cell (or 0 if never affected)"}};
 }
 
 double WindModule::moduleVariable(const Cell *cell, size_t variableIndex) const
 {
     auto &gr = mGrid[cell->cellIndex()];
     switch (variableIndex) {
-    case 0:
-        return gr.spread;
-    case 1:
-        return gr.n_fire;
+    case 0: {
+        // 10km grid
+        return mRegionalStormProb.constValueAt(mGrid.cellCenterPoint(cell->cellIndex()));
+    }
+    case 1: // susceptibility
+        return cell->state()->value(miDamageProbability);
     case 2:
-        return gr.n_high_severity;
+        return gr.n_storm;
     case 3:
-        return gr.last_burn;
+        return gr.last_storm;
     default:
         return 0.;
     }
 }
 
+static const Point eight_neighbors[8] = {Point(-1,0), Point(1,0), Point(0,-1), Point(-1,0),
+                                         Point(-1,-1), Point(-1,1), Point(1,-1), Point(1,1)};
+
+
 void WindModule::run()
 {
     // check if we have ignitions
     auto &grid = Model::instance()->landscape()->grid();
-    auto range = mIgnitions.equal_range(Model::instance()->year());
-    int n_ignited=0;
+    auto range = mWindEvents.equal_range(Model::instance()->year());
+    int n_executed=0;
     for (auto i=range.first; i!=range.second; ++i) {
-        SIgnition &ignition = i->second;
-        lg->debug("WindModule: ignition at {:f}/{:f} with max-size {} ha.", ignition.x, ignition.y, ignition.max_size);
-        if (!grid.coordValid(ignition.x, ignition.y)) {
+        SWindEvent &event = i->second;
+        lg->debug("WindModule: event at {:f}/{:f} with # affected regions: '{}'.", event.x, event.y, event.n_regions);
+        if (!grid.coordValid(event.x, event.y)) {
             lg->debug("Coordinates invalid. Skipping.");
             continue;
         }
-        GridCell &c = grid.valueAt(ignition.x, ignition.y);
-        if (c.isNull()) {
-            lg->debug("Ignition point not in project area. Skipping.");
-            continue;
-        }
-        ++n_ignited;
-        fireSpread(ignition);
-    }
-    lg->info("WindModule: end of year. #ignitions: {}.", n_ignited);
 
-    // fire output
-    Model::instance()->outputManager()->run("Wind");
+        ++n_executed;
+        runWindEvent(event);
+    }
+    lg->info("WindModule: end of year. #wind events: {}.", n_executed);
+
+    // wind output
+    //Model::instance()->outputManager()->run("Wind");
 
 }
 
+double WindModule::calculateSusceptibility(Cell &c) const
+{
+    /// pre-calculated value, stored as extra column
+    double pDamage = c.state()->value(miDamageProbability);
+    return pDamage;
+}
 
-void WindModule::fireSpread(const WindModule::SIgnition &ign)
+Point WindModule::sampleFromRegionMap(std::map<Point, double> &map)
+{
+    if (map.empty())
+        return Point(-1, -1); // invalid location
+
+    // calculate the sum of probs
+    double p_sum = 0.;
+    for (auto it=map.begin(); it!=map.end(); ++it)
+        p_sum += it->second;
+
+    double p = nrandom(0., p_sum);
+
+    p_sum = 0.;
+    for (auto it=map.begin(); it!=map.end(); ++it) {
+        p_sum += it->second;
+        if (p < p_sum)
+            return it->first;
+    }
+    return map.rbegin()->first;
+}
+
+
+void WindModule::runWindEvent(const SWindEvent &event)
+{
+    // spread to multiple cells....
+    auto p=mRegionalStormProb.indexAt(PointF(event.x, event.y));
+
+    std::map<Point, double> region_list;
+    std::vector<SWindStat> stats;
+    region_list[p] = 1.; // initial cell (will be returned by initial sampling)
+
+    int regions_to_process = event.n_regions;
+    int processed = 0;
+    while (regions_to_process > 0) {
+
+        Point p_sampled = sampleFromRegionMap(region_list);
+        if (p_sampled.x() < 0)
+            break;
+
+        RectF cell_rect = mRegionalStormProb.cellRect(p_sampled);
+
+        // call wind routine on regional cell
+        stats.push_back(windImpactOnRegion(cell_rect, event.prop_affected, event));
+
+        ++processed;
+        --regions_to_process;
+        region_list[p_sampled] = 0.;
+
+        // add further candidate regions
+        for (int i=0;i<8;++i) {
+            Point pd = p_sampled + eight_neighbors[i];
+            if (!mRegionalStormProb.isIndexValid(pd))
+                 continue; // not in probability map
+            if (!mGrid.coordValid(mRegionalStormProb.cellCenterPoint(pd)))
+                 continue; // not in project area
+            if ( region_list.find(pd) != region_list.end())
+                 continue; // already in list
+
+            // add to list
+            region_list[pd] = mRegionalStormProb[pd];
+        }
+
+
+    }
+    if (!stats.empty()) {
+    // process/aggregate stats: take last element....
+        SWindStat cstat =stats.back();
+        stats.pop_back();
+        //... and cumulatively add the others
+        double msus = cstat.mean_susceptiblity * cstat.n_forested;
+        for (auto &s : stats) {
+            cstat.n_affected += s.n_affected;
+            cstat.n_forested += s.n_forested;
+            cstat.n_planned += s.n_planned;
+            msus += s.mean_susceptiblity * s.n_forested;
+
+        }
+        cstat.mean_susceptiblity = msus / cstat.n_forested; // weighed with forested pixels
+        cstat.regions_affected = processed;
+        cstat.regions_planned = event.n_regions;
+        mStats.push_back(cstat);
+    }
+
+    lg->debug("End of wind-event #{}: Regions planned: '{}', #Regions affected: {} (Regions not processed: {}). cells affected/planned: '{}'/'{}', mean susceptibility: '{}'",
+              event.Id, event.n_regions, processed, regions_to_process,
+              mStats.back().n_affected, mStats.back().n_planned, mStats.back().mean_susceptiblity);
+
+}
+
+class ComparisonClassTopK {
+public:
+    bool operator() (const std::pair<float, Cell*> &p1, const std::pair<float, Cell*> &p2) {
+        //comparison code here: we want to keep track of the largest element
+        return p1.first>p2.first;
+    }
+};
+
+
+SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, const SWindEvent &event)
 {
     auto &grid = Model::instance()->landscape()->grid();
-    Point index = grid.indexAt(PointF(ign.x, ign.y));
+    Grid<float> wind_grid(area, grid.cellsize());
+    wind_grid.initialize(-2.f);
+    // create a 1:1 copy of the grid
+    Grid<int> wind_debug_grid(area, grid.cellsize());
+    wind_debug_grid.initialize(0);
 
-    // clear the spread flag for all cells
-    std::for_each(mGrid.begin(), mGrid.end(), [](SWindCell &c) { c.spread=0.f; });
+    GridRunner<GridCell> runner(grid, area);
 
-    mGrid[index].spread = 1.f; // initial value
-    double size_multiplier = 1.;
-    if (!mWindSizeMultiplier.isEmpty()) {
-        size_multiplier = mWindSizeMultiplier.calculate(ign.max_size);
-        lg->debug("Modified fire size from '{}' to '{}' (fireSizeMultiplier).", ign.max_size, ign.max_size*size_multiplier);
-    }
-    int max_ha = static_cast<int>(ign.max_size * size_multiplier);
-    int n_ha = 0;
-    int n_highseverity_ha = 0;
-    int grid_max_x = grid.sizeX()-1, grid_max_y=grid.sizeY()-1;
+    std::priority_queue< std::pair<float, Cell*>, std::vector<std::pair<float, Cell*> >, ComparisonClassTopK > queue;
 
-    int ixmin=std::max(index.x() - 1,0);
-    int ixmax = std::min(index.x() + 1, grid_max_x);
-    int iymin = std::max(index.y() - 1, 0);
-    int iymax = std::min(index.y() + 1, grid_max_y);
-
-    int ixmin2=ixmin, ixmax2=ixmax, iymin2=iymin, iymax2=iymax;
-    int n_burned_in_round, n_rounds = 1;
-
-    if (!burnCell(index.x(), index.y(), n_highseverity_ha, n_rounds)) {
-        lg->debug("Wind: not spreading, stopped at ignition point.");
-    } else {
-        ++n_ha; // one cell already burned
-        while (n_ha <= max_ha) {
-            n_burned_in_round=0;
-            // calculate spread probabilities based on wind and slope from currently burning px
-            for (int iy=iymin; iy<=iymax; ++iy)
-                for (int ix=ixmin; ix<=ixmax; ++ix) {
-                    if (mGrid(ix, iy).spread == 1.f) {
-                        // value = 1.f -> the cell burned and is spreading
-                        float elev_origin = Model::instance()->landscape()->elevationAt(mGrid.cellCenterPoint(Point(ix, iy)));
-                        // direction codes: (1..8, N, E, S, W, NE, SE, SW, NW)
-                        calculateSpreadProbability(ign, Point(ix-1, iy+1), elev_origin, 8); // NW
-                        calculateSpreadProbability(ign, Point(ix  , iy+1), elev_origin, 1); // N
-                        calculateSpreadProbability(ign, Point(ix+1, iy+1), elev_origin, 5); // NE
-                        calculateSpreadProbability(ign, Point(ix+1, iy  ), elev_origin, 2); // E
-                        calculateSpreadProbability(ign, Point(ix+1, iy-1), elev_origin, 6); // SE
-                        calculateSpreadProbability(ign, Point(ix  , iy-1), elev_origin, 3); // S
-                        calculateSpreadProbability(ign, Point(ix-1, iy-1), elev_origin, 7); // SW
-                        calculateSpreadProbability(ign, Point(ix-1, iy  ), elev_origin, 4); // W
-                        // the cell has spread, mark the iteration
-                        mGrid.valueAtIndex(ix, iy).spread = static_cast<float>(n_rounds + 1);
-                    }
-                }
-            for (int iy=iymin; iy<=iymax; ++iy) {
-                for (int ix=ixmin; ix<=ixmax; ++ix) {
-                    float &p_spread = mGrid.valueAtIndex(ix, iy).spread;
-                    if (p_spread < 1.f && p_spread > 0.f) {
-                        // the cell is spreading, calculate the probability and decide using a random number
-                        if (drandom() < p_spread) {
-                            if (burnCell(ix, iy, n_highseverity_ha, n_rounds)) {
-                                // the cell really burned, potentially increase the bounding box (if the cell is also spreading)
-                                ixmin2 = std::max(std::min(ixmin2, ix-1), 0);
-                                ixmax2 = std::min(std::max(ixmax2, ix+1), grid_max_x);
-                                iymin2 = std::max(std::min(iymin2, iy-1), 0);
-                                iymax2 = std::min(std::max(iymax2, iy+1), grid_max_y);
-                                n_ha++;
-                                n_burned_in_round++;
-                            } else {
-                                p_spread = 0.; // did not burn, reset
-                            }
-                        } else {
-                            p_spread = 0.; // did not burn, reset
-                        }
-                    }
-                }
-            }
-
-            if (n_burned_in_round == 0) {
-                lg->debug("Wind: stopped, no more burning pixels found.");
-                break;
-            }
-            n_rounds++;
-            ixmin = ixmin2; ixmax = ixmax2; iymin = iymin2; iymax = iymax2;
-            if (lg->should_log(spdlog::level::debug))
-                lg->debug("Round {}, burned: {} ha, max-size: {} ha, rectangle: {}/{}-{}/{}", n_rounds, n_ha, max_ha, ixmin, iymin, ixmax, iymax);
-
-        } // end while
-    } // end if (fire at ignition point)
-
-    lg->info("WindEvent. total burned (ha): {}, high severity (ha): {}, max-fire-size (ha): {}", n_ha, n_highseverity_ha, max_ha);
     SWindStat stat;
+    stat.Id = event.Id;
     stat.year = Model::instance()->year();
-    stat.Id = ign.Id;
-    stat.x = ign.x;
-    stat.y = ign.y;
-    stat.max_size = static_cast<int>(ign.max_size);
-    stat.ha_burned = n_ha;
-    stat.ha_high_severity = n_highseverity_ha;
-    mStats.push_back(stat);
-}
+    stat.x = event.x; stat.y = event.y;
+    stat.proportion = event.prop_affected;
+    stat.n_planned = stat.proportion * wind_grid.count();
 
 
-// examine a single cell and eventually burn.
-bool WindModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
-{
-    auto &grid = Model::instance()->landscape()->grid();
-    auto &c = mGrid[Point(ix, iy)];
-    auto &gs = grid[Point(ix, iy)];
-    if (gs.isNull()) {
-        c.spread = -1.f;
-        if (round==1)
-            lg->debug("Stopped at ignition: invalid cell!");
-        return false;
-    }
-    auto &s = gs.cell();
+    const size_t n_top = 10 + proportion*1000;
+    const double temperature = 0.1; // 0..1; 0: strictly as provided, 1
 
-    // If a cell is already altered *during* this year (e.g. by a previous)
-    // fire, then the state used here is still the old (i.e. unburned) state.
-    // Can happen that a cells burns twice a year
-    // a workaround could be: if cell->isUpdated() then then cell is already changed; in
-    // this case, next years' state could be checked instead
-    // (not sure if this plays nicely with other combinations of modules / management, ...)
+    // look for top k susceptibility values
+    int n_forested = 0;
+    double mean_susceptibility=0.;
+    float *grid_ptr = wind_grid.begin();
+    while (auto *gr = runner.next()) {
+        if (!gr->isNull()) {
+            double p_damage = calculateSusceptibility(gr->cell());
+            *grid_ptr = p_damage; // write susceptibility values to wind grid
+            mean_susceptibility += p_damage;
+            ++n_forested;
 
-
-    // burn probability
-    double pBurn = s.state()->value(miBurnProbability);
-    if (pBurn > 0. && round<=5)
-        pBurn = 1.;
-
-//    if (round>5) {
-//        pBurn *= (1. - mExtinguishProb);
-//    }
-    if (pBurn == 0. || pBurn < drandom()) {
-        if (round==1)
-            lg->debug("Stopped at ignition: State: {} burn-prob: {}", s.state()->asString(), pBurn);
-        c.spread = -1.f;
-        return false;
-    }
-
-
-    bool high_severity = drandom() < s.state()->value(miHighSeverity);
-    // effect of fire: a transition to another state
-    state_t new_state = mWindMatrix.transition(s.stateId(), high_severity ? 1 : 0);
-    s.setNewState(new_state);
-
-    // test for landcover change
-    if (lg->should_log(spdlog::level::trace))
-        if ( s.state()->type() != Model::instance()->states()->stateById(new_state).type() )
-            lg->trace("Landcover type change: from state '{}' to '{}'", s.stateId(), new_state);
-
-    c.last_burn = static_cast<short int>(Model::instance()->year());
-    c.n_fire++;
-    if (high_severity) {
-        c.n_high_severity++;
-        rHighSeverity++;
-    }
-
-    // fire extinction: a cell that burned can go out (i.e. spread no further)
-    if (round>5) {
-        if (drandom() < mExtinguishProb ) {
-            c.spread = -1.f;
-            return true; // this cell burned
+            if (queue.size()<n_top || p_damage > queue.top().first) {
+                if (queue.size() == n_top)
+                    queue.pop();
+                queue.push( std::pair<float, Cell*>(p_damage, &gr->cell()) );
+            }
         }
+        ++grid_ptr;
+    }
+    mean_susceptibility /= n_forested > 0? n_forested : 1;
+
+    std::string tile_code = std::to_string(area.left()) + "_" + std::to_string(area.top());
+    if (mSaveDebugGrids) {
+        std::string filename = Tools::path("temp/suscept_tile_" + tile_code + "_" + std::to_string(Model::instance()->year()) + ".asc" );
+        std::string result = gridToESRIRaster<float>(wind_grid);
+        if (!writeFile(filename, result))
+            throw std::logic_error("Wind: couldn't write debug output grid file: " + filename);
     }
 
 
-    c.spread = 1.f; // this cell spreads
-    return true;
-}
+    std::queue<Point> spread_queue;
+    lg->debug("Event#{}: - Tile: {}. Mean suscetibility on tile: '{}', '{}' forested pixels.", stat.Id, tile_code, mean_susceptibility, n_forested);
+    //lg->debug("Number of starting positions: '{}'. ", n_top);
 
-/// calculate effect of slope on fire spread
-/// for upslope following Keene and Albini 1976
-///  It was designed by RKeane (2/2/99) (calc.c)
-/// the downslope function is "not based on empirical data" (Keane in calc.c)
-/// return is the metric distance to spread (and not number of pixels)
-double WindModule::calcSlopeFactor(const double slope) const
-{
-    double slopespread;       /* Slope spread rate in pixels / timestep   */
-    static double firebgc_cellsize = 30.; /* cellsize for which this functions were originally designed */
+    std::stack<Point> reverse_queue; // helper to reverse the order of elements
+    while (!queue.empty()) {
+        //lg->debug("Cell: {}, p={}", queue.top().second->cellIndex(), queue.top().first);
+        // queue.top().second->setNewState(6); // ABAL 2-4m - just a test
 
-    if (slope < 0.) {
-        // downslope effect
-        slopespread = 1.0 - ( 20.0 * slope * slope );
+        // add values as starting points
+        PointF loc = grid.cellCenterPoint(queue.top().second->cellIndex());
+        // use the *local* coordinates
+        reverse_queue.push(wind_grid.indexAt(loc));
+        queue.pop();
+    }
+    // we reverse the order, as we want to start with the pixel with *highest* susceptibility
+//    while (!reverse_queue.empty()) {
+//        spread_queue.push(reverse_queue.top());
+//        reverse_queue.pop();
+//    }
+    // add a single starting point to the queue:
+    spread_queue.push(reverse_queue.top());
+    reverse_queue.pop();
 
-    } else {
-        // upslope effect
-        static double alpha = 4.0; /* Maximum number of pixels to spread      */
-        static double beta  = 3.5; /* Scaling coeff for inflection point      */
-        static double gamma = 10.0;/* Scaling coeff for graph steepness       */
-        static double zeta  = 0.0; /* Scaling coeff for y intercept           */
 
-        slopespread = zeta + ( alpha / ( 1.0 + ( beta * exp( -gamma * slope ) ) ) );
+
+    // now perform a (conditional) floodfill
+    int max_impact = proportion * wind_grid.count(); // assume proportion=prop of total cells
+    int n_impact = 0;
+    int step = 0;
+
+
+    bool pixel_affected = false;
+    while (!spread_queue.empty()) {
+        Point p = spread_queue.front();
+        spread_queue.pop();
+
+        // when everything is processed, add next starting pont
+        if (spread_queue.empty()) {
+            if (!reverse_queue.empty()) {
+                spread_queue.push(reverse_queue.top());
+                reverse_queue.pop();
+            }
+        }
+
+        if (!wind_grid.isIndexValid(p))
+            continue;
+        float p_local = wind_grid[p];
+        if (p_local < 0.f)
+            continue;
+
+        if ( drandom() > p_local ) {
+            // (i) impact the cell
+            // ====================
+            wind_grid[p] = -1.; // mark cell as already processed
+            PointF loc = wind_grid.cellCenterPoint(p);
+            grid[loc].cell().setNewState(6); // ABAL 2-4m - just a test
+            auto &stat = mGrid[loc];
+            stat.last_storm = Model::instance()->year();
+            ++stat.n_storm;
+            ++n_impact;
+            pixel_affected = true;
+            wind_debug_grid[p] = 10000 + step;
+        } else {
+            // not affected
+            wind_grid[p] = -0.5; // mark as processed (but not affected)
+            wind_debug_grid[p] = step;
+            pixel_affected = false;
+        }
+        if (pixel_affected || drandom() < mPspreadUndisturbed) {
+            // now check neigbors
+            for (int i=0;i<8;++i) {
+                // increase probability of neighboring pixels
+                Point pd = p + eight_neighbors[i];
+                if (wind_grid.isIndexValid(pd)) {
+                    if (wind_grid[pd] < 0.) // already processed
+                        continue;
+                    wind_grid[pd] += mPfetchFactor; // add a prob for neighbors
+                    // there is a chance that wind-impact does not spread further
+                    if (mPstopAfterImpact>0. && drandom() < mPstopAfterImpact)
+                        continue;
+                    // add to queue *only* if impact does not stop here
+                    spread_queue.push(pd);
+                }
+            }
+        }
+        ++step;
+        if (n_impact >= max_impact) {
+            // we stop here, enough pixel found!
+            break;
+        }
+
+    }
+    lg->debug("region finished - Event#: {} Tile: {}. max_impact={}, found={} cells, #processed: {}. length of queue left: {}, number of starting points left: '{}'/'{}'",
+              stat.Id, tile_code, max_impact, n_impact, step, spread_queue.size(),
+              reverse_queue.size(), n_top);
+
+    // do some stats, saves
+    //mRegionalStormProb.indexOf()
+    if (mSaveDebugGrids) {
+        std::string filename = Tools::path("temp/damage_tile_" + tile_code + "_" + std::to_string(Model::instance()->year()) + ".asc" );
+        std::string result = gridToESRIRaster<int>(wind_debug_grid);
+        if (!writeFile(filename, result))
+            throw std::logic_error("FireOut: couldn't write output grid file: " + filename);
     }
 
+    stat.mean_susceptiblity = mean_susceptibility;
+    stat.n_forested = n_forested;
+    stat.n_affected = n_impact;
 
-    return( slopespread ) * firebgc_cellsize;
-
-}
-
-/// calculate the effect of wind on the spread.
-/// function designed by R. Keane, 2/2/99
-/// @param direction direction (in degrees) of spread (0=north, 90=east, ...)
-/// @return spread (in meters)
-double WindModule::calcWindFactor(const SIgnition &fire_event, const double direction) const
-{
-    const double firebgc_cellsize = 30.; /* cellsize for which this functions were originally designed */
-    double windspread;         /* Wind spread rate in pixels / timestep   */
-    double coeff;              /* Coefficient that reflects wind direction*/
-    double lwr;                /* Length to width ratio                   */
-    const double alpha = 0.6; /* Wind spread power coeffieicnt           */
-    const double MPStoMPH = 1. / 0.44704;
-
-    /* .... If zero wind speed return 1.0 for the factor .... */
-    if ( fire_event.wind_speed <= 0.5 )
-        return ( 1.0 ) * firebgc_cellsize; // not 0????
-
-    /* .... Change degrees to radians .... */
-    coeff = fabs( direction - fire_event.wind_direction ) * M_PI/180.;
-
-    /* .... If spread direction equal zero, then spread direction = wind direct */
-    if ( direction <= 0.01 )
-        coeff = 0.0;
-
-    /* .... Compute the length:width ratio from Andrews (1986) .....  */
-
-    lwr = 1.0 + ( 0.125 * fire_event.wind_speed * MPStoMPH );
-
-    /* .... Scale the difference between direction between 0 and 1.0 .....  */
-    coeff = ( cos( coeff ) + 1.0 ) / 2.0;
-
-    /* .... Scale the function based on windspeed between 1 and 10...  */
-    windspread = pow( coeff, pow( (fire_event.wind_speed * MPStoMPH ), alpha ) ) * lwr;
-
-    return( windspread ) * firebgc_cellsize;
-
-}
-
-
-/** calculates probability of spread from one pixel to one neighbor.
-    In this functions the effect of the terrain, the wind and others are used to estimate a probability.
-    @param fire_data reference to the variables valid for the current resource unit
-    @param height elevation (m) of the origin point
-    @param pixel_from pointer to the origin point in the fire grid
-    @param pixel_to pointer to the target pixel
-    @param direction codes the direction from the origin point (1..8, N, E, S, W, NE, SE, SW, NW)
-  */
-void WindModule::calculateSpreadProbability(const SIgnition &fire_event,  const Point &point, const float origin_elevation,  const int direction)
-{
-
-    if (!mGrid.isIndexValid(point) || Model::instance()->landscape()->grid()[point].isNull())
-        return;
-
-    auto & fire_cell = mGrid[point];
-
-    if (fire_cell.spread<0.f || fire_cell.spread>=1.f)
-        return;
-
-    const double directions[8]= {0., 90., 180., 270., 45., 135., 225., 315. };
-    double spread_metric; // distance that fire supposedly spreads
-
-    // calculate the slope from the curent point (pixel_from) to the spreading cell (pixel_to)
-    float h_to = Model::instance()->landscape()->elevationAt(mGrid.cellCenterPoint(point));
-    //float h_to = Model::instance()->landscape()->grid()[point].elevation();
-    if (h_to==0.f) {
-        lg->debug("Invalid elevation (value = 0) at point '{}m/{}m'", mGrid.cellCenterPoint(point).x(), mGrid.cellCenterPoint(point).y());
-        return;
-    }
-    double pixel_size = 100.;
-    // if we spread diagonal, the distance is longer:
-    if (direction>4)
-        pixel_size *= 1.41421356;
-
-    double slope = (h_to - origin_elevation) / pixel_size;
-
-    double r_wind, r_slope; // metric distance for spread
-    r_slope = calcSlopeFactor( slope ); // slope factor (upslope / downslope)
-
-    r_wind = calcWindFactor(fire_event, directions[direction-1]); // metric distance from wind
-
-    spread_metric = r_slope + r_wind;
-
-    double spread_pixels = spread_metric / pixel_size;
-    if (spread_pixels<=0.)
-        return;
-
-    // calculate the probability: this is the chance
-    double p_spread = pow(mSpreadToDistProb, 1. / spread_pixels);
-    // apply the r_land factor that accounts for different land types
-    //p_spread *= fire_data.mRefLand;
-    // add probabilites
-    //*pixel_to = static_cast<float>(1. - (1. - *pixel_to)*(1. - p_spread));
-    fire_cell.spread = static_cast<float>(1. - (1. - fire_cell.spread)*(1. - p_spread));
-
+    return stat;
 }
 

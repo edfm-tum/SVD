@@ -43,7 +43,9 @@ public:
     void setX(int x) { mX = x; }
     void setY(int y) { mY = y; }
     // operators
-    Point operator+(const Point &p) {return Point(x()+p.x(), y()+p.y()); }
+    Point operator+(const Point &p) const {return Point(x()+p.x(), y()+p.y()); }
+
+    bool friend operator<(const Point&lhs, const Point &rhs) { int cmp = rhs.x() - lhs.x(); if (cmp==0) cmp=rhs.y()-lhs.y(); return cmp<0; }
 private:
     int mX;
     int mY;
@@ -217,7 +219,7 @@ public:
     PointF cellCenterPoint(const int &index) const { Point pos=indexOf(index); return PointF( (pos.x()+0.5)*mCellsize+mRect.left(), (pos.y()+0.5)*mCellsize + mRect.top());}
     /// get the metric rectangle of the cell with index @p pos
     RectF cellRect(const Point &pos) const { RectF r( mRect.left() + mCellsize*pos.x(), mRect.top() + pos.y()*mCellsize,
-                                                      mRect.left() + mCellsize*(pos.x()+1), mRect.top() + pos.y()*(mCellsize+1)); return r; } ///< return coordinates of rect given by @param pos.
+                                                      mRect.left() + mCellsize*(pos.x()+1), mRect.top() + mCellsize * (pos.y()+1)); return r; } ///< return coordinates of rect given by @param pos.
 
     /// nullValue is the value for empty/null/NA
     static T nullValue() { return std::numeric_limits<T>::min(); }
@@ -769,21 +771,40 @@ std::string gridToString(const Grid<T> &grid, std::function<std::string(const T&
     return ts.str();
 }
 
-/// Save a grid to a GeoTIFF
-/// @param valueFunction pointer to a function with the signature: QString func(const T&) : this should return a QString
+/// Save a grid to a GeoTIFF and provide a valueFunction to extract the basic data from a class/structure
 /// @param fileName string file path
+/// @param datatype the datatype for the tif file (see geotiff.h for values)
 /// @param valueFunction function that should return a double (for NA use std::numeric_limits<double>::lowest())
-template <class T>
-bool gridToGeoTIFF(const Grid<T> &grid, const std::string &fileName, std::function<double(const T&)> valueFunction)
+template <class T, typename U>
+bool gridToGeoTIFF(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDatatype datatype, std::function<U(const T&)> valueFunction)
 {
     GeoTIFF tif;
-    tif.initialize(grid.sizeX(), grid.sizeY());
+    tif.initialize(grid.sizeX(), grid.sizeY(), datatype);
 
     for (int y=0; y<grid.sizeY();++y){
         for (int x=0;x<grid.sizeX();x++){
-            double value = valueFunction(grid.constValueAtIndex(x,y));
+            U value = valueFunction(grid.constValueAtIndex(x,y));
             //if (value > std::numeric_limits<double>::min())
             tif.setValue(x, y, value );
+        }
+    }
+
+    return tif.saveToFile(fileName);
+}
+
+/// Save a simple grid to a GeoTIFF
+/// @param grid grid to save
+/// @param fileName string file path
+/// @param datatype the datatype for the tif file (see geotiff.h for values)
+template <class T>
+bool gridToGeoTIFF(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDatatype datatype)
+{
+    GeoTIFF tif;
+    tif.initialize(grid.sizeX(), grid.sizeY(), datatype);
+
+    for (int y=0; y<grid.sizeY();++y){
+        for (int x=0;x<grid.sizeX();x++){
+            tif.setValue(x,y, grid.constValueAtIndex(x,y));
         }
     }
 
@@ -823,16 +844,17 @@ std::string gridToESRIRaster(const Grid<T> &grid )
     Vector3D model(grid.metricRect().left(), grid.metricRect().top(), 0.);
     Vector3D world;
     modelToWorld(model, world);
-    std::string result = "not implemented";
-    std::string line = ", sorry";
-    /*
-            QString result = QString("ncols %1\r\nnrows %2\r\nxllcorner %3\r\nyllcorner %4\r\ncellsize %5\r\nNODATA_value %6\r\n")
-                    .arg(grid.sizeX())
-                    .arg(grid.sizeY())
-                    .arg(world.x(),0,'f').arg(world.y(),0,'f')
-                    .arg(grid.cellsize()).arg(-9999);
-            QString line = gridToString(grid, QChar(' ')); // for normal grids (e.g. double) */
-    return result + line;
+
+    std::ostringstream oss;
+    oss << "ncols " << grid.sizeX() << std::endl
+        << "nrows " << grid.sizeY() << std::endl
+        << "xllcorner " << world.x() << std::endl
+        << "yllcorner " << world.y() << std::endl
+        << "cellsize " << grid.cellsize() << std::endl
+        << "NODATA_value -9999" << std::endl;
+    oss << gridToString(grid, ' ', 100);
+    return oss.str();
+
 }
 
 

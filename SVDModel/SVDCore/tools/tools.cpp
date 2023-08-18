@@ -79,6 +79,16 @@ std::string Tools::path(const std::string &fileName)
         return fileName;
 }
 
+int Tools::fileSize(const std::string &fileName)
+{
+    std::wifstream infile(fileName);
+    if(!infile.good())
+        return -1;
+    infile.seekg(0, std::ios::end);
+    int length = infile.tellg();
+    return length;
+}
+
 void Tools::setupPaths(const std::string &path, const Settings *settings)
 {
     Tools::mProjectDir = path;

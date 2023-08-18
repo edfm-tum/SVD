@@ -52,11 +52,10 @@ void StateGridOut::execute()
     auto &grid = Model::instance()->landscape()->grid();
     if (has_ending(file_name, ".tif") || has_ending(file_name, ".TIF")) {
         // save as tif
-        if (!gridToGeoTIFF<GridCell>( grid, file_name,
-                                  [](const GridCell &c) -> double {if(c.isNull())
-                                  return std::numeric_limits<double>::lowest();
-                                  else
-                                  return static_cast<double>(c.cell().state()->id()); }) )
+        if (!gridToGeoTIFF<GridCell, short>( grid, file_name, GeoTIFF::DTSINT16,
+                                  [](const GridCell &c) -> short {if(c.isNull())
+                                                                     return std::numeric_limits<short>::lowest();
+                                                                  return static_cast<short>(c.cell().state()->id()); }) )
             throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);
 
     } else {

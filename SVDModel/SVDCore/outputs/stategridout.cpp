@@ -50,19 +50,13 @@ void StateGridOut::execute()
     std::string file_name = mPath;
     find_and_replace(file_name, "$year$", to_string(year));
     auto &grid = Model::instance()->landscape()->grid();
-    if (has_ending(file_name, ".tif") || has_ending(file_name, ".TIF")) {
-        // save as tif
-        if (!gridToGeoTIFF<GridCell, short>( grid, file_name, GeoTIFF::DTSINT16,
-                                  [](const GridCell &c) -> short {if(c.isNull())
-                                                                     return std::numeric_limits<short>::lowest();
-                                                                  return static_cast<short>(c.cell().state()->id()); }) )
-            throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);
 
-    } else {
-        // save as esri ascii raster
-        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.cell().stateId()); });
-        if (!writeFile(file_name, result))
-            throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);
-    }
+    if (!gridToFile<GridCell, short>( grid, file_name, GeoTIFF::DTSINT16,
+                                   [](const GridCell &c) -> short {if(c.isNull())
+                                                                     return std::numeric_limits<short>::lowest();
+                                                                  return static_cast<short>(c.cell().state()->id()); }))
+        throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);
+
+
 
 }

@@ -167,7 +167,7 @@ void WindModule::run()
     lg->info("WindModule: end of year. #wind events: {}.", n_executed);
 
     // wind output
-    //Model::instance()->outputManager()->run("Wind");
+    Model::instance()->outputManager()->run("Wind");
 
 }
 

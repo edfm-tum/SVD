@@ -28,6 +28,7 @@ SOURCES += \
     modelshell.cpp \
     modules/simplemanagement/simplemanagementmodule.cpp \
     modules/wind/windmodule.cpp \
+    modules/wind/windout.cpp \
     outputs/statehistout.cpp \
     tools/geotiff.cpp \
     tools/grid.cpp \
@@ -61,6 +62,7 @@ HEADERS += \
     modelshell.h \
     modules/simplemanagement/simplemanagementmodule.h \
     modules/wind/windmodule.h \
+    modules/wind/windout.h \
     outputs/statehistout.h \
     tools/geotiff.h \
     tools/grid.h \

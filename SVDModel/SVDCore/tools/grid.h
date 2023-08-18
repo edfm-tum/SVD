@@ -750,8 +750,8 @@ std::string gridToString(const Grid<T> &grid, const char sep=';', const int newl
 /// @param valueFunction pointer to a function with the signature: QString func(const T&) : this should return a QString
 /// @param sep string separator
 /// @param newline_after if <>-1 a newline is added after every 'newline_after' data values
-template <class T>
-std::string gridToString(const Grid<T> &grid, std::function<std::string(const T&)> valueFunction, const char sep=';', const int newline_after=-1 )
+template <class T, typename U>
+std::string gridToString(const Grid<T> &grid, std::function<U(const T&)> valueFunction, const char sep=';', const int newline_after=-1 )
 {
     std::ostringstream ts;
 
@@ -814,8 +814,8 @@ bool gridToGeoTIFF(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TI
 
 void modelToWorld(const Vector3D &From, Vector3D &To);
 
-template <class T>
-std::string gridToESRIRaster(const Grid<T> &grid, std::function<std::string(const T&)>  valueFunction )
+template <class T, typename U>
+std::string gridToESRIRaster(const Grid<T> &grid, std::function<U(const T&)>  valueFunction )
 {
     Vector3D model(grid.metricRect().left(), grid.metricRect().top(), 0.);
     Vector3D world;
@@ -855,6 +855,49 @@ std::string gridToESRIRaster(const Grid<T> &grid )
     oss << gridToString(grid, ' ', 100);
     return oss.str();
 
+}
+
+
+/// Save a grid to a file (either ASC or GeoTIFF) using a complex data type. The type of file depends on the file ending (.tif or .TIF -> GeoTIFF).
+/// Template parameters: 1st: class the grid consists of, 2nd: type of the return value that should be saved.
+/// @param grid grid to save
+/// @param fileName string file path
+/// @param datatype the datatype for the tif file (see geotiff.h for values)
+/// @param valueFunction function that should return a double (for NA use std::numeric_limits<double>::lowest())
+/// @return true on success, false on failure
+template <class T, typename U>
+bool gridToFile(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDatatype datatype, std::function<U(const T&)> valueFunction)
+{
+    // number of fires per cell:
+    if (has_ending(fileName, ".tif") || has_ending(fileName, ".TIF")) {
+        // save as tif
+        return gridToGeoTIFF( grid, fileName, datatype, valueFunction);
+
+    } else {
+        std::string result = gridToESRIRaster(grid, valueFunction);
+        return writeFile(fileName, result);
+    }
+}
+
+
+/// Save a grid to a file (either ASC or GeoTIFF) using a simple data type. The type of file depends on the file ending (.tif or .TIF -> GeoTIFF).
+/// Template parameter: class the grid consists of
+/// @param grid grid to save
+/// @param fileName string file path
+/// @param datatype the datatype for the tif file (see geotiff.h for values)
+/// @return true on sucess, false on failure
+template <class T>
+bool gridToFile(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDatatype datatype)
+{
+    // number of fires per cell:
+    if (has_ending(fileName, ".tif") || has_ending(fileName, ".TIF")) {
+        // save as tif
+        return gridToGeoTIFF<T>( grid, fileName, datatype);
+
+    } else {
+        std::string result = gridToESRIRaster<T>(grid);
+        return writeFile(fileName, result);
+    }
 }
 
 

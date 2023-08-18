@@ -143,6 +143,9 @@ private:
         double  udfIn(double Value, double* Stack, int ArgCount) const; ///< special function in()
         // SVD specific neighborhood functions
         double udfNeighborhood(ExpressionWrapper *object, int neighbor_class, double *Stack, int ArgCount) const;
+        // SVD specifc functions acessing state history
+        double udfStateChange(ExpressionWrapper *object, int var_type, double *Stack, int ArgCount) const;
+
         void checkBuffer(int Index);
 
         // linearization

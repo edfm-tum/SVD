@@ -84,8 +84,8 @@ static std::vector<std::string> mathFuncList={"sin", "cos", "tan",
                                        "exp", "ln", "sqrt",
                                        "min", "max", "if",
                                        "incsum", "polygon", "mod", "sigmoid", "rnd", "rndg", "limit",  "round", "in",
-                                             "localNB", "intermediateNB", "globalNB", "distance"};
-const int  MaxArgCount[22]={1,1,1,1,  1, 1,   -1, -1, 3, 1, -1, 2, 4, 2, 2, 3, 1, -1,    -1,-1,-1,-1};
+                                             "localNB", "intermediateNB", "globalNB", "distance", "stateChange"};
+const int  MaxArgCount[23]={1,1,1,1,  1, 1,   -1, -1, 3, 1, -1, 2, 4, 2, 2, 3, 1, -1,    -1,-1,-1,-1,-1};
 #define    AGGFUNCCOUNT 6
 static std::string AggFuncList[AGGFUNCCOUNT]={"sum", "avg", "max", "min", "stddev", "variance"};
 
@@ -836,6 +836,20 @@ double Expression::udfNeighborhood(ExpressionWrapper *object, int neighbor_class
         ++p;
     }
     return result;
+}
+
+double Expression::udfStateChange(ExpressionWrapper *object, int var_type, double *Stack, int ArgCount) const
+{
+    if (!object) return 0.;
+    CellWrapper *wrap = dynamic_cast<CellWrapper*>(object);
+    if (!wrap) return 0.;
+    double *p = Stack - (ArgCount-1);
+
+    // TODO: here we miss the actual logic
+    // what needs to be done:
+    // - var_type = height increment ->
+    // get to cell -> history: calculate delta(structure) / sum(residence time) -> strucutre-class changes per year (*2 / *4 to get to m)
+    return *p;
 }
 
 

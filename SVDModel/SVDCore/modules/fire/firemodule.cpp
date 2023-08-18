@@ -154,7 +154,15 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
     Point index = grid.indexAt(PointF(ign.x, ign.y));
 
     // clear the spread flag for all cells
-    std::for_each(mGrid.begin(), mGrid.end(), [](SFireCell &c) { c.spread=0.f; });
+    if (mStats.empty()) {
+        std::for_each(mGrid.begin(), mGrid.end(), [](SFireCell &c) { c.spread=0.f; });
+    } else {
+        // clear only the rectangle affected by the last fire
+        Rect &rbox = mStats.back().fire_bounding_box;
+        GridRunner<SFireCell> runner(mGrid, rbox);
+        while(SFireCell *c = runner.next())
+            c->spread=0.f;
+    }
 
     mGrid[index].spread = 1.f; // initial value
     double size_multiplier = 1.;
@@ -245,6 +253,7 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
     stat.max_size = static_cast<int>(ign.max_size);
     stat.ha_burned = n_ha;
     stat.ha_high_severity = n_highseverity_ha;
+    stat.fire_bounding_box=Rect(ixmin, iymin, ixmax, iymax);
     mStats.push_back(stat);
 }
 

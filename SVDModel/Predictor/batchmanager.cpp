@@ -105,7 +105,7 @@ std::pair<Batch *, size_t> BatchManager::validSlot(Module *module)
                 return std::pair<Batch*, int>(nullptr, 0);
 
             }
-            if ( sleeps % 10000 == 0) { // 100 secs
+            if ( sleeps % 60000 == 0) { // 600 secs = 10min
                 lg->error("time out in batch manager - no empty slots found.");
                 return std::pair<Batch*, int>(nullptr, -1);
 

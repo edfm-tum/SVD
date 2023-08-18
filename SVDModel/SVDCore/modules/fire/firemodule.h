@@ -46,6 +46,7 @@ struct SFireStat {
     int max_size; ///< maximum fire size (ha)
     int ha_burned; ///< # of ha. burned
     int ha_high_severity; ///< # of ha burned with high severity
+    Rect fire_bounding_box; ///< bounding box in cell coordinates
 
 };
 

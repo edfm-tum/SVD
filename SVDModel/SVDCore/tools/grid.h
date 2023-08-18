@@ -64,9 +64,12 @@ private:
 };
 class Rect {
 public:
+    Rect(): mTop(-1), mBottom(-1), mLeft(-1), mRight(-1) {}
+    Rect(int x1, int y1, int x2, int y2) { mLeft=x1; mRight=x2; mTop=y1; mBottom=y2;}
     Rect(Point p1, Point p2) { mTop=p1.y(); mLeft=p1.x(); mBottom=p2.y(); mRight=p2.x(); }
     Point topLeft() const { return Point(mLeft, mTop); }
     Point bottomRight() const { return Point(mRight, mBottom); }
+    bool isEmpty() const { return mTop== -1 && mBottom==-1 && mLeft == -1 && mRight==-1; }
 private:
     int mTop;
     int mBottom;

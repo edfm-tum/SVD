@@ -32,11 +32,11 @@
 class FireOut; // forward
 
 struct SFireCell {
-    SFireCell() : spread(0.f), n_fire(0), n_high_severity(0), last_burn(0) {}
-    float spread; ///< spread flag during current fire event
-    short int n_fire; ///< counter how often cell burned
-    short int n_high_severity; ///< high severity counter
-    short int last_burn; ///< year when the cell burned the last time
+    SFireCell() = default;
+    float spread { 0.F }; ///< spread flag during current fire event
+    short int n_fire { 0 }; ///< counter how often cell burned
+    short int n_high_severity {0}; ///< high severity counter
+    short int last_burn {0}; ///< year when the cell burned the last time
 };
 
 struct SFireStat {
@@ -54,11 +54,11 @@ class FireModule : public Module
 {
 public:
     FireModule(std::string module_name);
-    void setup();
-    std::vector<std::pair<std::string, std::string> > moduleVariableNames() const;
-    virtual double moduleVariable(const Cell *cell, size_t variableIndex) const;
+    void setup() override;
+    std::vector<std::pair<std::string, std::string> > moduleVariableNames() const override;
+    double moduleVariable(const Cell *cell, size_t variableIndex) const override;
 
-    void run();
+    void run() override;
 
     // getters
     const Grid<SFireCell> &fireGrid() { return mGrid; }
@@ -94,13 +94,13 @@ private:
     // store for transition probabilites for burned cells
     TransitionMatrix mFireMatrix;
 
-    double mExtinguishProb; ///< prob. that a burned pixel stops spreading
-    double mSpreadToDistProb; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
+    double mExtinguishProb {0.}; ///< prob. that a burned pixel stops spreading
+    double mSpreadToDistProb {0.}; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
     Expression mFireSizeMultiplier; ///< scaling factor to change the fire size from the input file
 
     // index of variables
-    size_t miBurnProbability;
-    size_t miHighSeverity;
+    size_t miBurnProbability{0};
+    size_t miHighSeverity{0};
 
     // fire statistics
     std::vector< SFireStat > mStats;

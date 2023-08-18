@@ -219,16 +219,21 @@ bool GeoTIFF::saveToFile(const std::string &fileName)
 
 }
 
-void GeoTIFF::initialize(size_t width, size_t height)
+void GeoTIFF::initialize(size_t width, size_t height, TIFDatatype dtype)
 {
     if (!mProjectionBitmap)
         throw std::logic_error("GeoTif: init write: no projection information is available. You need to load at least one TIF including projection info before writing a TIF.");
 
+    mDType = dtype;
+    if (dtype != DTSINT16 && dtype!=DTSINT32 && dtype!=DTFLOAT && dtype!=DTDOUBLE)
+        throw std::logic_error("GeoTif: init write: invalid data type!");
 
-    dib = FreeImage_AllocateT(FIT_FLOAT, width, height );
+    FREE_IMAGE_TYPE fit = FREE_IMAGE_TYPE(dtype);
+    dib = FreeImage_AllocateT(fit , width, height );
     FreeImage_CloneMetadata(dib, mProjectionBitmap);
 
-
+    //if (!FreeImage_SetMetadataKeyValue(FIMD_GEOTIFF, dib, "GDAL_NODATA", "-32768"))
+    //   throw std::logic_error("GeoTif: set metadata (NODATA) to xyz not successful!");
 }
 
 void GeoTIFF::setValue(size_t ix, size_t iy, double value)
@@ -237,6 +242,71 @@ void GeoTIFF::setValue(size_t ix, size_t iy, double value)
         return;
     if (ix > FreeImage_GetWidth(dib) || iy > FreeImage_GetHeight(dib))
         return;
+    if (mDType == DTFLOAT) {
     float flt_value = static_cast<float>(value);
     ((float*)FreeImage_GetScanLine(dib, iy))[ix] = flt_value;
+    } else if (mDType == DTDOUBLE) {
+        ((double*)FreeImage_GetScanLine(dib, iy))[ix] = value;
+    } else {
+        throw logic_error_fmt("GeoTif:setValue(double): invalid type of TIF: {}", mDType);
+    }
+}
+
+void GeoTIFF::setValue(size_t ix, size_t iy, float value)
+{
+    if (!dib)
+        return;
+    if (ix > FreeImage_GetWidth(dib) || iy > FreeImage_GetHeight(dib))
+        return;
+    if (mDType == DTFLOAT) {
+        ((float*)FreeImage_GetScanLine(dib, iy))[ix] = value;
+    } else if (mDType == DTDOUBLE) {
+        double dbl_value = static_cast<double>(value);
+        ((double*)FreeImage_GetScanLine(dib, iy))[ix] = dbl_value;
+    } else {
+        throw logic_error_fmt("GeoTif:setValue(double): invalid type of TIF: {}", mDType);
+    }
+
+}
+
+void GeoTIFF::setValue(size_t ix, size_t iy, int value)
+{
+    if (!dib)
+        return;
+    if (ix > FreeImage_GetWidth(dib) || iy > FreeImage_GetHeight(dib))
+        return;
+
+    if (mDType == DTSINT16) {
+        // short int:  16 bit signed int on most machines: https://en.cppreference.com/w/cpp/language/types
+        short int sival = static_cast<short int>(value);
+        ((short int*)FreeImage_GetScanLine(dib, iy))[ix] = sival;
+    } else if (mDType == DTSINT32) {
+        // int: 32 bit signed integer on ~ every machine
+        ((int*)FreeImage_GetScanLine(dib, iy))[ix] = value;
+
+    } else {
+        throw logic_error_fmt("GeoTif:setValue(int): invalid type of TIF: {}", mDType);
+    }
+
+
+}
+
+void GeoTIFF::setValue(size_t ix, size_t iy, short value)
+{
+    if (!dib)
+        return;
+    if (ix > FreeImage_GetWidth(dib) || iy > FreeImage_GetHeight(dib))
+        return;
+
+    if (mDType == DTSINT16) {
+        // short int:  16 bit signed int on most machines: https://en.cppreference.com/w/cpp/language/types
+        ((short int*)FreeImage_GetScanLine(dib, iy))[ix] = value;
+    } else if (mDType == DTSINT32) {
+        // int: 32 bit signed integer on ~ every machine
+        int sival = static_cast<short int>(value);
+        ((int*)FreeImage_GetScanLine(dib, iy))[ix] = sival;
+
+    } else {
+        throw logic_error_fmt("GeoTif:setValue(short int): invalid type of TIF: {}", mDType);
+    }
 }

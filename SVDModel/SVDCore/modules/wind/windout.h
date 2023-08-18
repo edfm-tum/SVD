@@ -16,31 +16,22 @@
 **    You should have received a copy of the GNU General Public License
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ********************************************************************************************/
-#ifndef TOOLS_H
-#define TOOLS_H
-#include <string>
-#include <vector>
+#ifndef WINDOUT_H
+#define WINDOUT_H
 
-class Settings; // forward
+#include "../../outputs/output.h"
+#include "expression.h"
 
-class Tools
+class WindOut : public Output
 {
 public:
-    Tools();
-    /// returns 'true' if the file exists, false otherwise
-    static bool fileExists(const std::string &fileName);
-    /// returns the full path to 'fileName'. If a relative path if provided,
-    /// it is resolved relative to the project directory
-    static std::string path(const std::string &fileName);
-    /// get file size (bytes), -1 if file does not exists
-    static int fileSize(const std::string &fileName);
-
-
-    // maintenance
-    static void setupPaths(const std::string &path, const Settings *settings);
+    WindOut();
+    void setup();
+    void execute();
 private:
-    static std::string mProjectDir;
-    static std::vector< std::pair<std::string, std::string > > mPathReplace;
+    Expression mLastWind;
+    std::string mLastWindPath;
+
 };
 
-#endif // TOOLS_H
+#endif // WINDOUT_H

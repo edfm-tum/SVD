@@ -78,46 +78,46 @@ std::string ModelShell::run_test_op(std::string what)
 {
     if (what=="grid_state") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c) { if (c.isNull()) return std::string("-9999"); else return std::to_string(c.cell().stateId()); });
+        std::string result = gridToESRIRaster<GridCell, short>(grid, [](const GridCell &c) { if (c.isNull()) return short(-9999); else return c.cell().stateId(); });
         return result;
     }
     if (what=="grid_restime") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c)
+        std::string result = gridToESRIRaster<GridCell, short>(grid, [](const GridCell &c)
         { if (c.isNull())
-                return std::string("-9999");
+                return short(-9999);
             else
-                return std::to_string(c.cell().residenceTime()); }
+                return c.cell().residenceTime(); }
         );
         return result;
     }
     if (what=="grid_next") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c)
+        std::string result = gridToESRIRaster<GridCell, int>(grid, [](const GridCell &c)
         { if (c.isNull())
-                return std::string("-9999");
+                return -9999;
             else
-                return std::to_string(c.cell().nextUpdate()); }
+                return c.cell().nextUpdate(); }
         );
         return result;
     }
 
     if (what=="grid_N") {
         auto &grid = Model::instance()->landscape()->environment();
-        std::string result = gridToESRIRaster<EnvironmentCell*>(grid, [](EnvironmentCell *c)
+        std::string result = gridToESRIRaster<EnvironmentCell*, double>(grid, [](EnvironmentCell *c)
         { if (!c)
-                return std::string("-9999");
+                return -9999.;
             else
-                return std::to_string(c->value("availableNitrogen")); }
+                c->value("availableNitrogen"); }
         );
         return result;
     }
 
     if (what=="ext_seed") {
         auto &grid = Model::instance()->landscape()->grid();
-        std::string result = gridToESRIRaster<GridCell>(grid, [](const GridCell &c)
+        std::string result = gridToESRIRaster<GridCell, int>(grid, [](const GridCell &c)
         {
-                return std::to_string(c.cell().externalSeedType()); }
+                return c.cell().externalSeedType(); }
         );
         return result;
     }
@@ -127,9 +127,9 @@ std::string ModelShell::run_test_op(std::string what)
         if (!module) return "fire module not active";
         const auto &grid = module->fireGrid();
 
-        std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c)
+        std::string result = gridToESRIRaster<SFireCell, short>(grid, [](const SFireCell &c)
         {
-                return std::to_string(c.n_fire); }
+                return c.n_fire; }
         );
         return result;
     }
@@ -139,9 +139,9 @@ std::string ModelShell::run_test_op(std::string what)
         if (!module) return "fire module not active";
         const auto &grid = module->fireGrid();
 
-        std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c)
+        std::string result = gridToESRIRaster<SFireCell, short>(grid, [](const SFireCell &c)
         {
-                return std::to_string(c.last_burn); }
+                return c.last_burn; }
         );
         return result;
     }

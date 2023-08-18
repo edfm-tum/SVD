@@ -54,12 +54,13 @@ void Landscape::setup()
 
     grid.loadGridFromFile(grid_file_name);
 
+    std::set<int> uval = grid.uniqueValues();
+
     lg->info("Loaded the grid (landscape.grid) '{}'. Dimensions: {} x {}, with cell size: {}m. ", grid_file_name, grid.sizeX(), grid.sizeY(), grid.cellsize());
     lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
     if (lg->should_log(spdlog::level::trace)) {
         // some statistics:
         lg->trace("The grid contains '{}' not-null values.", grid.countNotNull());
-        std::set<int> uval = grid.uniqueValues();
         lg->trace("Unique values: {}", join(uval.begin(), uval.end(), ",", 1000));
 
     }
@@ -80,6 +81,9 @@ void Landscape::setup()
     while (rdr.next()) {
         int cid = int(rdr.value(i_clim));
         int id = int(rdr.value(i_id));
+
+        if (uval.count(id) == 0)
+            continue;
 
         mEnvironmentCells.push_back( EnvironmentCell (id, cid) );
         EnvironmentCell &ecell=mEnvironmentCells.back();

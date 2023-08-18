@@ -26,7 +26,7 @@ FireOut::FireOut()
 {
     setName("Fire");
     setDescription("Output on fire events (one event per line) and grids for the year of the last burn.\n\n" \
-                   "Grids are saved as ASCII grids to the location specified by the" \
+                   "Grids are saved as ASCII/GeoTIFF grids to the location specified by the" \
                    "`lastFireGrid.path` property (`$year$` is replaced with the actual year). " \
                    "The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.\n\n" \
                    "### Parameters\n" \
@@ -71,14 +71,9 @@ void FireOut::execute()
         find_and_replace(file_name, "$year$", to_string(Model::instance()->year()));
         auto &grid = fire->mGrid;
 
-        // last burn:
-        //std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c) { return std::to_string(c.last_burn); });
-
-        // number of fires per cell:
-        std::string result = gridToESRIRaster<SFireCell>(grid, [](const SFireCell &c) { return std::to_string(c.n_fire); });
-        if (!writeFile(file_name, result))
-            throw std::logic_error("FireOut: couldn't write output grid file: " + file_name);
-
+        if (!gridToFile<SFireCell, short>( grid, file_name, GeoTIFF::DTSINT16,
+                                             [](const SFireCell &c){ return c.n_fire; }) )
+            throw std::logic_error("FireOut: couldn't write output file: " + file_name);
 
     }
 }

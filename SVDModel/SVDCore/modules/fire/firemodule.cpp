@@ -77,7 +77,7 @@ void FireModule::setup()
     mExtinguishProb = settings.valueDouble("modules.fire.extinguishProb");
     mSpreadToDistProb = 1. - settings.valueDouble("modules.fire.spreadDistProb");
     std::string firesize_multiplier = settings.valueString("modules.fire.fireSizeMultiplier");
-    if (firesize_multiplier.size()>0) {
+    if (!firesize_multiplier.empty()) {
         mFireSizeMultiplier.setExpression(firesize_multiplier);
         lg->info("fireSizeMultiplier is active (value: {}). The maximum fire size of fires will be scaled with this function (variable: max fire size (ha)).", mFireSizeMultiplier.expression());
     }

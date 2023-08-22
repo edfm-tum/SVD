@@ -84,6 +84,7 @@ private:
     Grid<SWindCell> mGrid;
 
     Grid<double> mRegionalStormProb; ///< 10km grid with storm probabilities
+    int mCellsPerRegion {10000}; ///< number of SVD cells per wind region
 
     /// susceptibility to windthrow (depending on state)
     /// based on damage model by Schmidt et al 2010
@@ -109,7 +110,7 @@ private:
 
     //double mExtinguishProb {0.}; ///< prob. that a burned pixel stops spreading
     //double mSpreadToDistProb {0.}; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
-    //Expression mWindSizeMultiplier; ///< scaling factor to change the fire size from the input file
+    Expression mWindSizeMultiplier; ///< scaling factor to change the fire size from the input file
     double mPstopAfterImpact { 0.1 }; ///< probability that impacts stops spreading on a disturbed cell
     double mPspreadUndisturbed { 0.1 }; ///< probability that impacts spread from a undisturbed cell
     double mPfetchFactor { 0.1 }; ///< "fetch factor", i.e. increase in probability for impact on cells adjacent to disturbed cells

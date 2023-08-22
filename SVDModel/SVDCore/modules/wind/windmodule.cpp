@@ -41,21 +41,21 @@ void WindModule::setup()
     lg->info("Setup of WindModule '{}'", name());
     auto settings = Model::instance()->settings();
 
-    settings.requiredKeys("modules.wind", {"regionalProbabilityGrid", "stormEventFile", "stateFile",
-                                           "stopAfterImpact", "spreadUndisturbed", "fetchFactor", "saveDebugGrids" });
+    settings.requiredKeys("modules.wind", {"regionalProbabilityGrid", "stormEventFile", "stateFile", "transitionFile",
+                                           "stopAfterImpact", "spreadUndisturbed", "fetchFactor", "saveDebugGrids", "windSizeMultiplier" });
 
-    /*
+
     // set up the transition matrix
-    std::string filename = settings.valueString("modules.fire.transitionFile");
+    std::string filename = settings.valueString("modules.wind.transitionFile");
     mWindMatrix.load(Tools::path(filename));
-*/
+
 
     // set up additional fire parameter values per state
-    std::string filename = settings.valueString("modules.wind.stateFile");
+    filename = settings.valueString("modules.wind.stateFile");
     Model::instance()->states()->loadProperties(Tools::path(filename));
 
     // check if variables are available
-    for (auto a : {"pDamage"})
+    for (const auto *a : {"pDamage"})
         if (State::valueIndex(a) == -1)
             throw logic_error_fmt("The WindModule requires the state property '{}' which is not available.", a);
 
@@ -66,7 +66,7 @@ void WindModule::setup()
         throw logic_error_fmt("The fire module requires a digital elevation model! {}", 0);
 */
 
-    // set up ignitions
+    // set up wind events
     filename = Tools::path(settings.valueString("modules.wind.stormEventFile"));
     FileReader rdr(filename);
     rdr.requiredColumns({"year", "x", "y", "number_of_cells", "proportion_of_cell"});
@@ -86,6 +86,13 @@ void WindModule::setup()
     mPspreadUndisturbed = settings.valueDouble("modules.wind.spreadUndisturbed");
     mPfetchFactor = settings.valueDouble("modules.wind.fetchFactor");
     mSaveDebugGrids = settings.valueBool("modules.wind.saveDebugGrids");
+
+    std::string windsize_multiplier = settings.valueString("modules.wind.windSizeMultiplier");
+    if (!windsize_multiplier.empty()) {
+        mWindSizeMultiplier.setExpression(windsize_multiplier);
+        lg->info("windSizeMultiplier is active (value: {}). The maximum number of affected cells will be scaled with this function (variable: total planned cells ).", mWindSizeMultiplier.expression());
+    }
+
 
     /*
 
@@ -108,7 +115,8 @@ void WindModule::setup()
     // setup of the fire grid (values per cell)
     auto &grid = Model::instance()->landscape()->grid();
     mGrid.setup(grid.metricRect(), grid.cellsize());
-    lg->debug("Created wind grid {} x {} cells.", mGrid.sizeX(), mGrid.sizeY());
+    mCellsPerRegion = (mRegionalStormProb.cellsize() / grid.cellsize())*(mRegionalStormProb.cellsize() / grid.cellsize());
+    lg->debug("Created wind grid {} x {} cells. CellsPerRegion: {}.", mGrid.sizeX(), mGrid.sizeY(), mCellsPerRegion);
 
     lg->info("Setup of WindModule '{}' complete.", name());
 
@@ -149,7 +157,7 @@ static const Point eight_neighbors[8] = {Point(-1,0), Point(1,0), Point(0,-1), P
 
 void WindModule::run()
 {
-    // check if we have ignitions
+    // check if we have events
     auto &grid = Model::instance()->landscape()->grid();
     auto range = mWindEvents.equal_range(Model::instance()->year());
     int n_executed=0;
@@ -157,8 +165,15 @@ void WindModule::run()
         SWindEvent &event = i->second;
         lg->debug("WindModule: event at {:f}/{:f} with # affected regions: '{}'.", event.x, event.y, event.n_regions);
         if (!grid.coordValid(event.x, event.y)) {
-            lg->debug("Coordinates invalid. Skipping.");
+            lg->debug("Coordinates out of project area. Skipping.");
             continue;
+        }
+        double size_multiplier = 1.;
+        if (!mWindSizeMultiplier.isEmpty()) {
+            double total_predicted = event.n_regions * event.prop_affected * mCellsPerRegion;
+            size_multiplier = mWindSizeMultiplier.calculate(total_predicted);
+            event.prop_affected = event.prop_affected * size_multiplier;
+            lg->debug("Modified fire size from '{}' to '{}' (windSizeMultiplier).", total_predicted, total_predicted*size_multiplier);
         }
 
         ++n_executed;
@@ -386,7 +401,12 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
             // ====================
             wind_grid[p] = -1.; // mark cell as already processed
             PointF loc = wind_grid.cellCenterPoint(p);
-            grid[loc].cell().setNewState(6); // ABAL 2-4m - just a test
+            auto &s = grid[loc].cell();
+
+            // effect of wind: a transition to another state
+            state_t new_state = mWindMatrix.transition(s.stateId());
+            s.setNewState(new_state);
+
             auto &stat = mGrid[loc];
             stat.last_storm = Model::instance()->year();
             ++stat.n_storm;

@@ -82,18 +82,20 @@ void ConsoleShell::run()
                RunState::instance()->dnnState().stateString().c_str(),
                RunState::instance()->modelState().stateString().c_str());
         while (RunState::instance()->state().state() == ModelRunState::Creating && waitcount<100) {
-            printf("Waiting # %d Current model state: %s (dnn: %s, model: %s)\n", ++waitcount,
+            printf("Waiting # %d Current model state: %s (dnn: %s, model: %s)\033[0K\r", ++waitcount,
                    RunState::instance()->state().stateString().c_str(),
                    RunState::instance()->dnnState().stateString().c_str(),
                    RunState::instance()->modelState().stateString().c_str());
             QThread::msleep(50);
             QCoreApplication::processEvents();
         }
-        printf("Finished setup -  state: %s (dnn: %s, model: %s)\n",
+        printf("\nFinished setup -  state: %s (dnn: %s, model: %s)\n",
                RunState::instance()->state().stateString().c_str(),
                RunState::instance()->dnnState().stateString().c_str(),
                RunState::instance()->modelState().stateString().c_str());
 
+
+        //QThread::msleep(100);
 
         mUpdateModelTimer.start(100); // 100
 
@@ -137,12 +139,12 @@ void ConsoleShell::modelUpdate()
 
     int stime = mStopwatch.elapsed();
 
-    printf("\r %s: %s                        ", QTime(0,0).addMSecs(stime).toString(Qt::ISODate).toStdString().c_str(), RunState::instance()->asString().c_str());
+    printf("\r %s: %s %s                       ", QTime(0,0).addMSecs(stime).toString(Qt::ISODate).toStdString().c_str(), RunState::instance()->asString().c_str(), "\033[0K\r");
 
 
 
 
-    if (mController->state()->isModelCreated() && mCreated==false) {
+    if (mController->state()->isModelReadyToRun() && mCreated==false) {
         printf("\n model successfully created. Starting the simulation.\n");
         mCreated=true;
         runModel();

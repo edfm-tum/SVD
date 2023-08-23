@@ -161,13 +161,16 @@ void WindModule::run()
     auto &grid = Model::instance()->landscape()->grid();
     auto range = mWindEvents.equal_range(Model::instance()->year());
     int n_executed=0;
+    std::vector<int> skipped_events;
     for (auto i=range.first; i!=range.second; ++i) {
         SWindEvent &event = i->second;
-        lg->debug("WindModule: event at {:f}/{:f} with # affected regions: '{}'.", event.x, event.y, event.n_regions);
+
         if (!grid.coordValid(event.x, event.y)) {
-            lg->debug("Coordinates out of project area. Skipping.");
+            skipped_events.push_back(event.Id);
             continue;
         }
+
+        lg->debug("WindModule: event at {:f}/{:f} with # affected regions: '{}'.", event.x, event.y, event.n_regions);
         double size_multiplier = 1.;
         if (!mWindSizeMultiplier.isEmpty()) {
             double total_predicted = event.n_regions * event.prop_affected * mCellsPerRegion;
@@ -179,6 +182,10 @@ void WindModule::run()
         ++n_executed;
         runWindEvent(event);
     }
+    if (!skipped_events.empty())
+        lg->debug("'{}' events skipped (coordinates out of project area). EventIds: {}",
+                  skipped_events.size(),
+                  join(skipped_events.begin(), skipped_events.end(), ", "));
     lg->info("WindModule: end of year. #wind events: {}.", n_executed);
 
     // wind output
@@ -348,6 +355,10 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
     std::queue<Point> spread_queue;
     lg->debug("Event#{}: - Tile: {}. Mean suscetibility on tile: '{}', '{}' forested pixels.", stat.Id, tile_code, mean_susceptibility, n_forested);
     //lg->debug("Number of starting positions: '{}'. ", n_top);
+    if (n_forested == 0) {
+        lg->debug("No forested pixels on tile, exiting.");
+        return stat;
+    }
 
     std::stack<Point> reverse_queue; // helper to reverse the order of elements
     while (!queue.empty()) {
@@ -396,7 +407,7 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
         if (p_local < 0.f)
             continue;
 
-        if ( drandom() > p_local ) {
+        if ( drandom() < p_local ) {
             // (i) impact the cell
             // ====================
             wind_grid[p] = -1.; // mark cell as already processed

@@ -41,17 +41,17 @@ void WindModule::setup()
     lg->info("Setup of WindModule '{}'", name());
     auto settings = Model::instance()->settings();
 
-    settings.requiredKeys("modules.wind", {"regionalProbabilityGrid", "stormEventFile", "stateFile", "transitionFile",
+    settings.requiredKeys("modules." + name(), {"regionalProbabilityGrid", "stormEventFile", "stateFile", "transitionFile",
                                            "stopAfterImpact", "spreadUndisturbed", "fetchFactor", "saveDebugGrids", "windSizeMultiplier" });
 
 
     // set up the transition matrix
-    std::string filename = settings.valueString("modules.wind.transitionFile");
+    std::string filename = settings.valueString(modkey("transitionFile"));
     mWindMatrix.load(Tools::path(filename));
 
 
     // set up additional fire parameter values per state
-    filename = settings.valueString("modules.wind.stateFile");
+    filename = settings.valueString(modkey("stateFile"));
     Model::instance()->states()->loadProperties(Tools::path(filename));
 
     // check if variables are available
@@ -67,7 +67,7 @@ void WindModule::setup()
 */
 
     // set up wind events
-    filename = Tools::path(settings.valueString("modules.wind.stormEventFile"));
+    filename = Tools::path(settings.valueString(modkey("stormEventFile")));
     FileReader rdr(filename);
     rdr.requiredColumns({"year", "x", "y", "number_of_cells", "proportion_of_cell"});
     size_t iyr=rdr.columnIndex("year"), ix=rdr.columnIndex("x"), iy=rdr.columnIndex("y"), in_cell=rdr.columnIndex("number_of_cells"), iprop=rdr.columnIndex("proportion_of_cell");
@@ -82,12 +82,12 @@ void WindModule::setup()
     lg->debug("Loaded {} storm events from '{}'", mWindEvents.size(), filename);
 
     // setup parameters
-    mPstopAfterImpact = settings.valueDouble("modules.wind.stopAfterImpact");
-    mPspreadUndisturbed = settings.valueDouble("modules.wind.spreadUndisturbed");
-    mPfetchFactor = settings.valueDouble("modules.wind.fetchFactor");
-    mSaveDebugGrids = settings.valueBool("modules.wind.saveDebugGrids");
+    mPstopAfterImpact = settings.valueDouble(modkey("stopAfterImpact"));
+    mPspreadUndisturbed = settings.valueDouble(modkey("spreadUndisturbed"));
+    mPfetchFactor = settings.valueDouble(modkey("fetchFactor"));
+    mSaveDebugGrids = settings.valueBool(modkey("saveDebugGrids"));
 
-    std::string windsize_multiplier = settings.valueString("modules.wind.windSizeMultiplier");
+    std::string windsize_multiplier = settings.valueString(modkey("windSizeMultiplier"));
     if (!windsize_multiplier.empty()) {
         mWindSizeMultiplier.setExpression(windsize_multiplier);
         lg->info("windSizeMultiplier is active (value: {}). The maximum number of affected cells will be scaled with this function (variable: total planned cells ).", mWindSizeMultiplier.expression());
@@ -106,7 +106,7 @@ void WindModule::setup()
         lg->info("fireSizeMultiplier is active (value: {}). The maximum fire size of fires will be scaled with this function (variable: max fire size (ha)).", mWindSizeMultiplier.expression());
     }
     */
-    std::string grid_file_name = Tools::path(settings.valueString("modules.wind.regionalProbabilityGrid"));
+    std::string grid_file_name = Tools::path(settings.valueString(modkey("regionalProbabilityGrid")));
     mRegionalStormProb.loadGridFromFile(grid_file_name);
     lg->debug("Loaded regional wind probability grid: '{}'. Dimensions: {} x {}, with cell size: {}m.", grid_file_name, mRegionalStormProb.sizeX(), mRegionalStormProb.sizeY(), mRegionalStormProb.cellsize());
     //lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());

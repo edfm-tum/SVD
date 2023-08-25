@@ -67,7 +67,9 @@ public:
     void setState(state_t new_state);
     void setResidenceTime(restime_t res_time) { mResidenceTime = res_time; }
 
+    /// set a future state update. This is used by both DNN and modules.
     void setNextStateId(state_t new_state) { if(!mIsUpdated) mNextStateId = new_state; }
+    /// set a future time. This is used by both DNN and modules.
     void setNextUpdateTime(int next_year) { if(!mIsUpdated) mNextUpdateTime = next_year; }
     /// sets a new state immediately (later updates from DNN are blocked)
     void setNewState(state_t new_state);
@@ -89,11 +91,16 @@ public:
     double stateFrequencyGlobal(state_t stateId) const;
     double minimumDistanceTo(state_t stateId) const;
 
+    /// retrieve mean height increment over the last years
+    /// this facilitates current state change and state history
+    double heightIncrement() const;
+
     /// get history for state/residence time
     const state_t *stateHistory() const { return mHistory.state; }
     const restime_t *resTimeHistory() const { return mHistory.restime; }
     /// the number of elements the state / restime history stores
     static size_t historySize() { return History::NSteps; }
+
 private:
     void dumpDebugData();
     int mCellIndex; ///< index of the grid cell within the landscape grid
@@ -114,7 +121,7 @@ private:
         state_t state[NSteps];
         restime_t restime[NSteps];
         History() {for (int i=0;i<NSteps;++i) { state[i]=0; restime[i]=0; }}
-        void push(state_t newstate, restime_t newtime) {
+        void saveHistory(state_t newstate, restime_t newtime) {
             for (int i=NSteps-2;i>=0;--i) {
                 restime[i+1] = restime[i];
                 state[i+1] = state[i];
@@ -122,6 +129,7 @@ private:
             restime[0] = newtime;
             state[0] = newstate;
         }
+
     } mHistory;
 
     static const std::vector<Point> mLocalNeighbors;

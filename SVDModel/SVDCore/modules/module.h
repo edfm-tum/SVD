@@ -54,6 +54,11 @@ public:
     virtual void setup() {}
     virtual void run() {}
 
+    // helpers
+    /// returns the full name for a setting within a module.
+    /// for example, calling (within module "wind") with subkey="speed" returns "modules.wind.speed"
+    std::string modkey(const std::string &subkey) { return "modules." + name() + "." + subkey; }
+
     // variables
     virtual std::vector<std::pair<std::string, std::string> > moduleVariableNames() const;
     virtual double moduleVariable(const Cell *cell, size_t variableIndex) const;

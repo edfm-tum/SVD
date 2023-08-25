@@ -57,8 +57,8 @@ BatchDNN::BatchDNN(size_t batch_size) : Batch(batch_size)
 BatchDNN::~BatchDNN()
 {
     // free the memory of the tensors...
-    if (spdlog::get("dnn"))
-        spdlog::get("dnn")->trace("Destructor of batch, free tensors");
+//    if (spdlog::get("dnn"))
+//        spdlog::get("dnn")->trace("Destructor of batch, free tensors");
     for (auto p : mTensors) {
         delete p;
     }
@@ -137,7 +137,10 @@ void BatchDNN::selectClasses()
     for (size_t i=0; i<usedSlots(); ++i) {
         InferenceData &id = inferenceData(i);
 
-        // residence time: at least one year
+        if (id.nextState() > 0)
+            continue; // the state has already been set, e.g. by random states if DNN is not enabled in debug mode.
+
+        // residence time: at least one year, i.e. for 10 classes it will have values between [1,10]
         restime_t rt = static_cast<restime_t>( chooseProbabilisticIndex(timeProbResult(i), mNTimeClasses )) + 1;
 
         if (!mAllowStateChangeAtMaxTime) {

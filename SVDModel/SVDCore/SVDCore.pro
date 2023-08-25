@@ -26,6 +26,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     modelshell.cpp \
+    modules/automanagement/automanagementmodule.cpp \
     modules/simplemanagement/simplemanagementmodule.cpp \
     modules/wind/windmodule.cpp \
     modules/wind/windout.cpp \
@@ -60,6 +61,7 @@ SOURCES += \
 
 HEADERS += \
     modelshell.h \
+    modules/automanagement/automanagementmodule.h \
     modules/simplemanagement/simplemanagementmodule.h \
     modules/wind/windmodule.h \
     modules/wind/windout.h \

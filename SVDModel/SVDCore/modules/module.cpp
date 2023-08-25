@@ -24,11 +24,16 @@
 #include "fire/firemodule.h"
 #include "wind/windmodule.h"
 #include "simplemanagement/simplemanagementmodule.h"
+#include "automanagement/automanagementmodule.h"
 
 /// list of all available special modules
 /// this has to be edited in case new modules are added
 std::vector<std::string> Module::mModuleTypes = {
-    "matrix", "fire", "simpleManagement", "wind"
+    "matrix", // 0
+    "fire", // 1
+    "simpleManagement", // 2
+    "wind", // 3
+    "autoManagement" // 4
 };
 
 std::vector<std::string> Module::mModuleNames;
@@ -54,6 +59,7 @@ std::shared_ptr<Module> Module::moduleFactory(std::string module_name, std::stri
     case 1: m = new FireModule(module_name); break;
     case 2: m = new SimpleManagementModule(module_name); break;
     case 3: m = new WindModule(module_name); break;
+    case 4: m = new AutoManagementModule(module_name); break;
     default: throw std::logic_error("Error: " + module_type + " is not a valid module type (Module::moduleFactory)!");
     }
     mModuleNames.push_back(module_name);

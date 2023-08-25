@@ -374,7 +374,7 @@ Batch * DNN::run(Batch *abatch)
             InferenceData &id=batch->inferenceData(i);
             // just random ....
             const State &s = Model::instance()->states()->randomState();
-            restime_t rt = static_cast<restime_t>(Model::instance()->year()+irandom(1,12));
+            restime_t rt = static_cast<restime_t>(irandom(1,12));
             id.setResult(s.id(), rt);
 
         }

@@ -46,8 +46,8 @@ void InferenceData::fetchData(Cell *cell, BatchDNN *batch, size_t slot)
 
 void InferenceData::setResult(state_t state, restime_t time)
 {
-    //if (state==0) TODO: Enable again (nur wegen warning!!)
-    //    spdlog::get("main")->error("InferenceData::setResult, state=0!");
+    if (state==0) //TODO: Enable again (nur wegen warning!!)
+        spdlog::get("main")->error("InferenceData::setResult, state=0!");
     mNextState=state;
     // time is the number of years the next update should happen
     // we change to the absolute year:

@@ -41,6 +41,9 @@ void AutoManagementModule::setup()
 
     mMinHeight = settings.valueDouble(modkey("minHeight"), 20.);
 
+    // output: set up large enough space for all states
+    mStateHistogram.resize(Model::instance()->states()->stateIdLookupLength());
+
     lg->info("Setup of AutoManagementModule '{}' complete.", name());
     lg = spdlog::get("modules");
 
@@ -50,7 +53,7 @@ std::vector<std::pair<std::string, std::string> > AutoManagementModule::moduleVa
 {
 
     return { {"height", "stand topheight (m)"},
-        {"height_inc", "lower bound of height increment \n (based on current state &  history) in m/yr"}};
+        {"heightIncrement", "lower bound of height increment \n (based on current state &  history) in m/yr"}};
 
 }
 
@@ -73,7 +76,11 @@ void AutoManagementModule::run()
     if (!mBurnInProbability.isEmpty())
         p_burnin = mBurnInProbability.calculate(Model::instance()->year());
 
+    // reset stats
+    std::fill(mStateHistogram.begin(), mStateHistogram.end(), 0);
+
     lg->debug("Start AutoManagement. BurnInProb: '{}'", p_burnin);
+
 
     // run over all cells on the landscape and check height increment
     for (Cell &c : Model::instance()->landscape()->cells()) {
@@ -86,7 +93,9 @@ void AutoManagementModule::run()
                 double p_manage = c.state()->value(miManagement) * p_burnin;
                 if (p_manage==1. || drandom() < p_manage) {
                     // ok, now manage the stand!
-                    // effect of management: a transition to another state
+                    // (1) save stats:
+                    ++mStateHistogram[ static_cast<size_t>(c.stateId())];
+                    // (2) effect of management: a transition to another state
                     state_t new_state = mMgmtMatrix.transition(c.stateId());
                     c.setNewState(new_state);
                     ++n_managed;
@@ -96,5 +105,9 @@ void AutoManagementModule::run()
     }
 
     lg->info("AutoManagement completed. #tested: '{}', #managed: '{}'", n_tested, n_managed);
+
+    // fire output
+    Model::instance()->outputManager()->run("AutoManagement");
+
 }
 

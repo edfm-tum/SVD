@@ -138,7 +138,7 @@ bool DNN::setupDNN(size_t aindex)
     if (!lg)
         throw std::logic_error("DNN::setup: logging not available.");
     lg->info("Setup of DNN #{}", aindex);
-    settings.requiredKeys("dnn", {"file", "maxBatchQueue", "topKNClasses", "state.name", "state.N", "restime.name", "restime.N"});
+    settings.requiredKeys("dnn", {"file", "maxBatchQueue", "topKNClasses", "state.name", "state.N", "restime.name", "restime.N", "temperatureState", "temperatureRestime"});
 
     std::string file = Tools::path(settings.valueString("dnn.file"));
     mTopK_tf = settings.valueBool("dnn.topKGPU", "true");
@@ -149,6 +149,7 @@ bool DNN::setupDNN(size_t aindex)
          mNStateCls = Model::instance()->states()->states().size(); // default: number of states
 
     mNResTimeCls = settings.valueUInt("dnn.restime.N");
+
 
     std::string selected_gpu = settings.valueString("dnn.selectedGPU");
 

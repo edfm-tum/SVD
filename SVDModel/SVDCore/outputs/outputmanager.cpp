@@ -30,6 +30,7 @@
 #include "statehistout.h"
 #include "modules/fire/fireout.h"
 #include "modules/wind/windout.h"
+#include "modules/automanagement/automanagementout.h"
 
 OutputManager::OutputManager()
 {
@@ -40,6 +41,7 @@ OutputManager::OutputManager()
     mOutputs.push_back(new StateHistOut());
     mOutputs.push_back(new FireOut());
     mOutputs.push_back(new WindOut());
+    mOutputs.push_back(new AutoManagementOut());
 }
 
 OutputManager::~OutputManager()

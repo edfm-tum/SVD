@@ -115,7 +115,8 @@ public:
             throw std::logic_error("Invalid state id: " + to_string(id));
         return *s; }
     /* const State &stateById(state_t id); */
-
+    /// get the size required for a continuous vector from 0..max-state-id
+    state_t stateIdLookupLength() const { return mStateIdLookup.size(); }
 
     // handlers
     bool registerHandler(Module *module, const std::string &handler);

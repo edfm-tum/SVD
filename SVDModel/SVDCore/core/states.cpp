@@ -121,7 +121,9 @@ void States::updateStateHistogram()
 
 const State &States::randomState() const
 {
-    size_t i = static_cast<size_t>(  irandom(0, static_cast<int>(mStates.size())) );
+    size_t i = static_cast<size_t>(  irandom(1, static_cast<int>(mStates.size())) ); // do not return state 0 = invalid
+    if (mStates[i].id() == 0)
+        return mStates[1]; // just for debug
     return mStates[i];
 }
 

@@ -4,6 +4,7 @@
 #include "modules/module.h"
 #include "transitionmatrix.h"
 #include "expression.h"
+#include "automanagementout.h"
 
 
 /// The SimpleManagementModule implements a basic management regime
@@ -35,6 +36,9 @@ private:
     size_t miIncrementThreshold;
     size_t miManagement;
 
+    std::vector<int> mStateHistogram;
+
+    friend class AutoManagementOut;
 };
 
 #endif // AUTOMANAGEMENTMODULE_H

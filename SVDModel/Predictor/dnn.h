@@ -56,7 +56,6 @@ public:
     /// the definition of the tensors to fill
     static const std::list<InputTensorItem> &tensorDefinition() {return mTensorDef; }
 
-
 private:
 
     static TensorWrapper *buildTensor(size_t batch_size, InputTensorItem &item);
@@ -66,6 +65,7 @@ private:
     // DNN specifics
     size_t mIndex; ///< internal number of the DNN
     bool mDummyDNN; ///< if true, then the tensorflow components are not really used (for debug builds)
+
     bool mTopK_tf; ///< use tensorflow for the state top k calculation
     size_t mTopK_NClasses; ///< number of classes used for the top k algorithm
     std::vector<std::string> mOutputTensorNames; ///< names of the output tensors (e.g. output/Softmax)

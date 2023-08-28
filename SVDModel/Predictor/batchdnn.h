@@ -52,7 +52,8 @@ private:
 
     /// select from the topK classes (DNN result) the next state & time
     void selectClasses();
-    size_t chooseProbabilisticIndex(float *values, size_t n);
+    /// sample and return and index from a probability distribution (values) with size n. Use temperature parameter to scale probabilities.
+    size_t chooseProbabilisticIndex(float *values, size_t n, double temperature=1);
 
     // state change output specific
     /// link to detailed output
@@ -64,9 +65,12 @@ private:
     /// a vector of tensors associated with this batch of data
     std::vector<TensorWrapper*> mTensors;
 
-    size_t mNTopK; ///< number of classes for each example
-    size_t mNTimeClasses; ///< number of time classes for each example
-    bool mAllowStateChangeAtMaxTime; ///< if true, selecting the maximum number of years forces the state to stay the same
+    size_t mNTopK { 10 }; ///< number of classes for each example
+    size_t mNTimeClasses { 10 }; ///< number of time classes for each example
+    bool mAllowStateChangeAtMaxTime {false}; ///< if true, selecting the maximum number of years forces the state to stay the same
+    double mStateTemperature {1.}; ///< temperature parameter for selecting the next state
+    double mRestimeTemperature {1.}; ///< temperature parameter for selecting the next residence time
+
     /// store the topK classes from the DNN for target states
     std::vector<state_t> mStates;
     /// store the prob. for the topK classes from the DNN for target states

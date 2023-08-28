@@ -1,7 +1,6 @@
 #include "statehistout.h"
 
 #include "model.h"
-#include "landscape.h"
 
 
 StateHistOut::StateHistOut()
@@ -13,8 +12,8 @@ StateHistOut::StateHistOut()
     // define the columns
     columns() = {
     {"year", "simulation year", DataType::Int},
-    {"state", "stateId", DataType::Int},
-    {"n", "number of cells that are currently in the state `state`", DataType::Int}   };
+    {"stateId", "state Id", DataType::Int},
+    {"n", "number of cells that are currently in the state `stateId`", DataType::Int}   };
 
 }
 
@@ -25,24 +24,11 @@ void StateHistOut::setup()
 
 void StateHistOut::execute()
 {
-//    auto &grid = Model::instance()->landscape()->grid();
-//    const auto &states = Model::instance()->states()->states();
-//    int year = Model::instance()->year();
-//    // create a (sparse) vector of stateIds
-//    state_t max_state=0;
-//    for (const auto &s : states)
-//        max_state = std::max(max_state, s.id());
-//    std::vector<int> state_count;
-//    state_count.resize(static_cast<size_t>(max_state+1));
-
-//    // count every state on the landscape
-//    for (Cell *c=grid.begin(); c!=grid.end(); ++c)
-//        if (!c->isNull())
-//            state_count[static_cast<size_t>(c->stateId())]++;
 
     auto state_count = Model::instance()->states()->stateHistogram();
     int year = Model::instance()->year();
     // write output table
+    // Note: it works to use the the index here as state-id: this is exactly the other way round as it is used when saving
     for (size_t i=0;i<state_count.size();++i) {
         if (state_count[i]>0) {
             out() << year << i << state_count[i];

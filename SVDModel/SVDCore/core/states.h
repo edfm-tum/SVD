@@ -42,9 +42,17 @@ public:
     StateType type() const { return mType; }
     /// unique state id
     state_t id() const { return mId; }
+    /// composition of the state; this is a string consisting of one or more species codes
     const std::string &compositionString() const { return mComposition; }
+    /// value of the functioning dimension, typcally value for LAI
     int function() const { return mFunction; }
+    /// structure dimension of the state. Typically forest top-height in m.
     int structure() const {return mStructure; }
+
+    /// the top height in meters.
+    /// it is assumed here that the numeric value given by the structure component of the state
+    /// is *already* the top height.
+    double topHeight() const { return static_cast<double>(structure()); }
     const std::string &name() const  { return mName; }
     const std::string &colorName() const { return mColorName; }
     std::string asString() const;
@@ -100,8 +108,15 @@ public:
     const State &randomState() const;
     const std::vector<State> &states() { return mStates; }
     const State &stateByIndex(size_t index) const { return mStates[index]; }
-    const State &stateById(state_t id);
-
+    const State &stateById(state_t id) const {
+        assert(static_cast<size_t>(id) < mStateIdLookup.size());
+        State *s = mStateIdLookup[id];
+        if (!s)
+            throw std::logic_error("Invalid state id: " + to_string(id));
+        return *s; }
+    /* const State &stateById(state_t id); */
+    /// get the size required for a continuous vector from 0..max-state-id
+    state_t stateIdLookupLength() const { return mStateIdLookup.size(); }
 
     // handlers
     bool registerHandler(Module *module, const std::string &handler);
@@ -114,6 +129,9 @@ private:
     std::map<std::string,  Module*> mHandlers;
 
     std::vector<int> mStateHistogram;
+    /// quick lookup table for stateIds
+    /// stores on positions 0..max_state_id-1 pointers to mStates vector
+    std::vector<State*> mStateIdLookup;
 
 };
 

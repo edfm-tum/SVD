@@ -37,10 +37,14 @@ BatchDNN::BatchDNN(size_t batch_size) : Batch(batch_size)
 
     mInferenceData.resize(mBatchSize);
     // reserve memory for the topK classes for target states and residence time
+    const auto &settings = Model::instance()->settings();
+    settings.requiredKeys("dnn", {"topKNClasses", "restime.N", "allowStateChangeAtMaxTime", "temperatureState", "temperatureRestime"});
+    mNTopK = settings.valueUInt("dnn.topKNClasses", 10);
+    mNTimeClasses = settings.valueUInt("dnn.restime.N", 10);
+    mAllowStateChangeAtMaxTime = settings.valueBool("dnn.allowStateChangeAtMaxTime", "false");
+    mStateTemperature = settings.valueDouble("dnn.temperatureState");
+    mRestimeTemperature = settings.valueDouble("dnn.temperatureRestime");
 
-    mNTopK = Model::instance()->settings().valueUInt("dnn.topKNClasses", 10);
-    mNTimeClasses = Model::instance()->settings().valueUInt("dnn.restime.N", 10);
-    mAllowStateChangeAtMaxTime = Model::instance()->settings().valueBool("dnn.allowStateChangeAtMaxTime", "false");
 
     mStates.resize(mBatchSize * mNTopK);
     mStateProb.resize(mBatchSize * mNTopK);
@@ -57,8 +61,8 @@ BatchDNN::BatchDNN(size_t batch_size) : Batch(batch_size)
 BatchDNN::~BatchDNN()
 {
     // free the memory of the tensors...
-    if (spdlog::get("dnn"))
-        spdlog::get("dnn")->trace("Destructor of batch, free tensors");
+//    if (spdlog::get("dnn"))
+//        spdlog::get("dnn")->trace("Destructor of batch, free tensors");
     for (auto p : mTensors) {
         delete p;
     }
@@ -109,9 +113,23 @@ void BatchDNN::setupTensors()
     DNN::setupBatch(this, mTensors);
 }
 
+// Example code Francois Chollet, Deep Learning Book:
+//def sample_next(predictions, temperature=1.0):
+//    predictions = np.asarray(predictions).astype("float64")
+//    predictions = np.log(predictions) / temperature
+//    exp_preds = np.exp(predictions)
+//    predictions = exp_preds / np.sum(exp_preds)
+//    probas = np.random.multinomial(1, predictions, 1)
+//    return np.argmax(probas)
+
 // choose randomly a value in *values (length=n), return the index.
-size_t BatchDNN::chooseProbabilisticIndex(float *values, size_t n)
+size_t BatchDNN::chooseProbabilisticIndex(float *values, size_t n, double temperature)
 {
+    if (temperature != 1.) {
+        // include temperature parameter
+        for (size_t i=0;i<n;++i)
+            values[i] = exp( log(values[i]) / temperature );
+    }
 
     // calculate the sum of probs
     double p_sum = 0.;
@@ -137,8 +155,11 @@ void BatchDNN::selectClasses()
     for (size_t i=0; i<usedSlots(); ++i) {
         InferenceData &id = inferenceData(i);
 
-        // residence time: at least one year
-        restime_t rt = static_cast<restime_t>( chooseProbabilisticIndex(timeProbResult(i), mNTimeClasses )) + 1;
+        if (id.nextState() > 0)
+            continue; // the state has already been set, e.g. by random states if DNN is not enabled in debug mode.
+
+        // residence time: at least one year, i.e. for 10 classes it will have values between [1,10]
+        restime_t rt = static_cast<restime_t>( chooseProbabilisticIndex(timeProbResult(i), mNTimeClasses, mRestimeTemperature )) + 1;
 
         if (!mAllowStateChangeAtMaxTime) {
             // allowing state change at max time: default = false
@@ -161,7 +182,7 @@ void BatchDNN::selectClasses()
         }
 
         // select the next state
-        size_t index = chooseProbabilisticIndex(stateProbResult(i), mNTopK);
+        size_t index = chooseProbabilisticIndex(stateProbResult(i), mNTopK, mStateTemperature);
         state_t stateId = stateResult(i)[index];
 
 //        if (stateId == 0 || rt == 0) {

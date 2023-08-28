@@ -81,24 +81,26 @@ bool TransitionMatrix::load(const std::string &filename)
     }
 
     // TODO: check transition matrix: states have to be valid, p should sum up to 1
-    std::stringstream ss;
-    for (const auto &sk : mTM) {
-        state_t st = static_cast<state_t>(sk.first.first);
-        const auto &s = Model::instance()->states()->stateById(st);
+    if (spdlog::get("setup")->should_log(spdlog::level::trace)) {
+        std::stringstream ss;
+        for (const auto &sk : mTM) {
+            state_t st = static_cast<state_t>(sk.first.first);
+            const auto &s = Model::instance()->states()->stateById(st);
 
-        ss << fmt::format("State: #{}: '{}' (key: '{}')", st, s.name(), sk.first.second) << std::endl;
-        for (const auto &item : sk.second) {
-            const auto &s_target = Model::instance()->states()->stateById(item.state);
-            ss << fmt::format("|- #{}: '{}': p={}", item.state, s_target.name(), item.prob);
-            if (item.has_minmax())
-                ss << fmt::format(" pmin/pmax: {}/{}", item.pmin, item.pmax);
-            if (item.expr)
-                ss << fmt::format(" expr: '{}'", item.expr->expression());
-            ss << std::endl;
+            ss << fmt::format("State: #{}: '{}' (key: '{}')", st, s.name(), sk.first.second) << std::endl;
+            for (const auto &item : sk.second) {
+                const auto &s_target = Model::instance()->states()->stateById(item.state);
+                ss << fmt::format("|- #{}: '{}': p={}", item.state, s_target.name(), item.prob);
+                if (item.has_minmax())
+                    ss << fmt::format(" pmin/pmax: {}/{}", item.pmin, item.pmax);
+                if (item.expr)
+                    ss << fmt::format(" expr: '{}'", item.expr->expression());
+                ss << std::endl;
+            }
+            ss << "====================" << std::endl;
         }
-        ss << "====================" << std::endl;
+        spdlog::get("setup")->trace("Transition matrix dump: \n{}", ss.str());
     }
-    spdlog::get("setup")->debug("Transition matrix dump: \n{}", ss.str());
 
 
     spdlog::get("setup")->debug("Loaded transition matrix for {} states from file '{}' (processed {} records).", mTM.size(), filename, n);

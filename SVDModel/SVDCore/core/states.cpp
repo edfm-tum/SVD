@@ -61,8 +61,12 @@ void States::setup()
         max_state = std::max(max_state, mStates.back().id());
 
     }
+    // populate lookup table
+    mStateIdLookup.resize(max_state+1);
+    for (State &s : mStates)
+        mStateIdLookup[ s.id() ] = &s; // pointer to state
 
-    spdlog::get("setup")->debug("Loaded {} states from file '{}'", mStates.size(), file_name);
+    spdlog::get("setup")->debug("Loaded {} states from file '{}' (max stateId: {}).", mStates.size(), file_name, max_state);
 
     // load extra properties
     file_name = Model::instance()->settings().valueString("states.extraFile");
@@ -117,10 +121,13 @@ void States::updateStateHistogram()
 
 const State &States::randomState() const
 {
-    size_t i = static_cast<size_t>(  irandom(0, static_cast<int>(mStates.size())) );
+    size_t i = static_cast<size_t>(  irandom(1, static_cast<int>(mStates.size())) ); // do not return state 0 = invalid
+    if (mStates[i].id() == 0)
+        return mStates[1]; // just for debug
     return mStates[i];
 }
 
+/*
 const State &States::stateById(state_t id)
 {
 
@@ -132,7 +139,7 @@ const State &States::stateById(state_t id)
     }
     throw std::logic_error("Invalid state id: " + to_string(id));
 
-}
+}*/
 
 bool States::registerHandler(Module *module, const std::string &handler)
 {

@@ -58,11 +58,15 @@ void Cell::update()
     // is called at the end of the year: the state changes
     // already now so that we will have the correct state at the
     // start of the next year
+    // conceptually, this happens on the 31st of December.
+    // Outputs are written *after* that, i.e. will have already increased residence time / new state
     int year = Model::instance()->year();
     if (year+1 >= mNextUpdateTime) {
         // change the state of the current cell
         if (mNextStateId != stateId()) {
-            mHistory.push(mNextStateId, mResidenceTime); // save to history
+            // save to history: since the residence time here does not include the current year (yet), we'll add it here
+            // i.e., the minimum residence time in the history is 1.
+            mHistory.saveHistory(mNextStateId, mResidenceTime + 1);
             // the actual update:
             setState( mNextStateId );
             setResidenceTime( 0 );
@@ -97,6 +101,8 @@ void Cell::setState(state_t new_state)
 
 void Cell::setNewState(state_t new_state)
 {
+    // this sets a new state, which will be actually updated at the end of the year in Cell::update()
+    // any predictions done by DNN earlier will be ignored
     setNextUpdateTime(Model::instance()->year());
     setNextStateId(new_state);
     mIsUpdated = true;
@@ -255,5 +261,60 @@ void Cell::dumpDebugData()
     lg->info("Current state ID: {}, {}, residence time: {}", mStateId, mState ? mState->asString() : "Invalid State", mResidenceTime);
     lg->info("external seed type: {}", mExternalSeedType);
     lg->info("Next state-id: {},  update time: {}", mNextStateId, mNextUpdateTime);
+
+}
+
+double Cell::heightIncrement() const
+{
+    // the annual height increment is calculated as follows:
+    // it gets the maximum height (including the next state change)
+    // it counts the years from the future to the past until a height < max_height is found. If none is found, years are counted
+    // until the end of the history.
+    // the increment is then: delta_h / n_years, i.e. it is rather a lower limit, then an exact estimate
+    const double maximum_increment = 1.;
+    double max_height = -1.;
+    int n_years = 1;
+    double delta_h = 0.;
+    if (mNextStateId > -1 && mNextUpdateTime>0) {
+        // there is a change projected
+        const auto &next_state = Model::instance()->states()->stateById(mNextStateId);
+        max_height = next_state.topHeight();
+        // for height reduction return unlimited growth
+        if (max_height < state()->topHeight())
+            return maximum_increment;
+
+        // time until next state change + years until last state change
+        n_years = (mNextUpdateTime - Model::instance()->year()) + mResidenceTime + 1;
+    } else {
+        // no future change yet
+        max_height = state()->topHeight(); // current height
+        n_years = mResidenceTime + 1 ; // residence time is 0 in the first year
+    }
+    if (max_height <= 0.)
+        return 0.;
+
+    // calculate height increment based on the last saved state changes
+    for (int i=0;i<History::NSteps;++i) {
+        if (mHistory.state[i] != 0) {
+            const auto &history_state = Model::instance()->states()->stateById(mHistory.state[i]);
+            double h_history = history_state.topHeight();
+            // if we had disturbance/management already in the history, return upper bound
+            if (h_history > max_height)
+                return maximum_increment;
+
+            // check for height increment:
+            if (history_state.topHeight() < max_height) {
+                delta_h = (max_height - history_state.topHeight());
+
+                // lower height increment bound: increment [m] / years [yrs]; we cap with 1m / yr.
+                return std::min(delta_h / double(n_years), maximum_increment);
+            }
+            // note: residence time includes already the increment by one
+            n_years += mHistory.restime[i];
+        }
+    }
+    const double min_delta_h = 2.; // we have 2m steps right now
+    // in case no height increment is found, we provide a lower bound
+    return std::min(min_delta_h / double(n_years), maximum_increment);
 
 }

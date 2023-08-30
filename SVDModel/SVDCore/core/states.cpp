@@ -189,7 +189,7 @@ State::State(state_t id, std::string composition, int structure, int function, s
     // this is not ideal:
     // if module is empty, than we assume it is a forest state
     // if not we say it is "None"???? (see setModule())
-    if (handling_module.empty())
+    if (handling_module.empty() || handling_module=="NA")
         mType = Forest;
     else
         mType = None;

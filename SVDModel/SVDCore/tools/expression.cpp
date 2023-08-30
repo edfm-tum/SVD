@@ -26,7 +26,6 @@
 #include <cassert>
 #include <mutex>
 #include "randomgen.h"
-#include "strtools.h"
 
 /** @class Expression
   An expression engine for mathematical expressions provided as strings.
@@ -84,10 +83,21 @@ static std::vector<std::string> mathFuncList={"sin", "cos", "tan",
                                        "exp", "ln", "sqrt",
                                        "min", "max", "if",
                                        "incsum", "polygon", "mod", "sigmoid", "rnd", "rndg", "limit",  "round", "in",
-                                             "localNB", "intermediateNB", "globalNB", "distance", "stateChange"};
+                                             "localNB", "intermediateNB", "globalNB", "distance", "speciesProportion"};
 const int  MaxArgCount[23]={1,1,1,1,  1, 1,   -1, -1, 3, 1, -1, 2, 4, 2, 2, 3, 1, -1,    -1,-1,-1,-1,-1};
 #define    AGGFUNCCOUNT 6
 static std::string AggFuncList[AGGFUNCCOUNT]={"sum", "avg", "max", "min", "stddev", "variance"};
+
+// constants (static)
+std::vector<std::string> Expression::mConstants;
+
+void Expression::setConstants(const std::vector<std::string> &consts)
+{
+    mConstants.clear();
+    for (auto s : consts)
+        mConstants.push_back(s);
+
+}
 
 bool Expression::mLinearizationAllowed = false;
 Expression::Expression()
@@ -165,6 +175,12 @@ Expression::ETokType  Expression::next_token()
                 // support for pseudo-literals 'true' and 'false'
                 if (m_token=="true") { m_state=etNumber; m_token="1"; return etNumber; }
                 if (m_token=="false") { m_state=etNumber; m_token="0"; return etNumber; }
+                // and constants
+                if (contains(mConstants, m_token)) {
+                    m_state = etNumber;
+                    m_token = to_string( indexOf(mConstants, m_token) );
+                    return etNumber;
+                }
                 return etVariable;
             }
         }
@@ -606,6 +622,10 @@ double Expression::execute(double *varlist, ExpressionWrapper *object, bool *rLo
                 *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 4, p, (int)exec->Value);
                 p-=(int) (exec->Value-1);
                 break;
+            case 22: // stateSpecies()
+                *(p-(int)(exec->Value-1)) = udfSpeciesProportion(object, p, (int)exec->Value);
+                p-=(int) (exec->Value-1);
+                break;
             }
             p++;
             break;
@@ -740,6 +760,7 @@ void Expression::enableIncSum()
     m_incSumVar=0.;
 }
 
+
 // "Userdefined Function" Polygon
 double  Expression::udfPolygon(double Value, double* Stack, int ArgCount) const
 {
@@ -838,12 +859,29 @@ double Expression::udfNeighborhood(ExpressionWrapper *object, int neighbor_class
     return result;
 }
 
-double Expression::udfStateChange(ExpressionWrapper *object, int var_type, double *Stack, int ArgCount) const
+double Expression::udfSpeciesProportion(ExpressionWrapper *object, double *Stack, int ArgCount) const
 {
     if (!object) return 0.;
     CellWrapper *wrap = dynamic_cast<CellWrapper*>(object);
     if (!wrap) return 0.;
     double *p = Stack - (ArgCount-1);
+    double result = 0;
+    while (p <= Stack) {
+        size_t species_index = static_cast<size_t>( *p );
+        result += wrap->speciesProportion(species_index);
+        ++p;
+    }
+    return result;
+
+//    if (ArgCount<2)
+//        throw std::logic_error("Expression: in() function: not enough parameters");
+//    double *p = Stack - (ArgCount-2); // point at the first value (v1)
+//    while (p <= Stack) {
+//        if (*p == 1) // todo: fix!!!
+//            return static_cast<double>(True);
+//        ++p;
+//    }
+    return static_cast<double>(False);
 
     // TODO: here we miss the actual logic
     // what needs to be done:

@@ -307,3 +307,13 @@ double CellWrapper::minimumDistanceTo(size_t stateId)
 {
     return mData->minimumDistanceTo(static_cast<state_t>(stateId));
 }
+
+double CellWrapper::speciesProportion(size_t species_index)
+{
+    //Model::instance()->species()
+    // todo: retrieve proportion of species 'species_index' on the current state of the cell
+    if (!mData->state() || mData->state()->speciesShares().empty())
+        return -1.;
+    return mData->state()->speciesShares()[species_index];
+
+}

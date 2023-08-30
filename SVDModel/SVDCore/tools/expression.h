@@ -33,6 +33,7 @@ public:
         enum BoolValue { False=0, True=1 };
         Expression(const std::string &aExpression) { setExpression(aExpression); }
         Expression(const std::string &expression, ExpressionWrapper *wrapper) { setExpression(expression); mModelObject = wrapper;  }
+
         // intialization
         void setExpression(const std::string &aExpression); ///< set expression
         void setAndParse(const std::string &expr); ///< set expression and parse instantly
@@ -46,8 +47,12 @@ public:
         /// @param get_index a function with the signature int func(const std::string &var_name) -> returns the index of the variable
         /// @param get_value a function with the signature double func(int var_index) --> to retrieve the current value of the associated function
         void setScriptingFunctions( int (*get_index)(const std::string &), double (*get_value)(int)) { mScriptIndexFunc=get_index; mScriptValueFunc = get_value; }
+
+
         // calculations
-        double execute(double *varlist=0, ExpressionWrapper *object=0, bool *rLogicResult=0) const; ///< calculate formula and return result. variable values need to be set using "setVar()"
+        /// calculate formula and return result. variable values need to be set using "setVar()"
+        double execute(double *varlist=0, ExpressionWrapper *object=0, bool *rLogicResult=0) const;
+
         /** calculate formula. the first two variables are assigned the values Val1 and Val2. This function is for convenience.
            the return is the result of the calculation.
            e.g.: x+3*y --> Val1->x, Val2->y
@@ -57,6 +62,7 @@ public:
             double res = calculate(Val1, Val2, forceExecution);
             return !(res==0.);
         }
+
         /// calculate formula with object
         ///
         double calculate(ExpressionWrapper &object, const double variable_value1=0., const double variable_value2=0.) const;
@@ -64,6 +70,7 @@ public:
             double res = calculate(object, variable_value1, variable_value2);
             return !(res==0.);
         }
+
         //variables
         /// set the value of the variable named "Var". Note: using addVar to obtain a pointer may be more efficient for multiple executions.
         void  setVar(const std::string& Var, double Value);
@@ -83,9 +90,11 @@ public:
         bool isStrict() { return m_strict;}
         void setStrict(bool str) { m_strict=str; }
         void setCatchExceptions(bool docatch=true) { m_catchExceptions = docatch; }
-        void   setExternalVarSpace(const std::vector<std::string>& ExternSpaceNames, double* ExternSpace);
+        void setExternalVarSpace(const std::vector<std::string>& ExternSpaceNames, double* ExternSpace);
         void enableIncSum();
-        double udfRandom(int type, double p1, double p2) const; ///< user defined function rnd() (normal distribution does not work now!)
+
+        static void setConstants(const std::vector<std::string> &consts);
+
 private:
         enum ETokType {etNumber, etOperator, etVariable, etFunction, etLogical, etCompare, etStop, etUnknown, etDelimeter};
         enum EValueClasses {evcBHD, evcHoehe, evcAlter};
@@ -138,13 +147,19 @@ private:
         // inc-sum
         mutable double m_incSumVar;
         bool   m_incSumEnabled;
+
+        static std::vector<std::string> mConstants;
+        // user defined function, SVD specific
+
+        double udfRandom(int type, double p1, double p2) const; ///< user defined function rnd() (normal distribution does not work now!)
+
         double  udfPolygon(double Value, double* Stack, int ArgCount) const; ///< special function polygon()
         double udfSigmoid(double Value, double sType, double p1, double p2) const; ///< special function sigmoid()
         double  udfIn(double Value, double* Stack, int ArgCount) const; ///< special function in()
         // SVD specific neighborhood functions
         double udfNeighborhood(ExpressionWrapper *object, int neighbor_class, double *Stack, int ArgCount) const;
-        // SVD specifc functions acessing state history
-        double udfStateChange(ExpressionWrapper *object, int var_type, double *Stack, int ArgCount) const;
+        // SVD specifc functions acessing species part of a state
+        double udfSpeciesProportion(ExpressionWrapper *object, double *Stack, int ArgCount) const;
 
         void checkBuffer(int Index);
 

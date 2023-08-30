@@ -128,10 +128,12 @@ private:
     std::unordered_map<state_t, size_t> mStateSet;
     std::map<std::string,  Module*> mHandlers;
 
+    /// for counting states on the landscape
     std::vector<int> mStateHistogram;
     /// quick lookup table for stateIds
     /// stores on positions 0..max_state_id-1 pointers to mStates vector
     std::vector<State*> mStateIdLookup;
+
 
 };
 

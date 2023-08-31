@@ -90,7 +90,9 @@ private:
     /// based on damage model by Schmidt et al 2010
     double calculateSusceptibility(Cell &c) const;
 
+    /// run a single wind event (which could span multiple regions (10km grid cells))
     void runWindEvent(const SWindEvent &event);
+
     /// run wind event for a single region (area) and affect (up to) proportion of cells
     SWindStat windImpactOnRegion(const RectF &area, double proportion, const SWindEvent &event);
 
@@ -114,6 +116,7 @@ private:
     double mPstopAfterImpact { 0.1 }; ///< probability that impacts stops spreading on a disturbed cell
     double mPspreadUndisturbed { 0.1 }; ///< probability that impacts spread from a undisturbed cell
     double mPfetchFactor { 0.1 }; ///< "fetch factor", i.e. increase in probability for impact on cells adjacent to disturbed cells
+    double mStartParallel { 0. }; ///< start the wind spread sequential (0), or more in parallel (>0). When 1, all start points are used immediatel.y
     bool mSaveDebugGrids { false }; ///< save intermediate grids for debugging
 
     // index of variables

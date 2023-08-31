@@ -42,7 +42,7 @@ void WindModule::setup()
     auto settings = Model::instance()->settings();
 
     settings.requiredKeys("modules." + name(), {"regionalProbabilityGrid", "stormEventFile", "stateFile", "transitionFile",
-                                           "stopAfterImpact", "spreadUndisturbed", "fetchFactor", "saveDebugGrids", "windSizeMultiplier" });
+                                           "stopAfterImpact", "spreadUndisturbed", "fetchFactor", "saveDebugGrids", "windSizeMultiplier", "spreadStartParallel" });
 
 
     // set up the transition matrix
@@ -50,7 +50,7 @@ void WindModule::setup()
     mWindMatrix.load(Tools::path(filename));
 
 
-    // set up additional fire parameter values per state
+    // set up additional wind parameter values per state
     filename = settings.valueString(modkey("stateFile"));
     Model::instance()->states()->loadProperties(Tools::path(filename));
 
@@ -60,11 +60,6 @@ void WindModule::setup()
             throw logic_error_fmt("The WindModule requires the state property '{}' which is not available.", a);
 
     miDamageProbability = static_cast<size_t>(State::valueIndex("pDamage"));
-/*
-    // check if DEM is available
-    if (settings.valueString("visualization.dem").empty())
-        throw logic_error_fmt("The fire module requires a digital elevation model! {}", 0);
-*/
 
     // set up wind events
     filename = Tools::path(settings.valueString(modkey("stormEventFile")));
@@ -85,6 +80,8 @@ void WindModule::setup()
     mPstopAfterImpact = settings.valueDouble(modkey("stopAfterImpact"));
     mPspreadUndisturbed = settings.valueDouble(modkey("spreadUndisturbed"));
     mPfetchFactor = settings.valueDouble(modkey("fetchFactor"));
+    mStartParallel = settings.valueDouble(modkey("spreadStartParallel"));
+
     mSaveDebugGrids = settings.valueBool(modkey("saveDebugGrids"));
 
     std::string windsize_multiplier = settings.valueString(modkey("windSizeMultiplier"));
@@ -94,25 +91,13 @@ void WindModule::setup()
     }
 
 
-    /*
-
-    // set up parameters
-
-    mExtinguishProb = settings.valueDouble("modules.fire.extinguishProb");
-    mSpreadToDistProb = 1. - settings.valueDouble("modules.fire.spreadDistProb");
-    std::string firesize_multiplier = settings.valueString("modules.fire.fireSizeMultiplier");
-    if (!firesize_multiplier.empty()) {
-        mWindSizeMultiplier.setExpression(firesize_multiplier);
-        lg->info("fireSizeMultiplier is active (value: {}). The maximum fire size of fires will be scaled with this function (variable: max fire size (ha)).", mWindSizeMultiplier.expression());
-    }
-    */
     std::string grid_file_name = Tools::path(settings.valueString(modkey("regionalProbabilityGrid")));
     mRegionalStormProb.loadGridFromFile(grid_file_name);
     lg->debug("Loaded regional wind probability grid: '{}'. Dimensions: {} x {}, with cell size: {}m.", grid_file_name, mRegionalStormProb.sizeX(), mRegionalStormProb.sizeY(), mRegionalStormProb.cellsize());
     //lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
 
 
-    // setup of the fire grid (values per cell)
+    // setup of the wind grid (values per cell)
     auto &grid = Model::instance()->landscape()->grid();
     mGrid.setup(grid.metricRect(), grid.cellsize());
     mCellsPerRegion = (mRegionalStormProb.cellsize() / grid.cellsize())*(mRegionalStormProb.cellsize() / grid.cellsize());
@@ -176,7 +161,7 @@ void WindModule::run()
             double total_predicted = event.n_regions * event.prop_affected * mCellsPerRegion;
             size_multiplier = mWindSizeMultiplier.calculate(total_predicted);
             event.prop_affected = event.prop_affected * size_multiplier;
-            lg->debug("Modified fire size from '{}' to '{}' (windSizeMultiplier).", total_predicted, total_predicted*size_multiplier);
+            lg->debug("Modified wind size from '{}' to '{}' (windSizeMultiplier).", total_predicted, total_predicted*size_multiplier);
         }
 
         ++n_executed;
@@ -316,13 +301,13 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
     stat.year = Model::instance()->year();
     stat.x = event.x; stat.y = event.y;
     stat.proportion = event.prop_affected;
-    stat.n_planned = stat.proportion * wind_grid.count();
+    stat.n_planned = round(stat.proportion * wind_grid.count());
 
 
     const size_t n_top = 10 + proportion*1000;
-    const double temperature = 0.1; // 0..1; 0: strictly as provided, 1
 
-    // look for top k susceptibility values
+    // (1) look for top k susceptibility values
+    // (=potential starting points for spread). Use more starters when proportion is higher=larger impact.
     int n_forested = 0;
     double mean_susceptibility=0.;
     float *grid_ptr = wind_grid.begin();
@@ -352,33 +337,32 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
     }
 
 
+
     std::queue<Point> spread_queue;
-    lg->debug("Event#{}: - Tile: {}. Mean suscetibility on tile: '{}', '{}' forested pixels.", stat.Id, tile_code, mean_susceptibility, n_forested);
-    //lg->debug("Number of starting positions: '{}'. ", n_top);
     if (n_forested == 0) {
         lg->debug("No forested pixels on tile, exiting.");
         return stat;
     }
 
-    std::stack<Point> reverse_queue; // helper to reverse the order of elements
+    std::stack<Point> start_points_queue; // holds (reversed) starting points
     while (!queue.empty()) {
-        //lg->debug("Cell: {}, p={}", queue.top().second->cellIndex(), queue.top().first);
-        // queue.top().second->setNewState(6); // ABAL 2-4m - just a test
-
-        // add values as starting points
         PointF loc = grid.cellCenterPoint(queue.top().second->cellIndex());
         // use the *local* coordinates
-        reverse_queue.push(wind_grid.indexAt(loc));
+        start_points_queue.push(wind_grid.indexAt(loc));
         queue.pop();
     }
-    // we reverse the order, as we want to start with the pixel with *highest* susceptibility
-//    while (!reverse_queue.empty()) {
-//        spread_queue.push(reverse_queue.top());
-//        reverse_queue.pop();
-//    }
-    // add a single starting point to the queue:
-    spread_queue.push(reverse_queue.top());
-    reverse_queue.pop();
+
+    // Now add n_starts starting points
+    int n_starts = 1 + start_points_queue.size() * mStartParallel;
+    while (n_starts > 0 && !start_points_queue.empty()) {
+        // add starting point to the queue:
+        spread_queue.push(start_points_queue.top());
+        start_points_queue.pop();
+        --n_starts;
+    }
+    lg->debug("Event#{}: - Tile: {}. Mean suscetibility on tile: '{}', '{}' forested pixels. Start with {} of {} points.",
+              stat.Id, tile_code, mean_susceptibility, n_forested,
+              spread_queue.size(), spread_queue.size() + start_points_queue.size());
 
 
 
@@ -387,17 +371,18 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
     int n_impact = 0;
     int step = 0;
 
-
+    // (3) Run the main loop
+    // this spreads wind impact
     bool pixel_affected = false;
     while (!spread_queue.empty()) {
         Point p = spread_queue.front();
         spread_queue.pop();
 
-        // when everything is processed, add next starting pont
+        // when everything is processed, add next starting point
         if (spread_queue.empty()) {
-            if (!reverse_queue.empty()) {
-                spread_queue.push(reverse_queue.top());
-                reverse_queue.pop();
+            if (!start_points_queue.empty()) {
+                spread_queue.push(start_points_queue.top());
+                start_points_queue.pop();
             }
         }
 
@@ -453,10 +438,12 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
             break;
         }
 
-    }
+    } // end main loop
+
+
     lg->debug("region finished - Event#: {} Tile: {}. max_impact={}, found={} cells, #processed: {}. length of queue left: {}, number of starting points left: '{}'/'{}'",
               stat.Id, tile_code, max_impact, n_impact, step, spread_queue.size(),
-              reverse_queue.size(), n_top);
+              start_points_queue.size(), n_top);
 
     // do some stats, saves
     //mRegionalStormProb.indexOf()

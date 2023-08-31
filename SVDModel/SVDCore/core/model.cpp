@@ -22,6 +22,7 @@
 #include "../Predictor/batchmanager.h"
 #include "modules/module.h"
 #include "expressionwrapper.h"
+#include "expression.h"
 
 #include <QThreadPool>
 
@@ -234,6 +235,8 @@ void Model::setupSpecies()
     for (std::string &s : mSpeciesList)
         s = trimmed(s);
 
+    // add as constants
+    Expression::setConstants(mSpeciesList);
     lg_setup->debug("Setup of species: N={}.", mSpeciesList.size());
 
     if (lg_setup->should_log(spdlog::level::trace)) {

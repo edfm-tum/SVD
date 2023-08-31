@@ -61,6 +61,7 @@ class CellWrapper: public ExpressionWrapper
 public:
     CellWrapper(const Cell *data) : mData(data) {}
     void setData(const Cell *data) { mData = data; }
+    const Cell* cell() const { return mData; }
 
     /// fetch variable names from environment and state and add to the wrapper object.
     static void setupVariables(EnvironmentCell *ecell, const State *astate);
@@ -74,6 +75,7 @@ public:
     double intermediateStateAverage(size_t stateId);
     double globalStateAverage(size_t stateId);
     double minimumDistanceTo(size_t stateId);
+    double speciesProportion(size_t species_index);
 
 private:
     static std::vector<std::string> mVariableList;

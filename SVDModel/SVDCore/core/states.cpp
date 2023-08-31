@@ -189,7 +189,7 @@ State::State(state_t id, std::string composition, int structure, int function, s
     // this is not ideal:
     // if module is empty, than we assume it is a forest state
     // if not we say it is "None"???? (see setModule())
-    if (handling_module.empty())
+    if (handling_module.empty() || handling_module=="NA")
         mType = Forest;
     else
         mType = None;
@@ -203,7 +203,7 @@ State::State(state_t id, std::string composition, int structure, int function, s
 
 
     auto species = Model::instance()->species();
-    mSpeciesShare = std::vector<double>(species.size(), 0.);
+    mSpeciesProportion = std::vector<double>(species.size(), 0.);
 
     // special cases:
     if (mComposition == "mix" || mComposition=="unforested")
@@ -247,11 +247,11 @@ State::State(state_t id, std::string composition, int structure, int function, s
 
     if (dominant_species_index>-1) {
         if (admixed_species_index[0]==-1) {
-            mSpeciesShare[static_cast<size_t>(dominant_species_index)]=1.; // (a)
+           mSpeciesProportion[static_cast<size_t>(dominant_species_index)]=1.; // (a)
         } else {
             // max 1 other species: >66% + >20% -> at least 86% -> no other species possible
-            mSpeciesShare[static_cast<size_t>(dominant_species_index)]=0.67; // (b)
-            mSpeciesShare[static_cast<size_t>(admixed_species_index[0])]=0.33;
+           mSpeciesProportion[static_cast<size_t>(dominant_species_index)]=0.67; // (b)
+           mSpeciesProportion[static_cast<size_t>(admixed_species_index[0])]=0.33;
         }
     } else {
         // no dominant species
@@ -271,7 +271,7 @@ State::State(state_t id, std::string composition, int structure, int function, s
 
         // apply cases
         for (int i=0;i<n_s;++i)
-            mSpeciesShare[static_cast<size_t>(admixed_species_index[i])]=f;
+            mSpeciesProportion[static_cast<size_t>(admixed_species_index[i])]=f;
 
     }
 

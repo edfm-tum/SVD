@@ -130,7 +130,7 @@ std::vector<double> Cell::neighborSpecies() const
                 // note for external seeds:
                 // if the cell is in 'species-shares' mode, then state() is null
                 // if the cell is in 'state' mode, a (constant) state is assigned
-                const auto &shares = cell.state()? cell.state()->speciesShares() : Model::instance()->externalSeeds().speciesShares(cell.externalSeedType());
+                const auto &shares = cell.state()? cell.state()->speciesProportion() : Model::instance()->externalSeeds().speciesShares(cell.externalSeedType());
                 for (size_t i=0; i<n_species;++i)
                     result[i*2] += shares[i];
                 ++n_local;
@@ -147,7 +147,7 @@ std::vector<double> Cell::neighborSpecies() const
         if (grid.isIndexValid(center + p) && !grid.valueAtIndex(center + p).isNull()) {
             Cell &cell = grid.valueAtIndex(center + p).cell();
             if ((cell.state() && cell.state()->type()==State::Forest) || cell.externalSeedType()>=0) {
-                const auto &shares = cell.state()? cell.state()->speciesShares() : Model::instance()->externalSeeds().speciesShares(cell.externalSeedType());
+                const auto &shares = cell.state()? cell.state()->speciesProportion() : Model::instance()->externalSeeds().speciesShares(cell.externalSeedType());
                 for (size_t i=0; i<n_species;++i)
                     result[i*2+1] += shares[i];
                 ++n_mid;

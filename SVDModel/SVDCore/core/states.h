@@ -63,7 +63,9 @@ public:
     /// get the handling module for the state
     Module *module() const { return mModule; }
 
-    const std::vector<double> &speciesShares() const { return mSpeciesShare; }
+    /// vector of species proportions of the state. The index is based on Model::instance()->species().
+    /// e.g., if Model::instance()->species()[7] == "piab" -> speciesShares()[7] -> prop of "piab".
+    const std::vector<double> &speciesProportion() const { return mSpeciesProportion; }
 
     // properties
     static const std::vector<std::string> &valueNames() { return mValueNames; }
@@ -82,7 +84,7 @@ private:
     std::string mName;
     std::string mHandlingModule; ///< string as provided in the input; mapping to actual modules via setModule()
     std::string mColorName; ///< color for visualization
-    std::vector<double> mSpeciesShare;
+    std::vector<double> mSpeciesProportion;
 
     Module *mModule;
 

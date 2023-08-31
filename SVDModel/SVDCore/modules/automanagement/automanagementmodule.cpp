@@ -43,7 +43,7 @@ void AutoManagementModule::setup()
 
     // output: set up large enough space for all states
     mStateHistogram.resize(Model::instance()->states()->stateIdLookupLength());
-
+    lg->debug("AutoManagementModule: params: burnInProbability: '{}', minHeight: '{}'", burninprob, mMinHeight);
     lg->info("Setup of AutoManagementModule '{}' complete.", name());
     lg = spdlog::get("modules");
 

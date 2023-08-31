@@ -93,6 +93,8 @@ private:
     static std::vector<std::string> mValueNames;
 };
 
+
+/// Manages and stores all individual states.
 class States
 {
 public:
@@ -103,6 +105,7 @@ public:
     bool loadProperties(const std::string &filename);
     /// frequency table for every state
     void updateStateHistogram();
+    /// frequencies of states in the landscape. use stateId as index for vector.
     const std::vector<int> &stateHistogram() const { return mStateHistogram; }
 
     // members

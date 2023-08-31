@@ -486,7 +486,18 @@ void LandscapeVisualization::setupColorRamps()
 
 void LandscapeVisualization::setupStateColors()
 {
-    const auto &states = Model::instance()->states()->states();
+    const auto &all_states = Model::instance()->states()->states();
+    const auto &hist = Model::instance()->states()->stateHistogram();
+    std::vector< std::pair<const State*, int> > states;
+    for (size_t i=0;i<all_states.size();++i)
+        states.push_back(std::pair<const State*, int>(&all_states[i], hist[all_states[i].id()]));
+
+    if (states.size() > 100) {
+        // sort states according to frequency
+        std::sort( states.begin(), states.end(),
+                  []( const std::pair<const State*, int> &left, const std::pair<const State*, int> &right )
+                  { return ( left.second > right.second ); } );
+    }
 
     // 100 distinct colors generated with R package randomcoloR
     const QStringList default_cols = {"#C6F363","#559769","#EDC1CA","#58C3B4","#6E54E4","#E57BF1","#98EE6D","#D59D8F","#A3CED6","#E2D072","#3D6152","#3FBBD1","#C28FA7","#4F83EF","#749BA9",
@@ -510,7 +521,8 @@ void LandscapeVisualization::setupStateColors()
     QVector<QString> color_names;
     QVector<int> factor_values;
     QVector<QString> factor_labels;
-    for (const auto &s : states) {
+    for (const auto &st : states) {
+        auto &s = *st.first;
         if (s.colorName().empty())
             //color_names.push_back( default_cols[color_names.length() % default_cols.size()] );
             color_names.push_back( werner_cols[color_names.length() % werner_cols.size()] );

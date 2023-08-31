@@ -68,12 +68,12 @@ std::string Tools::path(const std::string &fileName)
         for (auto &p : mPathReplace) {
             find_and_replace(str, p.first, p.second);
         }
-        if (mProjectDir.size()>0)
+        if (mProjectDir.size()>0 && fileName[0]!='/')
             return mProjectDir + "/" + str;
         else
             return str;
     }
-    if (mProjectDir.size()>0)
+    if (mProjectDir.size()>0  && fileName[0]!='/')
         return mProjectDir + "/" + fileName;
     else
         return fileName;

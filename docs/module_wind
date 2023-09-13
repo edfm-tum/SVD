@@ -1,0 +1,78 @@
+# Wind module
+
+The SVD fire module simulates windthrows on 100 m resolution (the SVD base resolution). Wind spreads dynamically...
+
+*Spread probability*
+
+
+
+### Fire specific state attributes
+
+The fire module requires module-specific attributes for each state in SVD. These attributes are defined by a table defined with the `stateFile` setting. The table must have the following columns:
+
+| Attribute | Description                                                                          |
+|-----------|--------------------------------------------------------------------------------------|
+| stateId   | Id of svd state						                                         	   |
+| pDamage   | probability [0..1] that a cell in the current state is affected when reached by wind |
+
+The post-wind transition is defined by the transition matrix in `transitionFile`. 
+
+
+### Ignitions
+
+Fires are not started by SVD, but are triggered externally by a time series of fires (`ignitionFile`). The file has the following columns:
+
+| Column        | Description                                                                                                                       |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| year          | Simulation year of the ignition. The first year is 1, the second year 2, etc. Not related to the year of the climate time series. |
+| x             | x-coordinate of the ignition point in local metric coordinates                                                                    |
+| y             | y-coordinate of the ignition point                                                                                                |
+| max_size      | maximum fire size in ha                                                                                                           |
+| windspeed     | wind speed (m/s)                                                                                                                  |
+| winddirection | wind direction in degrees (0 = north, 90=east, ...)                                                                               |
+| id            | unique id of the fire event (not mandatory)                                                                                       |
+
+: Fire ignition file
+
+## Configuration
+
+The module is configured in the [project file](project_file.md).\
+In addition to the `enabled` and `type` setting, the fire module has the following settings:
+
+-   
+
+    ### `transitionFile` (filepath)
+
+    The file containing a transition matrix (see [matrix module](module_matrix.md)) for post fire states (see above).
+
+-   
+
+    ### `ignitionFile` (filepath)
+
+    The data table with the list of ignition points and fire sizes.
+
+-   
+
+    ### `stateFile` (filepath)
+
+    Data file with additional state-specific variables that specify per-state burn probabilities.
+
+-   
+
+    ### `extinguishProb` (numeric)
+
+    Probability that the fire does not spread after burning a cell.
+
+-   ### `spreadDistProb` (numeric)
+
+    The parameter *p~dist~* used in the calculation of fire spread probabilities (see text above). Higher values translate to higher probabilities of fire spread from one cell to another.
+
+-   
+
+    ### `fireSizeMultiplier` (expression)
+
+if not empty, the expression is used to scale the maximum fire size provided from the ignition file. Many fire do not reach the maximum size because of topography (lack of contiguous flammable area) or other reasons. This can be countered by scaling fire sizes, so that on average the realized fire sizes match the input. The expression takes one parameter, the fire size from the ignition file.
+
+## Output
+
+The module can provide tabular and gridded [output](outputs.md#Fire).

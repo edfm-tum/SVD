@@ -80,13 +80,7 @@ In addition to the `enabled` and `type` setting, the fire module has the followi
     ### `fetchFactor` (numeric)
     
     The parameter defines how much the probability increases for neighboring cells.
-    
-
--    
-    ### `fetchFactor` (numeric)
-    
-    The parameter defines how much the probability increases for neighboring cells.
-    
+     
     
 -    
     ### `spreadStartParallel` (numeric)

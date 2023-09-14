@@ -4,18 +4,16 @@ The SVD management module simulates management actions on 100 m resolution (the 
 
 
 
-### Storm events
+### Management actions
 
-Windstorms are not started by SVD, but are triggered externally by a time series of storms (`stormEventFile`). The file has the following columns:
+Management is triggered when height growth increment is below a certain threshold
+
 
 | Column        | Description                                                       |
 |---------------|-------------------------------------------------------------------|
-| cell_position | Cell id                                                           |
-| x             | x-coordinate of the ignition point in local metric coordinates    |
-| y             | y-coordinate of the ignition point                                |
-| number_of_cells      | number of 10km cells affected                              |
-| proportion of cell   | proportion of affected 100m cells affected within 10km     |
-| year | year of storm occurrence                                                   |
+| stateId       				| SVD state                                         						|
+| heightIncrementThreshold      | externaly defined threshold                        						|
+| pManagement   				| probability of management after crossing the heightIncrementThreshold     |
 
 
 

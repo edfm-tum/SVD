@@ -20,6 +20,8 @@ Note that any cell with a valid value here is expected to have input also other 
 
 ```{r eval=FALSE}
 
+library(raster)
+
 lscp <- raster("....") # load raster
 init.state <- raster("...") # load init state
 
@@ -97,7 +99,7 @@ Climate data - and more generally, all information that can change over time - u
 
 ```{r eval=FALSE}
 
-# assume we have only cliateId = 1
+# assume we have only climateId = 1
 
 # create a dummy time series for 1000 yrs 
 dummy.climate <- data.frame( climateId = 1,

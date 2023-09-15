@@ -20,6 +20,8 @@ It is a [research tool](svd_papers.md) and released under a GPL open source lice
 * [Modules](modules.md)
   * [Fire module](module_fire.md)
   * [Matrix module](module_matrix.md)
+  * [Wind module](module_wind.md)
+  * [Management module](module_management.md)
 
 ## Using SVD
 * [SVD user interface](svdUI.md)

@@ -8,18 +8,19 @@
 
 <a name="StateGrid"></a>
 ## StateGrid
-writes ASCII grids with the stateId for each cell.
+writes ASCII grids or GeoTIFFs with the stateId for each cell.
 
 Grids are save to the location specified with the `path`property (`$year$` is replaced with the actual year).
+
 ### Parameters
 * `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
 
 
-
 <a name="ResTimeGrid"></a>
 ## ResTimeGrid
-output of ASCII grids with the residence time (years) for each cell.
+output of ASCII grids or GeoTIFFs with the residence time (years) for each cell.
 Grids are save to the location specified with the `path`property (`$year$` is replaced with the actual year).
+
 ### Parameters
 * `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
 
@@ -68,7 +69,7 @@ n | number of cells that are currently in the state `state` | Int
 ## Fire
 Output on fire events (one event per line) and grids for the year of the last burn.
 
-Grids are saved as ASCII grids to the location specified by the`lastFireGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.
+Grids are saved as ASCII grids or GeoTIFFs to the location specified by the`lastFireGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.
 
 ### Parameters
  * `lastFireGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
@@ -83,6 +84,46 @@ y | y coordinate (m) of the ignition point | Double
 planned_size | planned fire size (ha) | Double
 realized_size | realized fire size (ha) | Double
 share_high_severity | share of pixels burning with high severity (0..1) | Double
+
+
+<a name="Wind"></a>
+## Wind
+Output on wind storm events (one event per line) and grids for the year of the last windthrows.
+
+Grids are saved as ASCII grids or GeoTIFFs to the location specified by the`lastWindGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.
+
+### Parameters
+ * `lastWindGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year of the wind storm event | Int
+id | unique identifier of a single storm | Int
+x | x coordinate (m) of the ignition point | Double
+y | y coordinate (m) of the ignition point | Double
+regions_planned | number of planned 10km gridcells affected | Double
+regions_affected | number of realized 10km gridcells affected | Double
+cells_forested | number of forested gridcells available in the regions planned | Double
+mean_susceptibility | mean susceptibility of the forested gridcells| Double
+cells_planned | planned storm size (ha) | Double
+cells_affected | realized storm size (ha) | Double
+
+
+
+<a name="Management"></a>
+## Management
+Output on managed states in .csv table.
+
+* `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
+
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+state | stateId | Int
+n | number of cells that are were managed | Int
 
 
 

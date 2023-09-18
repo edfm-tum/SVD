@@ -5,6 +5,8 @@
 * [StateChange](#StateChange)
 * [StateHist](#StateHist)
 * [Fire](#Fire)
+* [Wind](#Wind)
+* [Management](#Management)
 
 <a name="StateGrid"></a>
 ## StateGrid

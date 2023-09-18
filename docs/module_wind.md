@@ -1,19 +1,19 @@
 # Wind module
 
-The SVD fire module simulates windthrows on 100 m resolution (the SVD base resolution). Wind spreads dynamically...
+The SVD wind module simulates windthrows on 100 m resolution (the SVD base resolution). Wind spreads dynamically...
+
 
 *Spread probability*
 
 
+### Wind specific state attributes
 
-### Fire specific state attributes
-
-The fire module requires module-specific attributes for each state in SVD. These attributes are defined by a table defined with the `stateFile` setting. The table must have the following columns:
+The wind module requires module-specific attributes for each state in SVD. These attributes are defined by a table defined with the `stateFile` setting. The table must have the following columns:
 
 | Attribute | Description                                                                          |
 |-----------|--------------------------------------------------------------------------------------|
 | stateId   | Id of svd state						                                         	   |
-| pDamage   | probability [0..1] that a cell in the current state is affected when reached by wind |
+| pDamage   | probability [0..1] that a cell in the current state is affected when reached by storm|
 
 The post-wind transition is defined by the transition matrix in `transitionFile`. 
 
@@ -36,7 +36,7 @@ Windstorms are not started by SVD, but are triggered externally by a time series
 ## Configuration
 
 The module is configured in the [project file](project_file.md).\
-In addition to the `enabled` and `type` setting, the fire module has the following settings:
+In addition to the `enabled` and `type` setting, the wind module has the following settings:
 
 
 -   

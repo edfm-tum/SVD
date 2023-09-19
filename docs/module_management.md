@@ -23,7 +23,8 @@ The module is configured in the [project file](project_file.md).\
 In addition to the `enabled` and `type` setting, the management module has the following settings:
 
 
--
+-   
+
     ### `transitionFile` (filepath)
 
     The file containing a transition matrix (see [matrix module](module_matrix.md)) for post management states (see above).

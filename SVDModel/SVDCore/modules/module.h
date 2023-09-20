@@ -27,15 +27,31 @@
 class Cell; // forward
 class Batch; // forward
 
+/**
+ * @brief The Module class
+ *
+ * This is the base class for modules in SVD. Modules are derived from `Module` and add specific logic.
+ * Life-cylce functions: `setup()` is used initalization, `run()` for (annual) execution.
+ * You can specfiy module variables (see moduleVariableNames()).
+ * If the module handles states exclusively (e.g., MatrixModule), then you `registerModules()` and
+ * overload `processBatch()`.
+ */
 class Module
 {
 
 public:
     Module(std::string module_name, State::StateType type) : mName(module_name), mType(type) {}
     virtual ~Module();
+    /// list of available module types
     static std::vector<std::string> &allModuleTypes() {return mModuleTypes; }
+
+    /// names of all created and active modules
     static std::vector<std::string> &moduleNames() {return mModuleNames; }
     static void clearModuleNames() { mModuleNames.clear(); }
+
+    /// create a module as derived class
+    /// @param module_name name of the module, also used in configuration
+    /// @param module_type type as string, see also allModuleTypes()
     static std::shared_ptr<Module> moduleFactory(std::string module_name, std::string module_type);
 
     // properties
@@ -44,6 +60,7 @@ public:
     Batch::BatchType batchType() const { return mBatchType; }
 
     /// register the module using the ID and name
+    /// this is necessary when the module is handling exclusively one or multiple states
     bool registerModule();
 
     // actions to overload
@@ -51,7 +68,10 @@ public:
     virtual void processBatch(Batch *) {}
 
     // startup
+    /// function called to set up the module
     virtual void setup() {}
+    /// main function that executes the module
+    /// modules are called by the model (see runModules())
     virtual void run() {}
 
     // helpers

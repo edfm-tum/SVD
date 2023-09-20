@@ -93,6 +93,8 @@ void AutoManagementModule::run()
                 double p_manage = c.state()->value(miManagement) * p_burnin;
                 if (p_manage==1. || drandom() < p_manage) {
                     // ok, now manage the stand!
+                    //if (c.state()->topHeight() < 36)
+                    //    --n_tested; // fake
                     // (1) save stats:
                     ++mStateHistogram[ static_cast<size_t>(c.stateId())];
                     // (2) effect of management: a transition to another state

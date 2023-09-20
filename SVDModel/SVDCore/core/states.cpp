@@ -109,7 +109,7 @@ bool States::loadProperties(const std::string &filename)
     }
     spdlog::get("setup")->debug("Loaded {} values from file '{}'. States have the following properties: {}", rdr.columnCount()-1, filename, join(State::valueNames()));
     if (has_errors)
-        throw std::logic_error("Error in loading of extra state properties. Check the log.");
+        throw logic_error_fmt("Error in loading of extra state properties from '{}'. Check the log.", filename);
 
     return true;
 

@@ -29,12 +29,18 @@
 
 class WindOut; // forward
 
+/**
+ * @brief The SWindCell struct is cell level information used by the wind module.
+ */
 struct SWindCell {
     SWindCell() = default;
     short int last_storm {0}; ///< year when the cell was affected the last time
     short int n_storm {0}; ///< cumulative number of storms per pixel
 };
 
+/**
+ * @brief The SWindStat struct collects per-event-statistics of wind events.
+ */
 struct SWindStat {
     int year {-1}; ///< year of the fire
     int Id {-1}; ///< unique identifier
@@ -48,6 +54,11 @@ struct SWindStat {
     double mean_susceptiblity {0}; ///< mean susceptibility of all px in all regions
 };
 
+/**
+ * @brief The WindModule class
+ *
+ * implements wind disturbance in SVD.
+ */
 class WindModule : public Module
 {
 public:
@@ -62,12 +73,10 @@ public:
     const Grid<SWindCell> &windGrid() { return mGrid; }
 
 private:
-
     // logging
     std::shared_ptr<spdlog::logger> lg;
 
-
-    /// structure to store wind events
+    /// structure to store scheduled wind events
     struct SWindEvent {
         SWindEvent(int ayear, int id, double ax, double ay, int an_region, double aprop): year(ayear), Id(id), x(ax), y(ay), n_regions(an_region), prop_affected(aprop) {}
        int year; ///< year of storm
@@ -84,11 +93,12 @@ private:
     Grid<SWindCell> mGrid;
 
     Grid<double> mRegionalStormProb; ///< 10km grid with storm probabilities
-    int mCellsPerRegion {10000}; ///< number of SVD cells per wind region
+    int mCellsPerRegion {10000}; ///< number of SVD cells per wind region (10x10km vs 100x100m)
 
     /// susceptibility to windthrow (depending on state)
-    /// based on damage model by Schmidt et al 2010
-    double calculateSusceptibility(Cell &c) const;
+    /// based on damage model by Schmidt et al 2010.
+    /// values are pre-calculated per state (externally from SVD).
+    double getSusceptibility(Cell &c) const;
 
     /// run a single wind event (which could span multiple regions (10km grid cells))
     void runWindEvent(const SWindEvent &event);
@@ -96,16 +106,9 @@ private:
     /// run wind event for a single region (area) and affect (up to) proportion of cells
     SWindStat windImpactOnRegion(const RectF &area, double proportion, const SWindEvent &event);
 
-    /// sample probabilistically from the container and return a Point.
+    /// helper function that samples probabilistically from the container and returns a Point.
     Point sampleFromRegionMap(std::map<Point, double> &map);
-/*
-    void fireSpread(const SIgnition &ign);
-    bool burnCell(int ix, int iy, int &rHighSeverity, int round);
 
-    double calcSlopeFactor(const double slope) const;
-    double calcWindFactor(const SIgnition &fire_event, const double direction) const;
-    void calculateSpreadProbability(const SIgnition &fire_event, const Point &point, const float origin_elevation,  const int direction);
-*/
 
     // store for transition probabilites for affected cells
     TransitionMatrix mWindMatrix;
@@ -120,8 +123,6 @@ private:
     bool mSaveDebugGrids { false }; ///< save intermediate grids for debugging
 
     // index of variables
-    //size_t miBurnProbability{0};
-    //size_t miHighSeverity{0};
     size_t miDamageProbability{0};
 
     /// storm statistics for outputs

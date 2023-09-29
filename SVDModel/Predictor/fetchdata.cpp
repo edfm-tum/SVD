@@ -182,20 +182,26 @@ void FetchDataStandard::fetchClimate(Cell *cell, BatchDNN* batch, size_t slot)
     auto climate_series = Model::instance()->climate()->series(Model::instance()->year(),
                                                                mItem->sizeX,
                                                                ec->climateId());
+    auto n_values = Model::instance()->climate()->nDNNcolumns();
+
     TensorWrapper *t = batch->tensor(mItem->index);
     TensorWrap3d<float> *tw = static_cast<TensorWrap3d<float>*>(t);
 
-    if (climate_series.size() != mItem->sizeX || climate_series[0]->size() != mItem->sizeY)
-        throw std::logic_error("FetchDataStandard::fetchClimate: mismatch in dimensions: expected " +
-                               to_string(mItem->sizeX) + ", got " + to_string(climate_series.size()) +  " years; " +
-                               "expected " + to_string(mItem->sizeY) + ", got " + to_string(climate_series[0]->size()) + " columns (per year)!");
-    //return;
+
+    if (climate_series.size() == 0 || climate_series.size() != mItem->sizeX || n_values != mItem->sizeY)
+        throw logic_error_fmt("FetchDataStandard::fetchClimate: mismatch in dimensions: expected '{}', got '{}' years (rows); expected '{}' columns, got '{}' columns (per year)!",
+                              mItem->sizeX, climate_series.size(),
+                              mItem->sizeY, n_values);
+
+    if (climate_series[0]->size() < n_values)
+        throw logic_error_fmt("FetchDataStandard::fetchClimate: inconsistent climate variables. Number of values for DNN: {}, total number of values {}.", n_values, climate_series[0]->size());
+
     // copy the climate data to the tensors
-    // TODO: transform inputs
+    // Note that data transformations are applied already during loading of climate data
     size_t i = 0;
     for (const std::vector<float> *p : climate_series) {
         float *d = tw->row(slot, i++);
-        memcpy(d, p->data(), sizeof(float) * p->size());
+        memcpy(d, p->data(), sizeof(float) * n_values);
     }
 
 }

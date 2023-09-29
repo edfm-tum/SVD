@@ -82,7 +82,7 @@ std::string join(Iter it, Iter end, const std::string &delim=", ", int print_max
             return result;
         }
         if (n>0) result+=delim;
-        result+= std::to_string( *it );
+        result+= to_string( *it );
     }
     return result;
 }

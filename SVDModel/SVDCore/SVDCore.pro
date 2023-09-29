@@ -28,6 +28,7 @@ SOURCES += \
     modelshell.cpp \
     modules/automanagement/automanagementmodule.cpp \
     modules/automanagement/automanagementout.cpp \
+    modules/barkbeetle/barkbeetlemodule.cpp \
     modules/simplemanagement/simplemanagementmodule.cpp \
     modules/wind/windmodule.cpp \
     modules/wind/windout.cpp \
@@ -64,6 +65,7 @@ HEADERS += \
     modelshell.h \
     modules/automanagement/automanagementmodule.h \
     modules/automanagement/automanagementout.h \
+    modules/barkbeetle/barkbeetlemodule.h \
     modules/simplemanagement/simplemanagementmodule.h \
     modules/wind/windmodule.h \
     modules/wind/windout.h \

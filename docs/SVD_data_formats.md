@@ -4,7 +4,8 @@
 -   [Data tables](#table)
 -   [Raster data](#raster)
 
-<a name="config_file"></a> \#\# Configuration files SVD uses a simple text file based format for the configuration of the model. The model reads single configuration items as key-value pairs from the file.
+## <a name="config_file"></a> Configuration files 
+SVD uses a simple text file based format for the configuration of the model. The model reads single configuration items as key-value pairs from the file.
 
 The general layout is:
 
@@ -24,7 +25,8 @@ Example:
 
 This specifies that the output (`output.`) StateGrid (`output.StateGrid`) is `enabled` (boolean value), output data is saved at a specific location (`path`, a string), and with a given `interval` (numeric).
 
-<a name="table"></a> \#\# Data tables Tabular data is read into SVD as delimited text tables.
+## <a name="table"></a> Data tables 
+Tabular data is read into SVD as delimited text tables.
 
 -   Comments: lines starting with `#` are considered as comment and ignored
 -   the first (non-comment) line has the column names (quotes (`"`) are removed)
@@ -40,10 +42,12 @@ Example:
     3,4368,49,50.9185174306234
     ....
 
-<a name="raster"></a> \#\# Raster data SVD supports GeoTIFF and simple [ASCII file format](https://en.wikipedia.org/wiki/Esri_grid) for spatial data. Such grids can be produced by GIS Software (e.g., QGis, Arcmap) or also by the R `raster` package.
+## <a name="raster"></a> Raster data 
+
+SVD supports GeoTIFF and simple [ASCII file format](https://en.wikipedia.org/wiki/Esri_grid) for spatial data. Such grids can be produced by GIS Software (e.g., QGis, Arcmap) or also by the R `raster` package.
 
 The coordinates system has to be metric, and the requirements for the cell size vary (a typical cell size is 100m). SVD uses internally a flat metric coordinate system without considering spatial projections. Therefore all spatial input data should use a consistent projection.
 
-SVD uses the FreeImage library for handling GeoTIFF files. Currently, the selection of data types is limited to INT32 for integer grids, and 32 bit / 64 bit floating point data. In R you can use the `datatype` parameter of `writeGrid()` to force a specific format (use 'INT4S' for 32 bit signed integer, and 'FLT4S' for 32 bit float or 'FLT8S' for 64 bit double precision floating point numbers).
+SVD uses the FreeImage library for handling GeoTIFF files. Currently, the selection of data types is limited to INT16 (16-bit signed integers) and INT32 (32-bit signed integer) for integer grids, and 32 bit / 64 bit floating point data. In R you can use the `datatype` parameter of `writeGrid()` to force a specific format (use 'INT2S' or 'INT4S' for 16 and 32 bit integers, and 'FLT4S' for 32 bit float or 'FLT8S' for 64 bit double precision floating point numbers).
 
 The origin (i.e. the 0/0 point of the internal coordinate system) is derived from the [`landscape.grid`](configuring_the_landscape.md).

@@ -49,12 +49,13 @@ public:
 
 
     // access
-    // access single cells
-    Cell &cell(int index) { assert(mGrid.isIndexValid(index));
-                            return mGrid[index].cell();  }
-    EnvironmentCell &environmentCell(int index) { assert(mEnvironmentGrid.isIndexValid(index));
-                                                assert(mEnvironmentGrid[index] != nullptr);
-                                                return *mEnvironmentGrid[index]; }
+    /// access single cells with grid index
+    Cell &cell(int grid_index) { assert(mGrid.isIndexValid(grid_index));
+                            return mGrid[grid_index].cell();  }
+    /// acess environmentcell attached to a given grid_index
+    EnvironmentCell &environmentCell(int grid_index) { assert(mEnvironmentGrid.isIndexValid(grid_index));
+                                                assert(mEnvironmentGrid[grid_index] != nullptr);
+                                                return *mEnvironmentGrid[grid_index]; }
 
     /// number of active cells (forested)
     int NCells() const { return mNCells; }

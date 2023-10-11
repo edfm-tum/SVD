@@ -46,6 +46,9 @@ public:
     Point operator+(const Point &p) const {return Point(x()+p.x(), y()+p.y()); }
 
     bool friend operator<(const Point&lhs, const Point &rhs) { int cmp = rhs.x() - lhs.x(); if (cmp==0) cmp=rhs.y()-lhs.y(); return cmp<0; }
+    bool operator==(const Point &r) const { return mX == r.mX && mY == r.mY; }
+    bool operator!=(const Point &r) const { return !(r == *this); }
+
 private:
     int mX;
     int mY;
@@ -60,6 +63,9 @@ public:
     void setX(const double x) {mX = x; }
     void setY(const double y) {mY = y; }
 
+    bool operator==(const PointF &r) const { return mX == r.mX && mY == r.mY; }
+    bool operator!=(const PointF &r) const { return !(r == *this); }
+
 private:
     double mX;
     double mY;
@@ -72,6 +78,10 @@ public:
     Point topLeft() const { return Point(mLeft, mTop); }
     Point bottomRight() const { return Point(mRight, mBottom); }
     bool isEmpty() const { return mTop== -1 && mBottom==-1 && mLeft == -1 && mRight==-1; }
+
+    bool operator==(const Rect &r) const { return mTop==r.mTop && mBottom==r.mBottom && mLeft == r.mLeft && mRight == r.mRight; }
+    bool operator!=(const Rect &r) const { return !(r == *this); }
+
 private:
     int mTop;
     int mBottom;
@@ -95,6 +105,9 @@ public:
     void setCoords(double left, double top, double right, double bottom) {mLeft=left; mTop=top; mRight=right; mBottom=bottom; }
     bool isNull() const { return mTop==-1. && mBottom==-1. && mLeft==-1. && mRight==-1.; }
     bool contains(double x, double y) const { return x>=mLeft && x<=mRight && y>=mTop && y<=mBottom; }
+
+    bool operator==(const RectF &r) const { return mTop==r.mTop && mBottom==r.mBottom && mLeft == r.mLeft && mRight == r.mRight; }
+    bool operator!=(const RectF &r) const { return !(r == *this); }
 private:
     double mTop;
     double mBottom;

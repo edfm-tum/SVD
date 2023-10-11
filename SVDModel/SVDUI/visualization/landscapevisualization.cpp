@@ -86,10 +86,13 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
             // load DEM from raster file
             std::string filename = Tools::path(Model::instance()->settings().valueString("visualization.dem"));
             if (!Tools::fileExists(filename)) {
-                lg->error("DEM not available ('{}').", filename);
+                throw logic_error_fmt("DEM not available ('{}').", filename);
                 return;
             }
             mDem.loadGridFromFile(filename);
+            if (mDem.metricRect() != Model::instance()->landscape()->grid().metricRect()) {
+                throw logic_error_fmt("Loaded DEM from '{}' has not the same extent as the landscape. Either provide a proper DEM or set 'visualization.dem' to an empty string.", filename);
+            }
             mMinHeight = std::max( mDem.min(), 0.f);
             mMaxHeight = mDem.max();
 
@@ -293,7 +296,7 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
 
     if (auto_scale) {
         min_value = std::numeric_limits<double>::max();
-        max_value = std::numeric_limits<double>::min();
+        max_value = std::numeric_limits<double>::lowest();
         for (Cell &c : Model::instance()->landscape()->cells()) {
             if (!c.isNull()) {
                 cw.setData(&c);

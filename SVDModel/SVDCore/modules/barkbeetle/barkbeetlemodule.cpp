@@ -17,7 +17,7 @@ void BarkBeetleModule::setup()
     lg->info("Setup of BarkBeetleModule '{}'", name());
     auto settings = Model::instance()->settings();
 
-    settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost"  });
+    settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost", "beetleOffspringFactor", "kernelFile", "successOfColonization"  });
 
 
     miVarBBgen = Model::instance()->climate()->indexOfVariable( settings.valueString(modkey("climateVarGenerations")) );
@@ -27,23 +27,28 @@ void BarkBeetleModule::setup()
     if (miVarFrost < 0 )
         throw logic_error_fmt("Barkbeetle: required auxiliary climate variable not found. Looked for (setting climateVarFrost): '{}'", settings.valueString(modkey("climateVarFrost")));
 
+    mSuccessOfColonization = settings.valueDouble(modkey("successOfColonization"));
 
-/*
+    int k = settings.valueInt(modkey("beetleOffspringFactor"),-1);
+    std::string kernel_file = settings.valueString(modkey("kernelFile"));
+    setupKernels(Tools::path(kernel_file), k);
+
     // set up the transition matrix
     std::string filename = settings.valueString(modkey("transitionFile"));
-    mWindMatrix.load(Tools::path(filename));
+    mBBMatrix.load(Tools::path(filename));
 
 
-    // set up additional wind parameter values per state
+    // set up additional parameter values for each state state
     filename = settings.valueString(modkey("stateFile"));
     Model::instance()->states()->loadProperties(Tools::path(filename));
 
     // check if variables are available
-    for (const auto *a : {"pDamage"})
+    for (const auto *a : {"pBarkBeetleDamage"})
         if (State::valueIndex(a) == -1)
-            throw logic_error_fmt("The WindModule requires the state property '{}' which is not available.", a);
+            throw logic_error_fmt("The bark beetle module requires the state property '{}' which is not available.", a);
 
-    miDamageProbability = static_cast<size_t>(State::valueIndex("pDamage"));
+    miSusceptibility = static_cast<size_t>(State::valueIndex("pBarkBeetleDamage"));
+/*    miDamageProbability = static_cast<size_t>(State::valueIndex("pDamage"));
 
     // set up wind events
     filename = Tools::path(settings.valueString(modkey("stormEventFile")));
@@ -80,17 +85,15 @@ void BarkBeetleModule::setup()
     lg->debug("Loaded regional wind probability grid: '{}'. Dimensions: {} x {}, with cell size: {}m.", grid_file_name, mRegionalStormProb.sizeX(), mRegionalStormProb.sizeY(), mRegionalStormProb.cellsize());
     //lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
 
-
-    // setup of the wind grid (values per cell)
+*/
+    // setup of the grid (values per cell)
     auto &grid = Model::instance()->landscape()->grid();
     mGrid.setup(grid.metricRect(), grid.cellsize());
-    mCellsPerRegion = (mRegionalStormProb.cellsize() / grid.cellsize())*(mRegionalStormProb.cellsize() / grid.cellsize());
-    lg->debug("Created wind grid {} x {} cells. CellsPerRegion: {}.", mGrid.sizeX(), mGrid.sizeY(), mCellsPerRegion);
+    lg->debug("Created beetle grid {} x {} cells.", mGrid.sizeX(), mGrid.sizeY());
 
-*/
+
 
     lg->info("Setup of BarkBeetleModule '{}' complete.", name());
-
     lg = spdlog::get("modules");
 
 }
@@ -99,7 +102,11 @@ std::vector<std::pair<std::string, std::string> > BarkBeetleModule::moduleVariab
 {
     return {
             {"bbgen", "number of pot. bark beetle generations (Pheinps)"},
-            {"wintermin", "number of days with minimum temperture below threshold (from climate data)"}
+            {"frost_days", "number of days with minimum temperture below -15° (from climate data)"},
+            {"susceptibility", "stand susceptibility for bark beetle infestations"},
+            {"bbNEvents", "cumulative number of times the cell was affected by bark beetle"},
+            {"bbLastEvent", "the year the cell was impacted last by bark beetle"},
+            {"outbreakAge", "age (years) of the outbreak (the last time the cell was affected)"},
     };
 
 }
@@ -113,6 +120,15 @@ double BarkBeetleModule::moduleVariable(const Cell *cell, size_t variableIndex) 
         else
             return Model::instance()->climate()->value(miVarFrost,clim_id);
     }
+    auto &gr = mGrid[cell->cellIndex()];
+    switch (variableIndex) {
+    case 2: return cell->state()->value(miSusceptibility);
+    case 3: return gr.n_disturbance;
+    case 4: return gr.last_attack;
+    case 5: return gr.outbreak_age;
+
+    }
+
     return 0.;
 
 
@@ -138,6 +154,210 @@ double BarkBeetleModule::moduleVariable(const Cell *cell, size_t variableIndex) 
 
 void BarkBeetleModule::run()
 {
+    // (1) background infestation
+    initialRandomInfestation();
+
+    // (2) bark beetle spread and impact
+    spread();
+
+    // at the end of the year, reverse the stacks (for next year)
+    switchActiveCells();
+
     // barkbeetle output
-    // Model::instance()->outputManager()->run("BarkBeetle");
+    Model::instance()->outputManager()->run("BarkBeetle");
+}
+
+void BarkBeetleModule::initialRandomInfestation()
+{
+    const double p_infestation = 0.000685; // probability for initial outbreak;
+    auto &cells = Model::instance()->landscape()->cells();
+
+    int n_samples = cells.size() * p_infestation;
+    int n_started = 0;
+    for (int i=0;i<n_samples;++i) {
+        auto &cell = cells[irandom(0, cells.size())];
+        double susceptibility = cell.state()->value(miSusceptibility);
+        if (susceptibility>0. && drandom() < susceptibility) {
+            // start infestation
+            auto &g = mGrid[cell.cellIndex()];
+            g.outbreak_age = 0; // start again from outbreak age zero
+            activeCellsNow().push(cell.cellIndex());
+            ++n_started;
+        }
+    }
+    mStats.n_background = n_started;
+    mStats.n_wind_infestation = 0; // TODO
+    lg->debug("Initial infestation: Checked {} cells, {} infestations started.", n_samples, n_started);
+}
+
+void BarkBeetleModule::spread()
+{
+    const double kernel_value_cap = 10.;
+
+    auto &active_now = activeCellsNow();
+    auto &active_next_year = activeCellsNextYear();
+    auto *model = Model::instance();
+
+    // variables for book keeping
+    size_t n_active_this_year = active_now.size();
+    int n_impact = 0.;
+    int n_tested = 0;
+
+
+    while (!active_now.empty()) {
+        int cell_index = active_now.top();
+        active_now.pop();
+        auto &g = mGrid[cell_index];
+        auto &cell = model->landscape()->cell(cell_index);
+        double generations = model->climate()->value(miVarBBgen, cell.environment()->climateId());
+        if (generations == 0.) {
+            // if the climate does not support even a single generation,
+            // then we do nothing, i.e. not impact happens on this cell.
+            continue;
+        }
+        const auto &kernel = mKernels[kernelIndex(generations)];
+        Point cell_point = mGrid.indexOf(cell_index);
+
+        if (g.outbreak_age == 0) {
+            // impact on source cell happens only if this is the initial year (i.e. caused by random starts -> outbreak age is still 0)
+            g.last_attack = static_cast<short>(model->year());
+            g.n_disturbance++;
+            ++n_impact;
+
+            // effect of bark beetles: a transition to another state
+            state_t new_state = mBBMatrix.transition(cell.stateId());
+            cell.setNewState(new_state);
+        }
+
+        // (1) spread to neighboring cells using bark beetle kernel
+        for (const auto &k : kernel) {
+            // get position relative to start point
+            Point p = cell_point + k.first;
+            if (mGrid.isIndexValid(p)) {
+                auto &sgridcell = model->landscape()->grid()[p]; // the location on the grid...
+                if (sgridcell.isNull()) // could be empty
+                    continue;
+                auto &scell = sgridcell.cell(); // ... this is the actual cell
+                // susceptibility of the cell depends solely on the state
+                // and is modified with a scaling factor
+                double susceptibility = scell.state()->value(miSusceptibility);
+                susceptibility *= mSuccessOfColonization;
+
+                if (susceptibility == 0.)
+                    continue;
+                auto &sg = mGrid[p];
+                if (sg.last_attack == model->year())
+                    continue; // cell has been processed already in this year
+
+                // decide whether beetle should spread to cell 'scell':
+                bool do_spread;
+                if (k.second > 1.) {
+                    // try multiple times: p is 1 - prob not succeding for kernel value times
+                    double p_effective = 1. - pow(1. - susceptibility, std::min(k.second, kernel_value_cap) );
+                    do_spread = drandom() < p_effective;
+
+                } else {
+                    // kernel value is probability of successful spread with unlimited susceptibility
+                    // we scale here the probability with susceptibility
+                    double p_spread = susceptibility*k.second;
+                    do_spread = drandom() < p_spread;
+                }
+                ++n_tested;
+
+                if (do_spread) {
+
+                    int scell_index = mGrid.index(p);
+
+                    // impact of cell
+                    sg.last_attack = static_cast<short>(model->year());
+                    sg.n_disturbance++;
+                    ++n_impact;
+
+                    // effect of bark beetles: a transition to another state
+                    state_t new_state = mBBMatrix.transition(scell.stateId());
+                    scell.setNewState(new_state);
+                    sg.outbreak_age = g.outbreak_age + 1; // increase age of outbreak from the source cell
+
+                    // mortality of cell: following the approach of iLand here
+                    double frost_days = model->climate()->value(miVarFrost, cell.environment()->climateId());
+                    const double base_mortality = 0.4; // fixed proportion of cells dying (based on Jönsson 2012)
+                    double frost_mortality = 1. - exp( -0.1005 * frost_days); // probability of mortality due to strong frost (Kostal et al 2011)
+                    // p of either base or frost mortality:
+                    double p_mort = base_mortality + frost_mortality - (base_mortality * frost_mortality);
+
+                    // mortality due to age of the outbreak: 50% in year 5, 100% later.
+                    // value is 1 for 4 yrs, 0.5 for 5yrs, 0 for 6 yrs and above
+                    if (sg.outbreak_age > 4) {
+                        double wave_survival = 1. - ( sg.outbreak_age < 5 ? 0. : std::min( (sg.outbreak_age - 4)/2., 1.) );
+                        // effective mortality with reduced survival rate
+                        p_mort = 1. - ( 1. - p_mort)*wave_survival;
+                    }
+                    if (drandom() < p_mort) {
+                        // mortality
+                        // nothing to do?
+                        sg.outbreak_age = 0; // reset
+                    } else {
+                        // cell survives: is active next year and can spread
+                        active_next_year.push(scell_index);
+                    }
+                }
+
+            }
+        }
+
+    }
+    mStats.n_active_yearend = active_next_year.size();
+    mStats.n_impact = n_impact;
+    lg->debug("Barkbeetle spread. Active before spread: {}, #cell tested (cells with susceptibility>0): {}, #cells spread to and impacted: {}, surviving beetle cells active next year: {} ",
+              n_active_this_year, n_tested, n_impact, active_next_year.size());
+
+
+
+}
+
+void BarkBeetleModule::setupKernels(const std::string &file_name,  int offspring_factor)
+{
+
+    FileReader rdr(file_name);
+
+    if (rdr.columnCount() != 123)
+        throw logic_error_fmt("Invalid kernel data file for bark beetle!");
+
+    mKernels.clear();
+    mKernels.resize(5); // 1, 1.5, 2, 2.5, 3
+
+    size_t i_gen = rdr.columnIndex("vgen");
+    size_t i_k = rdr.columnIndex("vk");
+    while (rdr.next()) {
+        if (rdr.value(i_k) == offspring_factor) {
+            size_t ki = kernelIndex(rdr.value(i_gen));
+            for (int i=2; i<123; ++i) {
+                int d_x = (i-2) % 11 - 5;
+                int d_y = ((i-2) / 11) - 5;
+                double value = rdr.value(i);
+                if (value > 0.) {
+                    //lg->debug("{}: x: {} y: {}, value: {}", i, d_x, d_y, value);
+                    mKernels[ki].push_back(std::pair<Point, double>( Point(d_x, d_y), value  ));
+                }
+            }
+        }
+    }
+    // test
+    for (size_t i=0; i<mKernels.size(); ++i) {
+        if (mKernels[i].empty())
+            throw logic_error_fmt("setup barkbeetle kernels: no data available for kernel {}", i);
+    }
+    lg->debug("Barkbeetle kernels loaded from '{}'", file_name);
+
+}
+
+size_t BarkBeetleModule::kernelIndex(double gen_count) const
+{
+    if (gen_count == 1.) return 0;
+    if (gen_count == 1.5) return 1;
+    if (gen_count == 2.) return 2;
+    if (gen_count == 2.5) return 3;
+    if (gen_count == 3.) return 4;
+    throw logic_error_fmt("barkbeetle: invalid number of generations: '{}' (allowed are: 1,1.5,2,2.5,3)", gen_count);
+
 }

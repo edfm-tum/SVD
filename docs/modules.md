@@ -46,6 +46,12 @@ State-specific transitions based on a transition probability matrix.
 * ### [`fire`](module_fire.md)
 Wildfire disturbance module that simulates pre-defined events.
 
+* ### [`wind`](module_wind.md)
+Wind disturbance module that simulates pre-defined events.
+
+* ### [`management`](module_management.md)
+Management module that simulates pre-defined events.
+
 ## Specifying handling modules for states
 To set the module as handler for specific states, use the module name as the `type` property in the
 [state](states.md) definition.

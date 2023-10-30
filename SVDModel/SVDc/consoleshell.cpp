@@ -12,6 +12,17 @@ ConsoleShell::ConsoleShell(QObject *parent) : QObject(parent)
 
 }
 
+ConsoleShell::~ConsoleShell()
+{
+    auto l = spdlog::get("main");
+    if (l)
+        l->info("Shutdown of the application.");
+    spdlog::apply_all([&](std::shared_ptr<spdlog::logger> l)
+    {
+        l->flush();
+    });
+}
+
 void ConsoleShell::run()
 {
     QString config_file_name = QCoreApplication::arguments().at(1);

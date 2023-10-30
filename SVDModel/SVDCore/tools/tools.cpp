@@ -64,7 +64,7 @@ std::string Tools::path(const std::string &fileName)
 {
     if (fileName.find('$') != std::string::npos) {
         std::string str = fileName; // a copy
-        // the path contains the magic delimiter - replace all elements of the
+        // the path contains the magic delimiter - replace all occurences of all strings in our list.
         for (auto &p : mPathReplace) {
             find_and_replace(str, p.first, p.second);
         }
@@ -97,7 +97,7 @@ void Tools::setupPaths(const std::string &path, const Settings *settings)
     auto keys = settings->findKeys("filemask");
 
     for (auto &s : keys) {
-        auto key = "$" + s.substr(9) + "$"; // 9: "filemask."
+        auto key = "$" + s.substr(9) + "$"; // 9: string after "filemask."
         mPathReplace.push_back(std::pair<std::string, std::string>(key, settings->valueString(s)));
 
     }

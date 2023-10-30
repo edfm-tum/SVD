@@ -93,18 +93,25 @@ bool States::loadProperties(const std::string &filename)
     while (rdr.next()) {
         ++lineno;
         try {
+
+            if (!Model::instance()->states()->isValid(static_cast<state_t>(rdr.value(sidx))))
+                throw std::logic_error("state invalid");
+
             const State &state = Model::instance()->states()->stateById(static_cast<state_t>(rdr.value(sidx)));
             for (size_t i=0;i<rdr.columnCount();++i)
                 if (i != sidx)
                     const_cast<State&>(state).setValue(rdr.columnName(i), rdr.value(i));
 
         } catch (const std::logic_error &) {
-            spdlog::get("setup")->warn("loading of properties: state {} is not valid (line {})!", rdr.value(sidx), lineno);
+            spdlog::get("setup")->error("loading of properties: state {} is not valid (line {})!", rdr.value(sidx), lineno);
             has_errors = true;
         }
     }
     spdlog::get("setup")->debug("Loaded {} values from file '{}'. States have the following properties: {}", rdr.columnCount()-1, filename, join(State::valueNames()));
-    return !has_errors;
+    if (has_errors)
+        throw logic_error_fmt("Error in loading of extra state properties from '{}'. Check the log.", filename);
+
+    return true;
 
 }
 

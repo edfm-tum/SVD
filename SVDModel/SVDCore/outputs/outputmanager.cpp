@@ -31,6 +31,7 @@
 #include "modules/fire/fireout.h"
 #include "modules/wind/windout.h"
 #include "modules/automanagement/automanagementout.h"
+#include "modules/barkbeetle/barkbeetleout.h"
 
 OutputManager::OutputManager()
 {
@@ -42,6 +43,7 @@ OutputManager::OutputManager()
     mOutputs.push_back(new FireOut());
     mOutputs.push_back(new WindOut());
     mOutputs.push_back(new AutoManagementOut());
+    mOutputs.push_back(new BarkBeetleOut());
 }
 
 OutputManager::~OutputManager()

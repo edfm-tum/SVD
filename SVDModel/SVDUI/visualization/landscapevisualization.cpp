@@ -86,10 +86,13 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
             // load DEM from raster file
             std::string filename = Tools::path(Model::instance()->settings().valueString("visualization.dem"));
             if (!Tools::fileExists(filename)) {
-                lg->error("DEM not available ('{}').", filename);
+                throw logic_error_fmt("DEM not available ('{}').", filename);
                 return;
             }
             mDem.loadGridFromFile(filename);
+            if (mDem.metricRect() != Model::instance()->landscape()->grid().metricRect()) {
+                throw logic_error_fmt("Loaded DEM from '{}' has not the same extent as the landscape. Either provide a proper DEM or set 'visualization.dem' to an empty string.", filename);
+            }
             mMinHeight = std::max( mDem.min(), 0.f);
             mMaxHeight = mDem.max();
 
@@ -293,7 +296,7 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
 
     if (auto_scale) {
         min_value = std::numeric_limits<double>::max();
-        max_value = std::numeric_limits<double>::min();
+        max_value = std::numeric_limits<double>::lowest();
         for (Cell &c : Model::instance()->landscape()->cells()) {
             if (!c.isNull()) {
                 cw.setData(&c);
@@ -486,7 +489,18 @@ void LandscapeVisualization::setupColorRamps()
 
 void LandscapeVisualization::setupStateColors()
 {
-    const auto &states = Model::instance()->states()->states();
+    const auto &all_states = Model::instance()->states()->states();
+    const auto &hist = Model::instance()->states()->stateHistogram();
+    std::vector< std::pair<const State*, int> > states;
+    for (size_t i=0;i<all_states.size();++i)
+        states.push_back(std::pair<const State*, int>(&all_states[i], hist[all_states[i].id()]));
+
+    if (states.size() > 100) {
+        // sort states according to frequency
+        std::sort( states.begin(), states.end(),
+                  []( const std::pair<const State*, int> &left, const std::pair<const State*, int> &right )
+                  { return ( left.second > right.second ); } );
+    }
 
     // 100 distinct colors generated with R package randomcoloR
     const QStringList default_cols = {"#C6F363","#559769","#EDC1CA","#58C3B4","#6E54E4","#E57BF1","#98EE6D","#D59D8F","#A3CED6","#E2D072","#3D6152","#3FBBD1","#C28FA7","#4F83EF","#749BA9",
@@ -510,7 +524,8 @@ void LandscapeVisualization::setupStateColors()
     QVector<QString> color_names;
     QVector<int> factor_values;
     QVector<QString> factor_labels;
-    for (const auto &s : states) {
+    for (const auto &st : states) {
+        auto &s = *st.first;
         if (s.colorName().empty())
             //color_names.push_back( default_cols[color_names.length() % default_cols.size()] );
             color_names.push_back( werner_cols[color_names.length() % werner_cols.size()] );

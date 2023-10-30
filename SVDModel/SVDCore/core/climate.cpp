@@ -51,11 +51,26 @@ void Climate::setup()
     lg->debug("reading climate file '{}' with {} columns. climateId: col {}, year: col {}.", file_name, rdr.columnCount(), i_id, i_year);
     mNColumns = rdr.columnCount()-2;
     mColNames.clear();
-    if (settings.valueBool("climate.publishVariables","false")) {
-        for (size_t i=2;i<rdr.columnCount();++i)
-           mColNames.push_back(rdr.columnName(i));
-    }
+    mVarsInExpressions = settings.valueBool("climate.publishVariables", "false");
 
+    for (size_t i=2;i<rdr.columnCount();++i)
+       mColNames.push_back(rdr.columnName(i));
+
+
+
+    if (settings.hasKey("climate.firstAuxiliaryColumn") ) {
+       std::string first_aux_col = settings.valueString("climate.firstAuxiliaryColumn", "");
+       if (!first_aux_col.empty()) {
+           int i_first_aux = indexOf(mColNames, first_aux_col);
+           if (i_first_aux < 0)
+               throw logic_error_fmt("Setup climate: climate.firstAuxiliaryColumn is '{}', but this column is not in the climate data table with the following (payload) columns: {}",
+                                     first_aux_col, join(mColNames));
+           // columns for DNN are columns from index 2 to number of cols excluding auxilaries (=index of first aux col)
+           mNColumns = i_first_aux;
+           lg->debug("n={} columns used by DNN: {}", mNColumns, join(mColNames.cbegin(), mColNames.cbegin() + i_first_aux));
+           lg->debug("n={} auxiliary columns (not used by DNN): {}", mColNames.size() - mNColumns, join(mColNames.cbegin() + i_first_aux, mColNames.cend()));
+       }
+    }
 
     // set up transformations
     std::vector<Expression> transformations;
@@ -190,6 +205,11 @@ std::vector<const std::vector<float> *> Climate::series(int start_year, size_t s
         set[i] = &singleSeries(year, climateId);
     }
     return set;
+}
+
+int Climate::indexOfVariable(const std::string &var_name) const
+{
+    return index_of(mColNames, var_name );
 }
 
 double Climate::value(const size_t varIdx, int climateId)

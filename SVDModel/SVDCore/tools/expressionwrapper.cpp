@@ -219,13 +219,15 @@ void CellWrapper::setupVariables(EnvironmentCell *ecell, const State *astate)
     }
     mMaxEnvVar = mVariableList.size();
 
-    for (auto &v : Model::instance()->climate()->climateVariables()) {
-        if (indexOf(mVariableList, v)>=0) {
-            spdlog::get("main")->error("Setup of variable names for CellWrapper: climate variable '{}' already exists! (list of variables so far: {})", v, join(mVariableList));
-            throw std::logic_error("Error in setting up variable names (check log).");
+    if (Model::instance()->climate()->climateVarsInExpressions()) {
+        for (auto &v : Model::instance()->climate()->climateVariables()) {
+            if (indexOf(mVariableList, v)>=0) {
+                spdlog::get("main")->error("Setup of variable names for CellWrapper: climate variable '{}' already exists! (list of variables so far: {})", v, join(mVariableList));
+                throw std::logic_error("Error in setting up variable names (check log).");
+            }
+            mVariableList.push_back(v);
+            mVariablesMetaData.push_back({"Climate", "Climate variable (user-defined)"});
         }
-        mVariableList.push_back(v);
-        mVariablesMetaData.push_back({"Climate", "Climate variable (user-defined)"});
     }
     mMaxClimVar = mVariableList.size();
 }

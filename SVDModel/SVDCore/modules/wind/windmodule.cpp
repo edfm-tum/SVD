@@ -55,11 +55,11 @@ void WindModule::setup()
     Model::instance()->states()->loadProperties(Tools::path(filename));
 
     // check if variables are available
-    for (const auto *a : {"pDamage"})
+    for (const auto *a : {"pWindDamage"})
         if (State::valueIndex(a) == -1)
             throw logic_error_fmt("The WindModule requires the state property '{}' which is not available.", a);
 
-    miDamageProbability = static_cast<size_t>(State::valueIndex("pDamage"));
+    miDamageProbability = static_cast<size_t>(State::valueIndex("pWindDamage"));
 
     // set up wind events
     filename = Tools::path(settings.valueString(modkey("stormEventFile")));
@@ -178,7 +178,7 @@ void WindModule::run()
 
 }
 
-double WindModule::calculateSusceptibility(Cell &c) const
+double WindModule::getSusceptibility(Cell &c) const
 {
     /// pre-calculated value, stored as extra column
     double pDamage = c.state()->value(miDamageProbability);
@@ -313,7 +313,7 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
     float *grid_ptr = wind_grid.begin();
     while (auto *gr = runner.next()) {
         if (!gr->isNull()) {
-            double p_damage = calculateSusceptibility(gr->cell());
+            double p_damage = getSusceptibility(gr->cell());
             *grid_ptr = p_damage; // write susceptibility values to wind grid
             mean_susceptibility += p_damage;
             ++n_forested;

@@ -371,12 +371,16 @@ Batch * DNN::run(Batch *abatch)
         // wait a bit...
         //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         // ... and produce a random result
+        state_t new_state;
         for (size_t i=0;i<batch->usedSlots();++i) {
             InferenceData &id=batch->inferenceData(i);
-            // just random ....
-            const State &s = Model::instance()->states()->randomState();
+            // select a new state randomly ....
+            //const State &s = Model::instance()->states()->randomState();
+            //new_state = s.id();
+            // ... or simply use the same state again
+            new_state = id.state();
             restime_t rt = static_cast<restime_t>(irandom(1,12));
-            id.setResult(s.id(), rt);
+            id.setResult(new_state, rt);
 
         }
         batch->changeState(Batch::FinishedDNN);

@@ -33,6 +33,8 @@ public:
     void setup();
 
     // access
+    /// number of columns that are used in the DNN (excluding climateId, year, and auxiliary columns)
+    size_t nDNNcolumns() const { return mNColumns; }
     /// retrieve a list of climate series, starting from 'start_year' (first year: 1, ...)
     /// and with the given length ('series_length').
     std::vector< const std::vector<float>* > series(int start_year, size_t series_length, int climateId) const;
@@ -41,8 +43,15 @@ public:
                                                                 auto s= y->second.find(climateId); if (s==(*y).second.end()) return false;
                                                               return true;}
     const std::vector< std::string > &climateVariables() { return mColNames; }
+    int indexOfVariable(const std::string &var_name) const;
 
+    /// retrieve a single value for the current year.
+    /// @param varIdx: index of the climate variable (see also indexOfVariable())
+    /// @param climateId: integer id of the climate region
     double value(const size_t varIdx, int climateId);
+
+    /// true if climate variables should be used for global expressions in SVD
+    bool climateVarsInExpressions() const { return mVarsInExpressions; }
 private:
     size_t mNColumns; ///< the number of data elements per year+id
     /// the main container for climate data
@@ -54,6 +63,8 @@ private:
     std::vector<int> mSequence;
     /// names of climate variables
     std::vector<std::string> mColNames;
+
+    bool mVarsInExpressions {false};
 };
 
 #endif // CLIMATE_H

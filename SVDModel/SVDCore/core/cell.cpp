@@ -18,6 +18,12 @@
 ********************************************************************************************/
 #include "cell.h"
 #include "model.h"
+#include "outputs/statematrixout.h"
+
+// static decl
+StateMatrixOut *Cell::mSMOut = nullptr;
+
+
 
 // 37 values, roughly a circle with 7px diameter
 const std::vector<Point> Cell::mMediumNeighbors = {
@@ -40,6 +46,14 @@ const std::vector<Point> Cell::mLocalNeighbors = {
 
 
 
+
+void Cell::setup()
+{
+    mSMOut = dynamic_cast<StateMatrixOut*>( Model::instance()->outputManager()->find("StateMatrix") );
+    if (mSMOut && !mSMOut->enabled())
+        mSMOut = nullptr;
+
+}
 
 float Cell::elevation() const
 {
@@ -67,6 +81,11 @@ void Cell::update()
             // save to history: since the residence time here does not include the current year (yet), we'll add it here
             // i.e., the minimum residence time in the history is 1.
             mHistory.saveHistory(mNextStateId, mResidenceTime + 1);
+
+            // save to output?
+            if (mSMOut)
+                mSMOut->add(mStateId, mNextStateId);
+
             // the actual update:
             setState( mNextStateId );
             setResidenceTime( 0 );

@@ -358,6 +358,7 @@ void ModelShell::internalRun()
         mModel->outputManager()->run("StateGrid");
         mModel->outputManager()->run("ResTimeGrid");
         mModel->outputManager()->run("StateHist");
+        mModel->outputManager()->run("StateMatrix");
 
         setState(ModelRunState::Running, "update cells");
 }

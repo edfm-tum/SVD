@@ -124,8 +124,9 @@ void Model::finalizeYear()
 void Model::runModules()
 {
     auto lg = spdlog::get("main");
-    lg->debug("Run modules (year {})", year());
+    lg->info("Run modules (year {})", year());
     for (auto &module : mModules) {
+        STimer tmr(lg, "Module " + module->name() );
         lg->debug("Run module '{}'", module->name());
         module->run();
     }

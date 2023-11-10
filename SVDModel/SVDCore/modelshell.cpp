@@ -27,6 +27,7 @@
 // needed only for visualization (to be removed again)
 #include "modules/fire/firemodule.h"
 #include "modules/module.h"
+#include "tools.h"
 
 #include <QThread>
 #include <QCoreApplication>
@@ -189,6 +190,7 @@ void ModelShell::setup()
                 QCoreApplication::processEvents();
             }
             setState( ModelRunState::ReadyToRun );
+            mTimer = new STimer(lg, "run year", false);
         }
 
 
@@ -338,6 +340,7 @@ void ModelShell::internalRun()
         mAllPackagesBuilt=false;
         mPackagesBuilt=0;
         mPackagesProcessed=0;
+        mTimer->reset();
 
         // check for each cell if we need to do something; if yes, then
         // fill a InferenceData item within a batch of data
@@ -538,7 +541,7 @@ void ModelShell::finalizeCycle()
     }
     // everything is
     mModel->finalizeYear();
-    lg->info("Year {} finished.", mModel->year());
+    lg->info("Year {} finished (total runtime: {}).", mModel->year(), mTimer->elapsedStr());
 
     setState(ModelRunState::ReadyToRun);
     emit processedStep(mModel->year());

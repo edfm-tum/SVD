@@ -34,6 +34,7 @@ SOURCES += \
     modules/wind/windmodule.cpp \
     modules/wind/windout.cpp \
     outputs/statehistout.cpp \
+    outputs/statematrixout.cpp \
     tools/geotiff.cpp \
     tools/grid.cpp \
     tools/strtools.cpp \
@@ -72,6 +73,7 @@ HEADERS += \
     modules/wind/windmodule.h \
     modules/wind/windout.h \
     outputs/statehistout.h \
+    outputs/statematrixout.h \
     tools/geotiff.h \
     tools/grid.h \
     tools/strtools.h \

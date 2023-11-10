@@ -28,6 +28,7 @@
 #include "restimegridout.h"
 #include "statechangeout.h"
 #include "statehistout.h"
+#include "statematrixout.h"
 #include "modules/fire/fireout.h"
 #include "modules/wind/windout.h"
 #include "modules/automanagement/automanagementout.h"
@@ -40,6 +41,7 @@ OutputManager::OutputManager()
     mOutputs.push_back(new ResTimeGridOut());
     mOutputs.push_back(new StateChangeOut());
     mOutputs.push_back(new StateHistOut());
+    mOutputs.push_back(new StateMatrixOut());
     mOutputs.push_back(new FireOut());
     mOutputs.push_back(new WindOut());
     mOutputs.push_back(new AutoManagementOut());

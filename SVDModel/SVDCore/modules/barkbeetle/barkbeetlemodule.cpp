@@ -169,25 +169,55 @@ void BarkBeetleModule::run()
 
 void BarkBeetleModule::initialRandomInfestation()
 {
-    const double p_infestation = 0.000685; // probability for initial outbreak;
+
+    /* idea of subsampling:
+     * we pick indices with a fixed distance (subsampling_factor) and a random offset in between.
+     * E.g., when subsampling=10, and our random numbers start with [4,6,0,...], our
+     * first indices would be: 0+4, 10+6=16, 20+0=20, ...
+     * to counteract that we select only a fixed fraction of cells (a different set every year!)
+     * the probability for each evaluated pixel increases by the same factor
+    */
+
+
     auto &cells = Model::instance()->landscape()->cells();
 
-    int n_samples = cells.size() * p_infestation;
+    // subsampling depends on the landscape size
+    int subsampling_factor = 1;
+    if (cells.size() < 1000000)
+        subsampling_factor = 1; // look at all cells (<1Mio)
+    else if (cells.size() < 10000000)
+        subsampling_factor = 10; // 1-10 Mio forested px
+    else
+        subsampling_factor = 100; // >10 Mio forested px
+
+    size_t idx = 0;
     int n_started = 0;
-    for (int i=0;i<n_samples;++i) {
-        auto &cell = cells[irandom(0, cells.size())];
+    int n_tested = 0;
+
+    while (idx < cells.size()) {
+        auto &cell = subsampling_factor>1 ? cells[idx + irandom(0, subsampling_factor)] : cells[idx];
         double susceptibility = cell.state()->value(miSusceptibility);
-        if (susceptibility>0. && drandom() < susceptibility) {
+        // here comes the probability function:
+        double p_start = 0.000685; // <- function call
+        // effective probability: susceptibility * climate-sensitive prob * subsampling,
+        // i.e., when subsampling = 10, then the chance is 10x higher. Since probs are generaly low
+        // (< 0.0001 even a factor 100 increase (for perfectly susceptible cells) gives max a 1% chance)
+        double p_eff = susceptibility*p_start* subsampling_factor;
+        if (susceptibility>0. && drandom() < p_eff ) {
             // start infestation
             auto &g = mGrid[cell.cellIndex()];
             g.outbreak_age = 0; // start again from outbreak age zero
             activeCellsNow().push(cell.cellIndex());
             ++n_started;
         }
+        idx += subsampling_factor;
+        ++n_tested;
     }
+
+
     mStats.n_background = n_started;
     mStats.n_wind_infestation = 0; // TODO
-    lg->debug("Initial infestation: Checked {} cells, {} infestations started.", n_samples, n_started);
+    lg->debug("Initial infestation: Checked {} cells, {} infestations started.", n_tested, n_started);
 }
 
 void BarkBeetleModule::spread()

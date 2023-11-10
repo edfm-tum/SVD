@@ -171,6 +171,7 @@ void Landscape::setup()
 
 
     setupInitialState();
+    Cell::setup(); // static setup
 
     lg->info("Landscape successfully set up.");
 }

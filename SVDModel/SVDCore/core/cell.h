@@ -21,7 +21,9 @@
 #include "grid.h"
 #include "states.h"
 
+class StateMatrixOut; // forward
 class EnvironmentCell; // forward
+
 class Cell
 {
 public:
@@ -36,6 +38,7 @@ public:
     /// establish the link to the environment cell
     void setEnvironmentCell(const EnvironmentCell *ec) { mEnvCell = ec; }
     void setCellIndex(int cell_index) { mCellIndex = cell_index; }
+    static void setup(); ///< static setup function, only called once
 
     // access
     /// isNull() returns true if the cell is not an actively simulated cell
@@ -134,6 +137,10 @@ private:
 
     static const std::vector<Point> mLocalNeighbors;
     static const std::vector<Point> mMediumNeighbors;
+
+    /// link to state matrix output
+    static StateMatrixOut *mSMOut;
+
 
 };
 

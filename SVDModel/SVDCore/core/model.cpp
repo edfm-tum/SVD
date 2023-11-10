@@ -109,6 +109,7 @@ bool Model::setup()
 void Model::finalizeYear()
 {
     // increment residence time for all pixels (updated pixels go from 0 -> 1)
+    // and update to a new state if changes should happen
     for (Cell &c : landscape()->cells())
         c.update();
 

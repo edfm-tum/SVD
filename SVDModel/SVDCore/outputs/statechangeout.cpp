@@ -67,7 +67,7 @@ void StateChangeOut::setup()
 void StateChangeOut::execute()
 {
     int year =  Model::instance()->year();
-    if (mInterval>0)
+    if (mInterval>1)
         if (year % mInterval != 1)
             return;
 

@@ -94,7 +94,6 @@ void WindModule::setup()
     std::string grid_file_name = Tools::path(settings.valueString(modkey("regionalProbabilityGrid")));
     mRegionalStormProb.loadGridFromFile(grid_file_name);
     lg->debug("Loaded regional wind probability grid: '{}'. Dimensions: {} x {}, with cell size: {}m.", grid_file_name, mRegionalStormProb.sizeX(), mRegionalStormProb.sizeY(), mRegionalStormProb.cellsize());
-    //lg->info("Metric rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", grid.metricRect().width(), grid.metricRect().height(), grid.metricRect().left(), grid.metricRect().right(), grid.metricRect().top(), grid.metricRect().bottom());
 
 
     // setup of the wind grid (values per cell)

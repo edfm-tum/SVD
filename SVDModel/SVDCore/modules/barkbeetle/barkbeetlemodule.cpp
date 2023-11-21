@@ -4,6 +4,7 @@
 #include "model.h"
 #include "filereader.h"
 #include "randomgen.h"
+#include "expressionwrapper.h"
 
 
 BarkBeetleModule::BarkBeetleModule(std::string module_name): Module(module_name, State::None)
@@ -17,7 +18,7 @@ void BarkBeetleModule::setup()
     lg->info("Setup of BarkBeetleModule '{}'", name());
     auto settings = Model::instance()->settings();
 
-    settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost", "beetleOffspringFactor", "kernelFile", "successOfColonization"  });
+    settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost", "beetleOffspringFactor", "kernelFile", "successOfColonization", "backgroundProbFormula"  });
 
 
     miVarBBgen = Model::instance()->climate()->indexOfVariable( settings.valueString(modkey("climateVarGenerations")) );
@@ -28,6 +29,11 @@ void BarkBeetleModule::setup()
         throw logic_error_fmt("Barkbeetle: required auxiliary climate variable not found. Looked for (setting climateVarFrost): '{}'", settings.valueString(modkey("climateVarFrost")));
 
     mSuccessOfColonization = settings.valueDouble(modkey("successOfColonization"));
+    std::string bb_infest = settings.valueString(modkey("backgroundProbFormula"));
+    if (!bb_infest.empty()) {
+        mBackgroundProbFormula.setExpression(bb_infest);
+        lg->info("backgroundProbFormula is active (value: {}). ", mBackgroundProbFormula.expression());
+    }
 
     int k = settings.valueInt(modkey("beetleOffspringFactor"),-1);
     std::string kernel_file = settings.valueString(modkey("kernelFile"));
@@ -73,11 +79,6 @@ void BarkBeetleModule::setup()
 
     mSaveDebugGrids = settings.valueBool(modkey("saveDebugGrids"));
 
-    std::string windsize_multiplier = settings.valueString(modkey("windSizeMultiplier"));
-    if (!windsize_multiplier.empty()) {
-        mWindSizeMultiplier.setExpression(windsize_multiplier);
-        lg->info("windSizeMultiplier is active (value: {}). The maximum number of affected cells will be scaled with this function (variable: total planned cells ).", mWindSizeMultiplier.expression());
-    }
 
 
     std::string grid_file_name = Tools::path(settings.valueString(modkey("regionalProbabilityGrid")));
@@ -131,25 +132,6 @@ double BarkBeetleModule::moduleVariable(const Cell *cell, size_t variableIndex) 
 
     return 0.;
 
-
-
-    /*
-    auto &gr = mGrid[cell->cellIndex()];
-    switch (variableIndex) {
-    case 0: {
-        // 10km grid
-        return mRegionalStormProb.constValueAt(mGrid.cellCenterPoint(cell->cellIndex()));
-    }
-    case 1: // susceptibility
-        return cell->state()->value(miDamageProbability);
-    case 2:
-        return gr.n_storm;
-    case 3:
-        return gr.last_storm;
-    default:
-        return 0.;
-    } */
-
 }
 
 void BarkBeetleModule::run()
@@ -177,6 +159,7 @@ void BarkBeetleModule::initialRandomInfestation()
      * to counteract that we select only a fixed fraction of cells (a different set every year!)
      * the probability for each evaluated pixel increases by the same factor
     */
+    CellWrapper cwrap(nullptr);
 
 
     auto &cells = Model::instance()->landscape()->cells();
@@ -198,7 +181,11 @@ void BarkBeetleModule::initialRandomInfestation()
         auto &cell = subsampling_factor>1 ? cells[idx + irandom(0, subsampling_factor)] : cells[idx];
         double susceptibility = cell.state()->value(miSusceptibility);
         // here comes the probability function:
-        double p_start = 0.000685; // <- function call
+        double p_start = 0.000685;
+        if (!mBackgroundProbFormula.isEmpty()) {
+            cwrap.setData(&cell);
+            p_start = mBackgroundProbFormula.calculate(cwrap);
+        }
         // effective probability: susceptibility * climate-sensitive prob * subsampling,
         // i.e., when subsampling = 10, then the chance is 10x higher. Since probs are generaly low
         // (< 0.0001 even a factor 100 increase (for perfectly susceptible cells) gives max a 1% chance)
@@ -217,7 +204,7 @@ void BarkBeetleModule::initialRandomInfestation()
 
     mStats.n_background = n_started;
     mStats.n_wind_infestation = 0; // TODO
-    lg->debug("Initial infestation: Checked {} cells, {} infestations started.", n_tested, n_started);
+    lg->debug("Initial infestation: Checked {} cells (subsampling-factor {}), {} infestations started.", n_tested, subsampling_factor, n_started);
 }
 
 void BarkBeetleModule::spread()

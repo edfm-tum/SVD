@@ -58,6 +58,8 @@ private:
 
     // parameters
     double mSuccessOfColonization; ///< probability scaling factor for suseceptibilty (i.e. p(colonization) = susceptibility * SucessOfColonization
+    Expression mBackgroundProbFormula; ///< climate sensitive background probability of infestation
+
 
     /// storage for the kernels: kernel[ generation_index ] -> vector with rel. distance (Point) and value (probability)
     std::vector< std::vector< std::pair< Point, double >>> mKernels;

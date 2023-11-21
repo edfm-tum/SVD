@@ -403,6 +403,7 @@ Batch * DNN::run(Batch *abatch)
         return batch;
     }
 
+    // tracing now in batchdnn.cpp
     //if (lg->should_log(spdlog::level::trace))
     //    lg->trace("dnn.cpp: {}", batch->inferenceData(0).dumpTensorData());
 
@@ -442,6 +443,8 @@ Batch * DNN::run(Batch *abatch)
         indices = new Tensor(tensorflow::DT_INT32, tensorflow::TensorShape({  static_cast<long long>(batch->batchSize()), static_cast<long long>(mTopK_NClasses)}));
 
         // run the top-k on CPU
+        if (lg->should_log(spdlog::level::trace))
+            lg->trace("Running Top-K for package {}:", abatch->packageId());
         getTopClasses(outputs[0], batch->batchSize(), mTopK_NClasses, indices, scores);
         timr.print("topk cpu");
 

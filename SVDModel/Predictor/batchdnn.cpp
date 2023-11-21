@@ -139,7 +139,7 @@ size_t BatchDNN::chooseProbabilisticIndex(float *values, size_t n, double temper
     double p = nrandom(0., p_sum);
 
     p_sum = 0.;
-    for (size_t i=0;i<n;++i, ++values) {
+    for (size_t i=0;i<n;++i) {
         p_sum += static_cast<double>(values[i]);
         if (p < p_sum)
             return i;
@@ -198,7 +198,7 @@ void BatchDNN::selectClasses()
 
     auto lg = spdlog::get("dnn");
     if (lg->should_log(spdlog::level::trace)) {
-
+        lg->trace("Dump for package '{}'", mPackageId);
         lg->trace("{}", inferenceData(0).dumpTensorData());
         InferenceData &id = inferenceData(0);
 
@@ -212,9 +212,11 @@ void BatchDNN::selectClasses()
         s << "\nClassification Results: current State " << id.state() << ": " << Model::instance()->states()->stateById(id.state()).asString() << "\n";
         state_t *st = stateResult(0);
         float *stp = stateProbResult(0);
+        float stateprobsum = 0.f;
         for (size_t i=0;i <mNTopK; ++i) {
             if (Model::instance()->states()->isValid(*st)) {
                 const State &tstate = Model::instance()->states()->stateById(*st);
+                stateprobsum+=*stp;
                 s << *st << ": " <<  (*stp)*100.f
                   << "% "<< tstate.asString() << (id.nextState() == *st ? " ***": "") << "\n";
             } else {
@@ -223,8 +225,10 @@ void BatchDNN::selectClasses()
             ++st;
             ++stp;
         }
-        s << "Selected State: " << id.nextState()   << " : " << (Model::instance()->states()->isValid(id.nextState()) ? Model::instance()->states()->stateById(id.nextState()).asString() : "(invalid)");
-        lg->trace("Results for example 0 in the batch:");
+        s << "Selected State: " << id.nextState()   << " : "
+          << (Model::instance()->states()->isValid(id.nextState()) ? Model::instance()->states()->stateById(id.nextState()).asString() : "(invalid)")
+          << " - prob. sum: " << stateprobsum * 100.f;
+        lg->trace("Results for example 0 in the batch (package {})", mPackageId);
         lg->trace("{}", s.str());
 
 

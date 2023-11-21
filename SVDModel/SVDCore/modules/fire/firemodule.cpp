@@ -244,7 +244,7 @@ void FireModule::fireSpread(const FireModule::SIgnition &ign)
         } // end while
     } // end if (fire at ignition point)
 
-    lg->info("FireEvent. total burned (ha): {}, high severity (ha): {}, max-fire-size (ha): {}", n_ha, n_highseverity_ha, max_ha);
+    lg->debug("FireEvent. total burned (ha): {}, high severity (ha): {}, max-fire-size (ha): {}", n_ha, n_highseverity_ha, max_ha);
     SFireStat stat;
     stat.year = Model::instance()->year();
     stat.Id = ign.Id;

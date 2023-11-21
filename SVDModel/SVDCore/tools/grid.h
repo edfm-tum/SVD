@@ -106,7 +106,9 @@ public:
     bool isNull() const { return mTop==-1. && mBottom==-1. && mLeft==-1. && mRight==-1.; }
     bool contains(double x, double y) const { return x>=mLeft && x<=mRight && y>=mTop && y<=mBottom; }
 
-    bool operator==(const RectF &r) const { return mTop==r.mTop && mBottom==r.mBottom && mLeft == r.mLeft && mRight == r.mRight; }
+    bool operator==(const RectF &r) const {
+        const double epsilon = 0.000001;
+        return fabs(mTop-r.mTop)<epsilon && fabs(mBottom-r.mBottom)<epsilon && fabs(mLeft - r.mLeft)<epsilon && fabs(mRight - r.mRight)<epsilon; }
     bool operator!=(const RectF &r) const { return !(r == *this); }
 private:
     double mTop;

@@ -20,6 +20,7 @@
 #define TOOLS_H
 #include <string>
 #include <vector>
+#include "spdlog/spdlog.h"
 
 class Settings; // forward
 
@@ -41,6 +42,30 @@ public:
 private:
     static std::string mProjectDir;
     static std::vector< std::pair<std::string, std::string > > mPathReplace;
+};
+
+class STimer {
+public:
+    STimer(std::shared_ptr<spdlog::logger> logger, std::string name, bool log_on_destroy=true) { start_time = std::chrono::system_clock::now(); _logger=logger; _name=name; _log_on_destroy = log_on_destroy; }
+    void reset() { start_time = std::chrono::system_clock::now(); }
+    size_t elapsed() { return static_cast<size_t>( std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start_time).count() ); }
+    std::string elapsedStr() {
+        auto t = elapsed();
+        if (t<10000.)
+            return std::to_string(t) + "µs";
+        else
+            return (std::to_string(round(t / 1000.) / 1000.)) + "s";
+    }
+    void print(std::string s) { _logger->debug("[{}] Timer {}: {}: {}",
+                                               std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count(),
+                                               _name, s, elapsedStr()) ; }
+    void now() { _logger->debug("Timepoint: {}us", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() ));}
+    ~STimer() { if (_log_on_destroy) print("finished"); }
+private:
+    std::shared_ptr<spdlog::logger> _logger;
+    std::string _name;
+    std::chrono::system_clock::time_point start_time;
+    bool _log_on_destroy { true };
 };
 
 #endif // TOOLS_H

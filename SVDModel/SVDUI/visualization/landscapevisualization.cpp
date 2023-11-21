@@ -91,6 +91,10 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
             }
             mDem.loadGridFromFile(filename);
             if (mDem.metricRect() != Model::instance()->landscape()->grid().metricRect()) {
+                auto rect = mDem.metricRect();
+                lg->info("DEM rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", rect.width(), rect.height(), rect.left(), rect.right(), rect.top(), rect.bottom());
+                rect = Model::instance()->landscape()->grid().metricRect();
+                lg->info("Landscape rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", rect.width(), rect.height(), rect.left(), rect.right(), rect.top(), rect.bottom());
                 throw logic_error_fmt("Loaded DEM from '{}' has not the same extent as the landscape. Either provide a proper DEM or set 'visualization.dem' to an empty string.", filename);
             }
             mMinHeight = std::max( mDem.min(), 0.f);

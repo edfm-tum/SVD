@@ -132,7 +132,7 @@ bool DNN::setupDNN(size_t aindex)
     cudaProfilerStop();
 #endif
 
-    lg = spdlog::get("dnn");
+    lg = spdlog::get("setup"); // use "setup" channel for logging during startup phase
     mIndex = aindex;
     auto settings = Model::instance()->settings();
     if (!lg)
@@ -325,34 +325,38 @@ bool DNN::setupDNN(size_t aindex)
     }
 
     lg->info("DNN Setup complete.");
+    lg = spdlog::get("dnn"); // continue logging on "dnn" channel
     return true;
 #endif
 
 }
-
+/*
 class STimer {
 public:
     STimer(std::shared_ptr<spdlog::logger> logger, std::string name) { start_time = std::chrono::system_clock::now(); _logger=logger; _name=name; }
     size_t elapsed() { return static_cast<size_t>( std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start_time).count() ); }
-    void print(std::string s) { _logger->debug("[{}] Timer {}: {}: {}us", std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count(),  _name, s, elapsed()) ; }
-    void now() { _logger->debug("Timepoint: {}us", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() ));}
-    ~STimer() { print("destroyed"); }
+    void print(std::string s) { _logger->trace("[{}] Timer {}: {}: {}us", std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count(),  _name, s, elapsed()) ; }
+    void now() { _logger->trace("Timepoint: {}us", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() ));}
+    ~STimer() {  }
 private:
     std::shared_ptr<spdlog::logger> _logger;
     std::string _name;
     std::chrono::system_clock::time_point start_time;
 };
-
+*/
 
 
 Batch * DNN::run(Batch *abatch)
 {
+
     BatchDNN *batch = dynamic_cast<BatchDNN*>(abatch);
     if (!batch)
         throw std::logic_error("DNN:run: invalid Batch!");
 #ifdef CUDA_PROFILING
     cudaProfilerStart();
 #endif
+    try {
+
     std::vector<Tensor> outputs;
     STimer timr(lg, "DNN::run:" + to_string(batch->packageId()));
     lg->debug("DNN#{}: started execution for package {}.", mIndex, batch->packageId());
@@ -399,6 +403,7 @@ Batch * DNN::run(Batch *abatch)
         return batch;
     }
 
+    // tracing now in batchdnn.cpp
     //if (lg->should_log(spdlog::level::trace))
     //    lg->trace("dnn.cpp: {}", batch->inferenceData(0).dumpTensorData());
 
@@ -438,12 +443,13 @@ Batch * DNN::run(Batch *abatch)
         indices = new Tensor(tensorflow::DT_INT32, tensorflow::TensorShape({  static_cast<long long>(batch->batchSize()), static_cast<long long>(mTopK_NClasses)}));
 
         // run the top-k on CPU
+        if (lg->should_log(spdlog::level::trace))
+            lg->trace("Running Top-K for package {}:", abatch->packageId());
         getTopClasses(outputs[0], batch->batchSize(), mTopK_NClasses, indices, scores);
         timr.print("topk cpu");
 
 
     }
-
 #ifdef CUDA_PROFILING
     cudaProfilerStop();
 #endif
@@ -492,6 +498,12 @@ Batch * DNN::run(Batch *abatch)
     lg->debug("DNN::run finished; package {}", batch->packageId());
     batch->changeState(Batch::FinishedDNN);
     return batch;
+
+    } catch(const std::exception &e) {
+        lg->error("error in DNN: {}", e.what());
+        batch->setError(true);
+        return batch;
+    }
 }
 
 void DNN::setupInput()

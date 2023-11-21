@@ -11,7 +11,7 @@ class ConsoleShell : public QObject
     Q_OBJECT
 public:
     explicit ConsoleShell(QObject *parent = nullptr);
-
+    ~ConsoleShell();
 signals:
 
 public slots:

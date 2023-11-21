@@ -27,6 +27,7 @@
 #include "modelrunstate.h"
 #include "spdlog/spdlog.h"
 #include "settings.h"
+#include "tools.h"
 
 
 class Model; // forward
@@ -105,7 +106,7 @@ private:
     // loggers
     std::shared_ptr<spdlog::logger> lg;
 
-
+    STimer *mTimer {nullptr};
 
 };
 

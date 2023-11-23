@@ -176,8 +176,9 @@ void BarkBeetleModule::initialRandomInfestation()
     size_t idx = 0;
     int n_started = 0;
     int n_tested = 0;
+    size_t max_cell_size = cells.size() - subsampling_factor + 1; // avoid access beyond end of vector
 
-    while (idx < cells.size()) {
+    while (idx < max_cell_size) {
         auto &cell = subsampling_factor>1 ? cells[idx + irandom(0, subsampling_factor)] : cells[idx];
         double susceptibility = cell.state()->value(miSusceptibility);
         // here comes the probability function:

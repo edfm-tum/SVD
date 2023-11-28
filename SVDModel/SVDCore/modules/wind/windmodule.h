@@ -62,7 +62,7 @@ struct SWindStat {
 class WindModule : public Module
 {
 public:
-    WindModule(std::string module_name);
+    WindModule(std::string module_name, std::string module_type);
     void setup() override;
     std::vector<std::pair<std::string, std::string> > moduleVariableNames() const override;
     double moduleVariable(const Cell *cell, size_t variableIndex) const override;
@@ -71,6 +71,7 @@ public:
 
     // getters
     const Grid<SWindCell> &windGrid() { return mGrid; }
+    const std::vector<RectF> &affectedRects(int &rLastYear) const { rLastYear = mYearLastExecuted; return mAffectedRects;  }
 
 private:
     // logging
@@ -105,6 +106,10 @@ private:
 
     /// run wind event for a single region (area) and affect (up to) proportion of cells
     SWindStat windImpactOnRegion(const RectF &area, double proportion, const SWindEvent &event);
+
+    /// list of rectangles (10km cells) that have wind events. Used for wind-barkbeetle interaction
+    std::vector<RectF> mAffectedRects;
+    int mYearLastExecuted{-1};
 
     /// helper function that samples probabilistically from the container and returns a Point.
     Point sampleFromRegionMap(std::map<Point, double> &map);

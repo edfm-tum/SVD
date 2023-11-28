@@ -5,7 +5,7 @@
 #include "tools.h"
 #include "filereader.h"
 
-AutoManagementModule::AutoManagementModule(std::string module_name): Module(module_name, State::None)
+AutoManagementModule::AutoManagementModule(std::string module_name, std::string module_type): Module(module_name, module_type, State::None)
 {
 
 }

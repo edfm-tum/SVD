@@ -59,7 +59,7 @@ void WindOut::setup()
 
 void WindOut::execute()
 {
-    WindModule *wind = dynamic_cast<WindModule*>(Model::instance()->module("wind"));
+    WindModule *wind = dynamic_cast<WindModule*>(Model::instance()->moduleByName("wind"));
     if (!wind)
         return;
 

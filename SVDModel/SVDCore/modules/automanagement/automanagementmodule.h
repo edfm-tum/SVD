@@ -12,7 +12,7 @@
 class AutoManagementModule: public Module
 {
 public:
-    AutoManagementModule(std::string module_name);
+    AutoManagementModule(std::string module_name, std::string module_type);
 
     void setup();
 

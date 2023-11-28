@@ -53,7 +53,7 @@ void BarkBeetleOut::setup()
 
 void BarkBeetleOut::execute()
 {
-    BarkBeetleModule *bb_module = dynamic_cast<BarkBeetleModule*>(Model::instance()->module("BarkBeetle"));
+    BarkBeetleModule *bb_module = dynamic_cast<BarkBeetleModule*>(Model::instance()->moduleByName("BarkBeetle"));
     if (!bb_module)
         return;
 

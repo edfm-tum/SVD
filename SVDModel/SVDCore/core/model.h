@@ -74,7 +74,8 @@ public:
     const ExternalSeeds &externalSeeds() {return mExternalSeeds; }
 
     /// return ptr to a module with the given name, or nullptr if not available
-    Module *module(const std::string &name);
+    Module *moduleByName(const std::string &name);
+    Module *moduleByType(const std::string &type);
 
     /// access to the output machinery
     std::shared_ptr<OutputManager> &outputManager() { return mOutputManager; }

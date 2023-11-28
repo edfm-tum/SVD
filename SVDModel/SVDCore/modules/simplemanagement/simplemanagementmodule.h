@@ -23,7 +23,7 @@ struct SimpleMgmtDataItem {
 class SimpleManagementModule: public Module
 {
 public:
-    SimpleManagementModule(std::string module_name);
+    SimpleManagementModule(std::string module_name, std::string module_type);
 
     void setup();
 

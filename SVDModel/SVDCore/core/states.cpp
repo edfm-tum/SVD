@@ -151,11 +151,11 @@ const State &States::stateById(state_t id)
 bool States::registerHandler(Module *module, const std::string &handler)
 {
     if (mHandlers.find(handler) != mHandlers.end()) {
-        spdlog::get("setup")->error("Cannot register the module '{}' for type '{}': already registered module ('{}')", module->name(), module->type(), mHandlers.find(handler)->second->name());
+        spdlog::get("setup")->error("Cannot register the module '{}' for type '{}': already registered module ('{}')", module->name(), module->stateType(), mHandlers.find(handler)->second->name());
         return false;
     }
     mHandlers[handler] = module;
-    spdlog::get("setup")->info("Registered module '{}' for type {}.", module->name(), module->type());
+    spdlog::get("setup")->info("Registered module '{}' for type {}.", module->name(), module->stateType());
     return true;
 }
 
@@ -173,7 +173,7 @@ void States::updateStateHandlers()
     }
     if (lg->should_log(spdlog::level::trace)) {
         for (auto &mn : Module::moduleNames()) {
-            Module *m = Model::instance()->module(mn);
+            Module *m = Model::instance()->moduleByName(mn);
             std::vector<std::string> ids;
             if (m) {
                 for (auto &s : mStates)

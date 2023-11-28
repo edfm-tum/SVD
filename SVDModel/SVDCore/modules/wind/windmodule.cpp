@@ -30,7 +30,7 @@
 #define M_PI 3.141592653589793
 #endif
 
-WindModule::WindModule(std::string module_name): Module(module_name, State::None)
+WindModule::WindModule(std::string module_name, std::string module_type): Module(module_name, module_type, State::None)
 {
 
 }
@@ -144,6 +144,8 @@ void WindModule::run()
     // check if we have events
     auto &grid = Model::instance()->landscape()->grid();
     auto range = mWindEvents.equal_range(Model::instance()->year());
+    mAffectedRects.clear();
+    mYearLastExecuted = Model::instance()->year();
     int n_executed=0;
     std::vector<int> skipped_events;
     for (auto i=range.first; i!=range.second; ++i) {
@@ -227,6 +229,7 @@ void WindModule::runWindEvent(const SWindEvent &event)
 
         // call wind routine on regional cell
         stats.push_back(windImpactOnRegion(cell_rect, event.prop_affected, event));
+        mAffectedRects.push_back(cell_rect);
 
         ++processed;
         --regions_to_process;

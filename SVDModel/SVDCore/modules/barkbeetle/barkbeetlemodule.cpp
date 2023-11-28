@@ -6,8 +6,10 @@
 #include "randomgen.h"
 #include "expressionwrapper.h"
 
+#include "../wind/windmodule.h"
 
-BarkBeetleModule::BarkBeetleModule(std::string module_name): Module(module_name, State::None)
+
+BarkBeetleModule::BarkBeetleModule(std::string module_name, std::string module_type): Module(module_name, module_type, State::None)
 {
 
 }
@@ -18,7 +20,9 @@ void BarkBeetleModule::setup()
     lg->info("Setup of BarkBeetleModule '{}'", name());
     auto settings = Model::instance()->settings();
 
-    settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost", "beetleOffspringFactor", "kernelFile", "successOfColonization", "backgroundProbFormula"  });
+    settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost", "beetleOffspringFactor",
+                                                "kernelFile", "successOfColonization", "backgroundProbFormula",
+                                                "windInteractionStrength"});
 
 
     miVarBBgen = Model::instance()->climate()->indexOfVariable( settings.valueString(modkey("climateVarGenerations")) );
@@ -35,7 +39,13 @@ void BarkBeetleModule::setup()
         lg->info("backgroundProbFormula is active (value: {}). ", mBackgroundProbFormula.expression());
     }
 
+    mWindInteractionFactor = settings.valueDouble(modkey("windInteractionStrength"));
     int k = settings.valueInt(modkey("beetleOffspringFactor"),-1);
+    miSpruce = indexOf(Model::instance()->species(), "piab");
+    if (miSpruce < 0)
+        throw std::logic_error("Barkbeetle module requires that the species 'piab' is available (see setting model.species).");
+
+    // setup of the kernel
     std::string kernel_file = settings.valueString(modkey("kernelFile"));
     setupKernels(Tools::path(kernel_file), k);
 
@@ -204,8 +214,57 @@ void BarkBeetleModule::initialRandomInfestation()
 
 
     mStats.n_background = n_started;
-    mStats.n_wind_infestation = 0; // TODO
-    lg->debug("Initial infestation: Checked {} cells (subsampling-factor {}), {} infestations started.", n_tested, subsampling_factor, n_started);
+    mStats.n_wind_infestation = 0;
+
+    windBeetleInteraction();
+
+    lg->debug("Initial infestation: Checked {} cells (subsampling-factor {}), {} infestations started (started {} wind-interaction cells)",
+              n_tested, subsampling_factor, n_started, mStats.n_wind_infestation);
+}
+
+void BarkBeetleModule::windBeetleInteraction()
+{
+    auto *wind_module = dynamic_cast<WindModule*>(Model::instance()->moduleByType("wind"));
+    if (!wind_module) {
+        lg->debug("No barkbeetle-wind interaction, because there is no active module with the name 'Wind'");
+        return;
+    }
+    int last_wind_year;
+    const auto rects = wind_module->affectedRects(last_wind_year);
+    if (last_wind_year < 0)
+        return;
+
+    short effective_year = static_cast<short>(last_wind_year);
+
+    auto &model_grid = Model::instance()->landscape()->grid();
+
+    const auto &wg = wind_module->windGrid();
+
+    size_t n_started = 0;
+    short max_year = -1;
+    for (size_t i=0;i < rects.size(); ++i) {
+        // loop over each rectangle (10x10km) and scan for wind events this year / last year
+        auto runner = GridRunner<SWindCell>(wg,rects[i]);
+        while (auto *c = runner.next()) {
+            if (c->last_storm>0)
+                max_year = std::max(max_year, c->last_storm);
+            if (c->last_storm == effective_year) {
+                const auto &mcell = model_grid[runner.currentIndex()].cell();
+                if (!mcell.state() || mcell.state()->type()==State::None)
+                    continue;
+                double susceptibility = mcell.state()->speciesProportion()[miSpruce];
+                double p_eff = susceptibility*mWindInteractionFactor;
+                if (susceptibility>0. && drandom() < p_eff ) {
+                    // start infestation
+                    auto &g = mGrid[mcell.cellIndex()];
+                    g.outbreak_age = 0; // start again from outbreak age zero
+                    activeCellsNow().push(mcell.cellIndex());
+                    ++n_started;
+                }
+            }
+        }
+    }
+    mStats.n_wind_infestation = n_started;
 }
 
 void BarkBeetleModule::spread()

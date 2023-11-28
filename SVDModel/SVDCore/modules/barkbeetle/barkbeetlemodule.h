@@ -29,7 +29,7 @@ struct SBeetleCell {
 class BarkBeetleModule : public Module
 {
 public:
-    BarkBeetleModule(std::string module_name);
+    BarkBeetleModule(std::string module_name, std::string module_type);
     void setup() override;
 
     std::vector<std::pair<std::string, std::string> > moduleVariableNames() const override;
@@ -42,6 +42,7 @@ private:
 
     // functions
     void initialRandomInfestation();
+    void windBeetleInteraction();
 
     void spread();
 
@@ -56,9 +57,13 @@ private:
     // variables for states
     state_t miSusceptibility { 0 }; ///< susceptibility of a state based on spruce proportion and height (preprocessed)
 
+    // index of spruce
+    int miSpruce {-1};
+
     // parameters
     double mSuccessOfColonization; ///< probability scaling factor for suseceptibilty (i.e. p(colonization) = susceptibility * SucessOfColonization
     Expression mBackgroundProbFormula; ///< climate sensitive background probability of infestation
+    double mWindInteractionFactor; ///< prob. of wind-attaced trees to turn bb infected
 
 
     /// storage for the kernels: kernel[ generation_index ] -> vector with rel. distance (Point) and value (probability)

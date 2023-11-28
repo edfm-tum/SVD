@@ -53,7 +53,7 @@ void FireOut::setup()
 
 void FireOut::execute()
 {
-    FireModule *fire = dynamic_cast<FireModule*>(Model::instance()->module("fire"));
+    FireModule *fire = dynamic_cast<FireModule*>(Model::instance()->moduleByName("fire"));
     if (!fire)
         return;
 

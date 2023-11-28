@@ -124,7 +124,7 @@ std::string ModelShell::run_test_op(std::string what)
     }
 
     if (what=="fire_n") {
-        FireModule *module = dynamic_cast<FireModule*>(Model::instance()->module("fire"));
+        FireModule *module = dynamic_cast<FireModule*>(Model::instance()->moduleByName("fire"));
         if (!module) return "fire module not active";
         const auto &grid = module->fireGrid();
 
@@ -136,7 +136,7 @@ std::string ModelShell::run_test_op(std::string what)
     }
 
     if (what=="fire_year") {
-        FireModule *module = dynamic_cast<FireModule*>(Model::instance()->module("fire"));
+        FireModule *module = dynamic_cast<FireModule*>(Model::instance()->moduleByName("fire"));
         if (!module) return "fire module not active";
         const auto &grid = module->fireGrid();
 

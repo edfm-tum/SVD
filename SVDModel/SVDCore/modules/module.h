@@ -40,7 +40,7 @@ class Module
 {
 
 public:
-    Module(std::string module_name, State::StateType type) : mName(module_name), mType(type) {}
+    Module(std::string module_name, std::string module_type, State::StateType type) : mName(module_name), mTypeString(module_type), mStateType(type) {}
     virtual ~Module();
     /// list of available module types
     static std::vector<std::string> &allModuleTypes() {return mModuleTypes; }
@@ -56,7 +56,8 @@ public:
 
     // properties
     const std::string &name() const { return mName; }
-    State::StateType type() const { return mType; }
+    const std::string &typeString() const { return mTypeString; }
+    State::StateType stateType() const { return mStateType; }
     Batch::BatchType batchType() const { return mBatchType; }
 
     /// register the module using the ID and name
@@ -84,7 +85,8 @@ public:
     virtual double moduleVariable(const Cell *cell, size_t variableIndex) const;
 protected:
     std::string mName;
-    State::StateType mType; ///< states of this type are automatically handled by the module
+    std::string mTypeString; ///< the module type as string (e.g. wind, fire, matrix)
+    State::StateType mStateType; ///< states of this type are automatically handled by the module
     Batch::BatchType mBatchType; ///< type of the batch used by the module (e.g. DNN or Simple)
     static std::vector<std::string> mModuleNames; ///< names of all created and active modules
     static std::vector<std::string> mModuleTypes; ///< available module types

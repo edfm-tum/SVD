@@ -5,7 +5,7 @@
 #include "tools.h"
 #include "filereader.h"
 
-SimpleManagementModule::SimpleManagementModule(std::string module_name): Module(module_name, State::None)
+SimpleManagementModule::SimpleManagementModule(std::string module_name, std::string module_type): Module(module_name, module_type, State::None)
 {
 
 }

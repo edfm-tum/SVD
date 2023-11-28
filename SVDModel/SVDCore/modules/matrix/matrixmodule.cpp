@@ -22,8 +22,8 @@
 #include "filereader.h"
 #include "expressionwrapper.h"
 
-MatrixModule::MatrixModule(std::string module_name) :
-    Module("matrix", State::Matrix) // set name and type explcitly
+MatrixModule::MatrixModule(std::string module_name, std::string module_type) :
+    Module("matrix", module_type, State::Matrix) // set name and type explcitly
 {
     mName = module_name;
     // decide which type of batch to use for the module (Simple: no preprocessing)

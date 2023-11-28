@@ -28,7 +28,7 @@
 class MatrixModule : public Module
 {
 public:
-    MatrixModule(std::string module_name);
+    MatrixModule(std::string module_name, std::string module_type);
     ~MatrixModule();
 
     void setup();

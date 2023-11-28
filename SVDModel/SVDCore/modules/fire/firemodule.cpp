@@ -27,7 +27,7 @@
 #define M_PI 3.141592653589793
 #endif
 
-FireModule::FireModule(std::string module_name): Module(module_name, State::None)
+FireModule::FireModule(std::string module_name, std::string module_type): Module(module_name, module_type, State::None)
 {
 
 }

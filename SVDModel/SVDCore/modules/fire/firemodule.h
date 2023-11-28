@@ -53,7 +53,7 @@ struct SFireStat {
 class FireModule : public Module
 {
 public:
-    FireModule(std::string module_name);
+    FireModule(std::string module_name, std::string module_type);
     void setup() override;
     std::vector<std::pair<std::string, std::string> > moduleVariableNames() const override;
     double moduleVariable(const Cell *cell, size_t variableIndex) const override;

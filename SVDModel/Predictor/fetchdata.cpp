@@ -475,7 +475,7 @@ float FetchDataFunction::calculateDistToSeedSource(Cell *cell)
 void FetchDataFunction::setupSimpleManagement()
 {
     // check if required modules / variables are available
-    mMgmtModule = dynamic_cast<SimpleManagementModule*>(Model::instance()->module("mgmt")) ;
+    mMgmtModule = dynamic_cast<SimpleManagementModule*>(Model::instance()->moduleByName("mgmt")) ;
     if (!mMgmtModule)
         throw logic_error_fmt("Setup of management: the required module 'mgmt' is not available!");
 }

@@ -133,10 +133,18 @@ void Model::runModules()
     }
 }
 
-Module *Model::module(const std::string &name)
+Module *Model::moduleByName(const std::string &name)
 {
     for (const auto &m : mModules)
         if (m->name() == name)
+            return m.get();
+    return nullptr;
+}
+
+Module *Model::moduleByType(const std::string &type)
+{
+    for (const auto &m : mModules)
+        if (m->typeString() == type)
             return m.get();
     return nullptr;
 }

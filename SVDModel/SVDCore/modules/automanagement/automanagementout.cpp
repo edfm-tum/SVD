@@ -28,7 +28,7 @@ void AutoManagementOut::setup()
 
 void AutoManagementOut::execute()
 {
-    AutoManagementModule *am_module = dynamic_cast<AutoManagementModule *>( Model::instance()->module("AutoManagement") );
+    AutoManagementModule *am_module = dynamic_cast<AutoManagementModule *>( Model::instance()->moduleByName("AutoManagement") );
     if (!am_module)
         throw std::logic_error("Error: AutoManagement-Module not available, but AutoManagement output active!");
 

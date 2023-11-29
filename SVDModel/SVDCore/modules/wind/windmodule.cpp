@@ -288,22 +288,35 @@ public:
 SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, const SWindEvent &event)
 {
     auto &grid = Model::instance()->landscape()->grid();
-    Grid<float> wind_grid(area, grid.cellsize());
-    wind_grid.initialize(-2.f);
-    // create a 1:1 copy of the grid
-    Grid<int> wind_debug_grid(area, grid.cellsize());
-    wind_debug_grid.initialize(0);
-
-    GridRunner<GridCell> runner(grid, area);
-
-    std::priority_queue< std::pair<float, Cell*>, std::vector<std::pair<float, Cell*> >, ComparisonClassTopK > queue;
 
     SWindStat stat;
     stat.Id = event.Id;
     stat.year = Model::instance()->year();
     stat.x = event.x; stat.y = event.y;
     stat.proportion = event.prop_affected;
+
+
+    RectF act_area = area.cropped(grid.metricRect());
+    if (act_area != area) {
+        lg->debug("WindModule: cropping of regional cell (aka 10x10km) to the project area.");
+    }
+    if (act_area.isNull()) {
+        lg->warn("wind-impact: region cell outside of project area.");
+        return stat;
+    }
+    Grid<float> wind_grid(act_area, grid.cellsize());
+    wind_grid.initialize(-2.f);
     stat.n_planned = round(stat.proportion * wind_grid.count());
+
+    // create a 1:1 copy of the grid
+    Grid<int> wind_debug_grid(act_area, grid.cellsize());
+    wind_debug_grid.initialize(0);
+
+
+    GridRunner<GridCell> runner(grid, act_area);
+
+    std::priority_queue< std::pair<float, Cell*>, std::vector<std::pair<float, Cell*> >, ComparisonClassTopK > queue;
+
 
 
     const size_t n_top = 10 + proportion*1000;

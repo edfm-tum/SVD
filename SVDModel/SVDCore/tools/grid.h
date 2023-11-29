@@ -105,6 +105,18 @@ public:
     void setCoords(double left, double top, double right, double bottom) {mLeft=left; mTop=top; mRight=right; mBottom=bottom; }
     bool isNull() const { return mTop==-1. && mBottom==-1. && mLeft==-1. && mRight==-1.; }
     bool contains(double x, double y) const { return x>=mLeft && x<=mRight && y>=mTop && y<=mBottom; }
+    /// return a rect that is cropped to `crop_to`. Rect is isNull() when it became invalid due to cropping.
+    RectF cropped(const RectF &crop_to) const {
+        RectF r;
+        r.setCoords(std::max(left(), crop_to.left()),
+                  std::max(top(), crop_to.top()),
+                  std::min(right(), crop_to.right()),
+                  std::min(bottom(), crop_to.bottom()));
+        if (width() <= 0. || height() <= 0.)
+            r.setCoords(-1., -1., -1., -1.); // invalidate
+        return r;
+    }
+
 
     bool operator==(const RectF &r) const {
         const double epsilon = 0.000001;
@@ -660,6 +672,15 @@ void GridRunner<T>::setup(const Grid<T> *target_grid, const Rect &rectangle)
 template <class T>
 void GridRunner<T>::setup(const Grid<T> *target_grid, const RectF &rectangle_metric)
 {
+    if (!target_grid->coordValid(rectangle_metric.topLeft()) ||
+            !target_grid->coordValid(rectangle_metric.bottomRight())) {
+        std::ostringstream details;
+        details << "grid-dimensions: (left/top-right/bottom): " << target_grid->metricRect().left() << "/" << target_grid->metricRect().top() <<
+                   " - " << target_grid->metricRect().right() << "/" << target_grid->metricRect().bottom() <<
+                   "; cell: " << rectangle_metric.left() << "/" << rectangle_metric.top() <<
+                   " - " << rectangle_metric.right() << "/" << rectangle_metric.bottom();
+        throw std::logic_error(std::string("Error in GridRunner: smaller rectangle does not fit into grid: \n") + details.str());
+    }
     Rect rect(target_grid->indexAt(rectangle_metric.topLeft()),
               target_grid->indexAt(rectangle_metric.bottomRight()) );
     setup (target_grid, rect);

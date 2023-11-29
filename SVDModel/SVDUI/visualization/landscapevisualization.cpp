@@ -95,7 +95,15 @@ void LandscapeVisualization::setup(SurfaceGraph *graph, Legend *palette)
                 lg->info("DEM rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", rect.width(), rect.height(), rect.left(), rect.right(), rect.top(), rect.bottom());
                 rect = Model::instance()->landscape()->grid().metricRect();
                 lg->info("Landscape rectangle with {}x{}m. Left-Right: {:f}m - {:f}m, Top-Bottom: {:f}m - {:f}m.  ", rect.width(), rect.height(), rect.left(), rect.right(), rect.top(), rect.bottom());
-                throw logic_error_fmt("Loaded DEM from '{}' has not the same extent as the landscape. Either provide a proper DEM or set 'visualization.dem' to an empty string.", filename);
+                // ignore differences if they are < then the cell size of the DEM
+                if (fabs(mDem.metricRect().left() - rect.left())<=mDem.cellsize() &&
+                        fabs(mDem.metricRect().top() - rect.top())<=mDem.cellsize() &&
+                        fabs(mDem.metricRect().right()-rect.right())<=mDem.cellsize() &&
+                        fabs(mDem.metricRect().bottom()-rect.bottom())<=mDem.cellsize()) {
+                    lg->info("The extent of the DEM loaded ('{}') is not identical to the landscape, but close enough. Prepare to live with small uncertainties.", filename);
+                } else {
+                    throw logic_error_fmt("Loaded DEM from '{}' has not the same extent as the landscape. Either provide a proper DEM or set 'visualization.dem' to an empty string.", filename);
+                }
             }
             mMinHeight = std::max( mDem.min(), 0.f);
             mMaxHeight = mDem.max();

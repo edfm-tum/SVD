@@ -675,7 +675,7 @@ void GridRunner<T>::setup(const Grid<T> *target_grid, const RectF &rectangle_met
     if (!target_grid->coordValid(rectangle_metric.topLeft()) ||
             !target_grid->coordValid(rectangle_metric.bottomRight())) {
         std::ostringstream details;
-        details << "grid-dimensions: (left/top-right/bottom): " << target_grid->metricRect().left() << "/" << target_grid->metricRect().top() <<
+        details << std::fixed << "grid-dimensions: (left/top-right/bottom): " << target_grid->metricRect().left() << "/" << target_grid->metricRect().top() <<
                    " - " << target_grid->metricRect().right() << "/" << target_grid->metricRect().bottom() <<
                    "; cell: " << rectangle_metric.left() << "/" << rectangle_metric.top() <<
                    " - " << rectangle_metric.right() << "/" << rectangle_metric.bottom();

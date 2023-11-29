@@ -229,7 +229,6 @@ void WindModule::runWindEvent(const SWindEvent &event)
 
         // call wind routine on regional cell
         stats.push_back(windImpactOnRegion(cell_rect, event.prop_affected, event));
-        mAffectedRects.push_back(cell_rect);
 
         ++processed;
         --regions_to_process;
@@ -304,6 +303,8 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
         lg->warn("wind-impact: region cell outside of project area.");
         return stat;
     }
+    mAffectedRects.push_back(act_area);
+
     Grid<float> wind_grid(act_area, grid.cellsize());
     wind_grid.initialize(-2.f);
     stat.n_planned = round(stat.proportion * wind_grid.count());
@@ -316,8 +317,6 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
     GridRunner<GridCell> runner(grid, act_area);
 
     std::priority_queue< std::pair<float, Cell*>, std::vector<std::pair<float, Cell*> >, ComparisonClassTopK > queue;
-
-
 
     const size_t n_top = 10 + proportion*1000;
 

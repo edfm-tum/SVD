@@ -49,7 +49,7 @@ inline double nrandom(const double& p1, const double& p2)
     return p1 + RandomGenerator::rand(p2-p1);
     //return p1 + (p2-p1)*(rand()/double(RAND_MAX));
 }
-/// returns a random number in [0,1) (i.e.="1" is NOT a possible result!)
+/// returns a random number in [0,1] (i.e.="1" *is* a possible result!)
 inline double drandom()
 {
     return RandomGenerator::rand();

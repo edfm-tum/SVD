@@ -196,6 +196,8 @@ public:
     inline const T& operator()(const int ix, const int iy) const { return constValueAtIndex(ix, iy); }
     /// access (const) using metric variables. use double.
     inline const T& operator()(const double x, const double y) const { return constValueAt(x, y); }
+    /// access (const) using metric variables. use double.
+    inline const T& operator()(const PointF &p) const { return constValueAt(p.x(), p.y()); }
     /// access value of grid with a Point
     inline const T& operator[](const Point &p) const { return constValueAtIndex(p); }
     /// use the square brackets to access by index
@@ -673,7 +675,8 @@ template <class T>
 void GridRunner<T>::setup(const Grid<T> *target_grid, const RectF &rectangle_metric)
 {
     if (!target_grid->coordValid(rectangle_metric.topLeft()) ||
-            !target_grid->coordValid(rectangle_metric.bottomRight())) {
+        rectangle_metric.right() > target_grid->metricRect().right() ||
+        rectangle_metric.bottom() > target_grid->metricRect().bottom()) {
         std::ostringstream details;
         details << std::fixed << "grid-dimensions: (left/top-right/bottom): " << target_grid->metricRect().left() << "/" << target_grid->metricRect().top() <<
                    " - " << target_grid->metricRect().right() << "/" << target_grid->metricRect().bottom() <<

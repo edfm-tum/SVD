@@ -43,6 +43,7 @@ private:
     // functions
     void initialRandomInfestation();
     void windBeetleInteraction();
+    double backgroundInfestationProb(const Cell &cell) const;
 
     void spread();
 
@@ -63,6 +64,7 @@ private:
     // parameters
     double mSuccessOfColonization; ///< probability scaling factor for suseceptibilty (i.e. p(colonization) = susceptibility * SucessOfColonization
     Expression mBackgroundProbFormula; ///< climate sensitive background probability of infestation
+    double *mBackgroundProbVar;
     double mWindInteractionFactor; ///< prob. of wind-attaced trees to turn bb infected
 
 
@@ -71,6 +73,10 @@ private:
 
     /// grid specific for bark beetles (native 100m resolution)
     Grid<SBeetleCell> mGrid;
+
+
+    Grid<double> mRegionalBackgroundProb; ///< large scale grid with background infestation probabilities
+
 
     std::stack<int> &activeCellsNow()  { return mActiveIsA ? mActiveCellsA : mActiveCellsB; }
     std::stack<int> &activeCellsNextYear()  { return mActiveIsA ? mActiveCellsB : mActiveCellsA; }

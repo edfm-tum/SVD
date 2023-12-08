@@ -296,7 +296,7 @@ bool FireModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
     }
 
 
-    bool high_severity = drandom() < s.state()->value(miHighSeverity);
+    bool high_severity = drandom() <= s.state()->value(miHighSeverity);
     // effect of fire: a transition to another state
     state_t new_state = mFireMatrix.transition(s.stateId(), high_severity ? 1 : 0);
     s.setNewState(new_state);

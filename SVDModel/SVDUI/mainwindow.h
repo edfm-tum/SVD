@@ -132,6 +132,8 @@ private slots:
 
     void on_actionContinue_triggered();
 
+    void on_actionSave_as_grid_triggered();
+
 private:
     QList<QString> mRecentFileList;
 

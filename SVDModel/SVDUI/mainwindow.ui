@@ -81,7 +81,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mainTab">
        <attribute name="title">
@@ -247,7 +247,7 @@
      <x>0</x>
      <y>0</y>
      <width>1121</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFunctions">
@@ -291,6 +291,7 @@
      <addaction name="actionSaveView_3"/>
     </widget>
     <addaction name="actionRender_to_file"/>
+    <addaction name="actionSave_as_grid"/>
     <addaction name="action3D_Camera_settings"/>
     <addaction name="actionReset_view"/>
     <addaction name="actionCustom_view_1"/>
@@ -364,7 +365,7 @@
       <number>0</number>
      </property>
      <property name="bottomMargin">
-      <number>0</number>
+      <number>3</number>
      </property>
      <item>
       <widget class="QTabWidget" name="tabLeft">
@@ -497,6 +498,9 @@
       <number>3</number>
      </property>
      <property name="rightMargin">
+      <number>3</number>
+     </property>
+     <property name="bottomMargin">
       <number>3</number>
      </property>
      <item>
@@ -725,6 +729,9 @@
    <property name="text">
     <string>Render to file</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
   </action>
   <action name="actiondelete_model">
    <property name="text">
@@ -883,6 +890,14 @@
    </property>
    <property name="shortcut">
     <string>F10</string>
+   </property>
+  </action>
+  <action name="actionSave_as_grid">
+   <property name="text">
+    <string>Save as grid file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Tab</string>
    </property>
   </action>
  </widget>

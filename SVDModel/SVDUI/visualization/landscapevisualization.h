@@ -60,6 +60,8 @@ public slots:
     /// renders the content of the cell variable
     QString renderVariable(QString variableName, QString description);
 
+    bool renderToSavedGrid(QString filename);
+
     /// update the rendering
     void update();
     /// reset view to stored view

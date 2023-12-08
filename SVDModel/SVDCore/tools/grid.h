@@ -675,7 +675,8 @@ template <class T>
 void GridRunner<T>::setup(const Grid<T> *target_grid, const RectF &rectangle_metric)
 {
     if (!target_grid->coordValid(rectangle_metric.topLeft()) ||
-            !target_grid->coordValid(rectangle_metric.bottomRight())) {
+        rectangle_metric.right() > target_grid->metricRect().right() ||
+        rectangle_metric.bottom() > target_grid->metricRect().bottom()) {
         std::ostringstream details;
         details << std::fixed << "grid-dimensions: (left/top-right/bottom): " << target_grid->metricRect().left() << "/" << target_grid->metricRect().top() <<
                    " - " << target_grid->metricRect().right() << "/" << target_grid->metricRect().bottom() <<

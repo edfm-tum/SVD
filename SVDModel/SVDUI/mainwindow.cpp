@@ -316,7 +316,7 @@ void MainWindow::initiateLogging()
 void MainWindow::initiateModelController()
 {
     // bookkeeping, signal - slot connections
-    connect(mMC.get(), &ModelController::stateChanged, [this](QString s) {ui->statusBar->showMessage(s);});
+    connect(mMC.get(), &ModelController::stateChanged, [this](QString s) {statusBar()->showMessage(s);});
     connect(mMC.get(), &ModelController::stateChanged, this, &MainWindow::modelStateChanged);
     connect(mMC.get(), &ModelController::finishedYear, ui->progressBar, &QProgressBar::setValue);
     connect(mMC.get(), &ModelController::finishedYear, this, &MainWindow::finishedYear);
@@ -850,4 +850,17 @@ void MainWindow::on_actionCustom_View_3_triggered()
 }
 
 
+
+
+void MainWindow::on_actionSave_as_grid_triggered()
+{
+    if (mLandscapeVis->isValid()) {
+        QString project_dir = QFileInfo(ui->lConfigFile->text()).absoluteDir().path();
+
+
+        QString file_name = QFileDialog::getSaveFileName(this, "Save the currently rendered expression to a grid. Specify either .asc or .tif files as target.", project_dir);
+        if (!file_name.isEmpty())
+            mLandscapeVis->renderToSavedGrid(file_name);
+    }
+}
 

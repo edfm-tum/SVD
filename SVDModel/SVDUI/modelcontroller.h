@@ -71,7 +71,7 @@ private:
     int mYearsToRun;
     int mCurrentStep;
     int mDelayMSecs; // pause each year for a time
-    QTime mStopWatch;
+    QElapsedTimer mStopWatch;
     bool mIsCurrentlyRunning;
     bool mInteractiveMode;
 

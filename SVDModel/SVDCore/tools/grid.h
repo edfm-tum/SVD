@@ -931,7 +931,7 @@ bool gridToFile(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDa
 template <class T>
 bool gridToFile(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDatatype datatype)
 {
-    // number of fires per cell:
+    // determine type of file format based on filename
     if (has_ending(fileName, ".tif") || has_ending(fileName, ".TIF")) {
         // save as tif
         return gridToGeoTIFF<T>( grid, fileName, datatype);

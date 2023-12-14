@@ -459,7 +459,7 @@ size_t BarkBeetleModule::kernelIndex(double gen_count) const
     if (gen_count == 2.) return 2;
     if (gen_count == 2.5) return 3;
     if (gen_count == 3.) return 4;
-    if (gen_count == 3.5) return 4; // use the same kernel as for 3 generations
+    if (gen_count > 3) return 4; // use the same kernel for everything above 3 generations
     throw logic_error_fmt("barkbeetle: invalid number of generations: '{}' (allowed are: 1,1.5,2,2.5,3,3.5)", gen_count);
 
 }

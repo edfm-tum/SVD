@@ -483,7 +483,7 @@
    <property name="minimumSize">
     <size>
      <width>150</width>
-     <height>305</height>
+     <height>327</height>
     </size>
    </property>
    <property name="windowTitle">
@@ -605,6 +605,22 @@
              <string notr="true">1</string>
             </property>
            </column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>Zoom</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_8">
+            <item>
+             <widget class="QSlider" name="visQuickZoom">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
          <item>

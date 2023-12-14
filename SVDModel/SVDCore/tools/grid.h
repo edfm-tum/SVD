@@ -254,7 +254,7 @@ public:
                                                       mRect.left() + mCellsize*(pos.x()+1), mRect.top() + mCellsize * (pos.y()+1)); return r; } ///< return coordinates of rect given by @param pos.
 
     /// nullValue is the value for empty/null/NA
-    static T nullValue() { return std::numeric_limits<T>::min(); }
+    static T nullValue() { return std::numeric_limits<T>::lowest(); }
     bool isNull(const T &value) const {return value==nullValue(); }
 
     inline  T* begin() const { return mData; } ///< get "iterator" pointer
@@ -693,7 +693,11 @@ template <class T>
 T* GridRunner<T>::next()
 {
     if (mCurrent>mLast)
-        return NULL;
+        mCurrent = nullptr;
+
+    if (!mCurrent)
+        return nullptr;
+
     mCurrent++;
     mCurrentCol++;
 
@@ -702,9 +706,9 @@ T* GridRunner<T>::next()
         mCurrentCol = 0;
     }
     if (mCurrent>mLast)
-        return NULL;
-    else
-        return mCurrent;
+        mCurrent = nullptr;
+
+    return mCurrent;
 }
 
 template <class T>

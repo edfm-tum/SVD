@@ -2,6 +2,7 @@
 #define AUTOMANAGEMENTMODULE_H
 
 #include "modules/module.h"
+#include "grid.h"
 #include "transitionmatrix.h"
 #include "expression.h"
 #include "automanagementout.h"
@@ -23,6 +24,7 @@ public:
 
     // access
 private:
+    std::pair<int,int> runArea(const RectF &cell, double p_burnin, double mgmt_cap);
     // logging
     std::shared_ptr<spdlog::logger> lg;
 
@@ -37,6 +39,9 @@ private:
     size_t miManagement;
 
     std::vector<int> mStateHistogram;
+
+    Grid<double> mManagementCapGrid;
+    double mManagementCapModifier {1};
 
     friend class AutoManagementOut;
 };

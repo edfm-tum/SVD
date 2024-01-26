@@ -43,6 +43,13 @@ void AutoManagementModule::setup()
 
     // output: set up large enough space for all states
     mStateHistogram.resize(Model::instance()->states()->stateIdLookupLength());
+
+    // setup of the management output grid
+    auto &grid = Model::instance()->landscape()->grid();
+    mGrid.setup(grid.metricRect(), grid.cellsize());
+    mGrid.initialize(0);
+
+
     lg->debug("AutoManagementModule: params: burnInProbability: '{}', minHeight: '{}'", burninprob, mMinHeight);
     lg->info("Setup of AutoManagementModule '{}' complete.", name());
     lg = spdlog::get("modules");
@@ -53,7 +60,9 @@ std::vector<std::pair<std::string, std::string> > AutoManagementModule::moduleVa
 {
 
     return { {"height", "stand topheight (m)"},
-        {"heightIncrement", "lower bound of height increment \n (based on current state &  history) in m/yr"}};
+        {"heightIncrement", "lower bound of height increment \n (based on current state &  history) in m/yr"},
+        {"lastYear", "simulation year of last management on cell \n 0 if never managed."}
+    };
 
 }
 
@@ -65,6 +74,8 @@ double AutoManagementModule::moduleVariable(const Cell *cell, size_t variableInd
         return cell->state()->topHeight();
     case 1: // height increment
         return cell->heightIncrement();
+    case 2: // last year of management
+        return mGrid[cell->cellIndex()];
     }
     return 0.;
 }
@@ -100,6 +111,8 @@ void AutoManagementModule::run()
                     // (2) effect of management: a transition to another state
                     state_t new_state = mMgmtMatrix.transition(c.stateId());
                     c.setNewState(new_state);
+                    // (3) track changes in grid for output / visualization
+                    mGrid[c.cellIndex()] = Model::instance()->year();
                     ++n_managed;
                 }
             }

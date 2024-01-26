@@ -1,6 +1,8 @@
 #include "automanagementout.h"
 #include "automanagementmodule.h"
 
+#include "tools.h"
+
 #include "model.h"
 
 AutoManagementOut::AutoManagementOut()
@@ -20,8 +22,8 @@ AutoManagementOut::AutoManagementOut()
 
 void AutoManagementOut::setup()
 {
-    //mLastFire.setExpression(Model::instance()->settings().valueString(key("lastFireGrid.filter")));
-    //mLastFirePath = Tools::path(Model::instance()->settings().valueString(key("lastFireGrid.path")));
+    mLastManagement.setExpression(Model::instance()->settings().valueString(key("lastMgmtGrid.filter")));
+    mLastManagementPath = Tools::path(Model::instance()->settings().valueString(key("lastMgmtGrid.path")));
     openOutputFile();
 
 }
@@ -43,4 +45,17 @@ void AutoManagementOut::execute()
             out().write();
         }
     }
+
+    // write output grids
+    if (mLastManagement.isEmpty() || mLastManagement.calculateBool( Model::instance()->year() )) {
+        std::string file_name = mLastManagementPath;
+        find_and_replace(file_name, "$year$", to_string(Model::instance()->year()));
+        auto &grid = am_module->mGrid;
+
+        gridToFile<short>( grid, file_name, GeoTIFF::DTSINT16);
+
+
+
+    }
+
 }

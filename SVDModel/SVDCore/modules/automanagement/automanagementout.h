@@ -30,8 +30,8 @@ public:
     void setup();
     void execute();
 private:
-    Expression mLastWind;
-    std::string mLastWindPath;
+    Expression mLastManagement;
+    std::string mLastManagementPath;
 
 };
 

@@ -2,6 +2,7 @@
 #define AUTOMANAGEMENTMODULE_H
 
 #include "modules/module.h"
+#include "grid.h"
 #include "transitionmatrix.h"
 #include "expression.h"
 #include "automanagementout.h"
@@ -37,6 +38,9 @@ private:
     size_t miManagement;
 
     std::vector<int> mStateHistogram;
+
+    /// grid with year of last management operation
+    Grid<short int> mGrid;
 
     friend class AutoManagementOut;
 };

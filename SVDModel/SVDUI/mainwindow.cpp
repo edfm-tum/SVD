@@ -316,7 +316,7 @@ void MainWindow::initiateLogging()
 void MainWindow::initiateModelController()
 {
     // bookkeeping, signal - slot connections
-    connect(mMC.get(), &ModelController::stateChanged, [this](QString s) {ui->statusBar->showMessage(s);});
+    connect(mMC.get(), &ModelController::stateChanged, [this](QString s) {statusBar()->showMessage(s);});
     connect(mMC.get(), &ModelController::stateChanged, this, &MainWindow::modelStateChanged);
     connect(mMC.get(), &ModelController::finishedYear, ui->progressBar, &QProgressBar::setValue);
     connect(mMC.get(), &ModelController::finishedYear, this, &MainWindow::finishedYear);

@@ -289,7 +289,7 @@ double Cell::heightIncrement() const
     // it gets the maximum height (including the next state change)
     // it counts the years from the future to the past until a height < max_height is found. If none is found, years are counted
     // until the end of the history.
-    // the increment is then: delta_h / n_years, i.e. it is rather a lower limit, then an exact estimate
+    // the increment is then: delta_h / n_years, i.e. it is rather an upper limit, then an exact estimate
     const double maximum_increment = 1.;
     double max_height = -1.;
     int n_years = 1;
@@ -333,7 +333,7 @@ double Cell::heightIncrement() const
         }
     }
     const double min_delta_h = 2.; // we have 2m steps right now
-    // in case no height increment is found, we provide a lower bound
+    // in case no height increment is found, we provide an upper bound
     return std::min(min_delta_h / double(n_years), maximum_increment);
 
 }

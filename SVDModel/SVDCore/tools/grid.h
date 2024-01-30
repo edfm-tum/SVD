@@ -196,6 +196,8 @@ public:
     inline const T& operator()(const int ix, const int iy) const { return constValueAtIndex(ix, iy); }
     /// access (const) using metric variables. use double.
     inline const T& operator()(const double x, const double y) const { return constValueAt(x, y); }
+    /// access (const) using metric variables. use double.
+    inline const T& operator()(const PointF &p) const { return constValueAt(p.x(), p.y()); }
     /// access value of grid with a Point
     inline const T& operator[](const Point &p) const { return constValueAtIndex(p); }
     /// use the square brackets to access by index
@@ -252,7 +254,7 @@ public:
                                                       mRect.left() + mCellsize*(pos.x()+1), mRect.top() + mCellsize * (pos.y()+1)); return r; } ///< return coordinates of rect given by @param pos.
 
     /// nullValue is the value for empty/null/NA
-    static T nullValue() { return std::numeric_limits<T>::min(); }
+    static T nullValue() { return std::numeric_limits<T>::lowest(); }
     bool isNull(const T &value) const {return value==nullValue(); }
 
     inline  T* begin() const { return mData; } ///< get "iterator" pointer
@@ -691,7 +693,11 @@ template <class T>
 T* GridRunner<T>::next()
 {
     if (mCurrent>mLast)
-        return NULL;
+        mCurrent = nullptr;
+
+    if (!mCurrent)
+        return nullptr;
+
     mCurrent++;
     mCurrentCol++;
 
@@ -700,9 +706,9 @@ T* GridRunner<T>::next()
         mCurrentCol = 0;
     }
     if (mCurrent>mLast)
-        return NULL;
-    else
-        return mCurrent;
+        mCurrent = nullptr;
+
+    return mCurrent;
 }
 
 template <class T>
@@ -929,7 +935,7 @@ bool gridToFile(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDa
 template <class T>
 bool gridToFile(const Grid<T> &grid, const std::string &fileName, GeoTIFF::TIFDatatype datatype)
 {
-    // number of fires per cell:
+    // determine type of file format based on filename
     if (has_ending(fileName, ".tif") || has_ending(fileName, ".TIF")) {
         // save as tif
         return gridToGeoTIFF<T>( grid, fileName, datatype);

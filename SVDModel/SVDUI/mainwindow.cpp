@@ -851,3 +851,24 @@ void MainWindow::on_actionCustom_View_3_triggered()
 
 
 
+
+void MainWindow::on_actionSave_as_grid_triggered()
+{
+    if (mLandscapeVis->isValid()) {
+        QString project_dir = QFileInfo(ui->lConfigFile->text()).absoluteDir().path();
+
+
+        QString file_name = QFileDialog::getSaveFileName(this, "Save the currently rendered expression to a grid. Specify either .asc or .tif files as target.", project_dir);
+        if (!file_name.isEmpty())
+            mLandscapeVis->renderToSavedGrid(file_name);
+    }
+}
+
+
+void MainWindow::on_visQuickZoom_actionTriggered(int action)
+{
+    if (!mLandscapeVis->isValid())
+        return;
+
+}
+

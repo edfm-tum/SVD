@@ -24,6 +24,7 @@ public:
 
     // access
 private:
+    std::pair<int,int> runArea(const RectF &cell, double p_burnin, double mgmt_cap);
     // logging
     std::shared_ptr<spdlog::logger> lg;
 
@@ -41,6 +42,8 @@ private:
 
     /// grid with year of last management operation
     Grid<short int> mGrid;
+    Grid<double> mManagementCapGrid;
+    double mManagementCapModifier {1};
 
     friend class AutoManagementOut;
 };

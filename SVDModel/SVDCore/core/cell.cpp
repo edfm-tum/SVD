@@ -333,7 +333,8 @@ double Cell::heightIncrement() const
         }
     }
     const double min_delta_h = 2.; // we have 2m steps right now
-    // in case no height increment is found, we provide an upper bound
-    return std::min(min_delta_h / double(n_years), maximum_increment);
+    // in case no height increment is found, we provide a lower bound
+    // there is +10 to "push" cells in a regime to have a chance for management (experimental)
+    return std::min(min_delta_h / double(n_years + 10), maximum_increment);
 
 }

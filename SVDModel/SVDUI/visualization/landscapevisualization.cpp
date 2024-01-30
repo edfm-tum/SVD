@@ -252,6 +252,31 @@ QString LandscapeVisualization::renderVariable(QString variableName, QString des
 
 }
 
+bool LandscapeVisualization::renderToSavedGrid(QString filename)
+{
+    if (mExpression.isEmpty())
+        return false;
+
+    CellWrapper cw(nullptr);
+    auto &grid = Model::instance()->landscape()->grid();
+
+    Grid<float> render_grid(grid.metricRect(), grid.cellsize());
+    float *t = render_grid.begin();
+
+    for (const auto &cell : grid) {
+        if (cell.isNull()) {
+            *t++ = 0.f;
+        } else {
+            cw.setData(&cell.cell());
+            float value = mExpression.calculate(cw);
+            *t++ = value;
+        }
+    }
+
+    return gridToFile<float>(render_grid, filename.toStdString(), GeoTIFF::DTFLOAT);
+
+}
+
 
 void LandscapeVisualization::update()
 {

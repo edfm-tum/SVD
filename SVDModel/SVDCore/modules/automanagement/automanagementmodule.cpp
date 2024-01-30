@@ -15,7 +15,7 @@ void AutoManagementModule::setup()
     lg = spdlog::get("setup");
     lg->info("Setup of AutoManagementModule '{}'", name());
     auto settings = Model::instance()->settings();
-    settings.requiredKeys("modules." + name(), {"stateFile", "burnInProbability", "transitionFile" });
+    settings.requiredKeys("modules." + name(), {"stateFile", "burnInProbability", "transitionFile", "managementCapGrid", "managementCapModifier" });
 
     // set up the transition matrix
     std::string filename = settings.valueString(modkey("transitionFile"));
@@ -31,6 +31,18 @@ void AutoManagementModule::setup()
 
     miIncrementThreshold = static_cast<size_t>(State::valueIndex("heightIncrementThreshold"));
     miManagement = static_cast<size_t>(State::valueIndex("pManagement"));
+
+    // management caps
+    std::string grid_file_name = Tools::path(settings.valueString(modkey("managementCapGrid")));
+    if (!grid_file_name.empty()) {
+        mManagementCapGrid.loadGridFromFile(grid_file_name);
+        mManagementCapModifier = settings.valueDouble(modkey("managementCapModifier"), 1.);
+        lg->debug("Loaded management cap grid: '{}'. Dimensions: {} x {}, with cell size: {}m. managementCapModifier={}% ",
+              grid_file_name, mManagementCapGrid.sizeX(), mManagementCapGrid.sizeY(),
+              mManagementCapGrid.cellsize(), mManagementCapModifier*100.);
+    } else {
+        lg->debug("ManagementCap is not active (no grid provided), only bottom up management.");
+    }
 
     // equation for burn-in phase of management
     std::string burninprob = settings.valueString(modkey("burnInProbability"));
@@ -82,7 +94,6 @@ double AutoManagementModule::moduleVariable(const Cell *cell, size_t variableInd
 
 void AutoManagementModule::run()
 {
-    int n_managed = 0, n_tested = 0;
     double p_burnin = 1.;
     if (!mBurnInProbability.isEmpty())
         p_burnin = mBurnInProbability.calculate(Model::instance()->year());
@@ -92,9 +103,76 @@ void AutoManagementModule::run()
 
     lg->debug("Start AutoManagement. BurnInProb: '{}'", p_burnin);
 
+    RectF rect; // rectangle of the cell to process
+    std::pair<int, int> stats = {0,0};
+    int capcells_tested = 0;
 
-    // run over all cells on the landscape and check height increment
-    for (Cell &c : Model::instance()->landscape()->cells()) {
+
+    if (mManagementCapGrid.isEmpty()) {
+        // no regional caps, run over the whole grid
+        rect = Model::instance()->landscape()->grid().metricRect();
+        stats = runArea(rect, p_burnin, -1);
+
+    } else {
+        for (int i=0;i < mManagementCapGrid.count(); ++i) {
+            double mgmt_cap = mManagementCapGrid[i];
+            if (mManagementCapGrid.isNull(mgmt_cap) ||
+                !Model::instance()->landscape()->grid().coordValid( mManagementCapGrid.cellCenterPoint(i) ))
+                continue;
+
+            ++capcells_tested;
+            mgmt_cap *= mManagementCapModifier;
+            rect = mManagementCapGrid.cellRect(mManagementCapGrid.indexOf(i));
+
+            auto res = runArea(rect, p_burnin, mgmt_cap);
+            stats.first += res.first; // tested
+            stats.second += res.second; // managed
+            if (lg->should_log(spdlog::level::trace)) {
+                lg->trace("Management on cell {}. #tested: '{}', #managed: '{}'", i, stats.first, stats.second);
+            }
+        }
+    }
+    lg->info("AutoManagement completed. #tested: '{}', #managed: '{}'. #large scale cells: {}", stats.first, stats.second, capcells_tested);
+
+    // fire output
+    Model::instance()->outputManager()->run("AutoManagement");
+
+}
+
+std::pair<int, int> AutoManagementModule::runArea(const RectF &rect, double p_burnin, double mgmt_cap)
+{
+    const auto &grid = Model::instance()->landscape()->grid();
+    RectF arect = rect.cropped(grid.metricRect());
+    if (arect != rect) {
+        lg->trace("AutoManagementModule: cropping of regional cap cell to the project area.");
+        // scale cap to cropped cell area
+        mgmt_cap = mgmt_cap * (arect.width()*arect.height()) / (rect.width()*rect.height());
+    }
+
+    GridRunner<GridCell> runner(grid, arect);
+    bool do_cap = mgmt_cap >= 0.;
+    // determine random starting position
+    size_t n_cells = (arect.width() * arect.height() ) / (grid.cellsize() * grid.cellsize());
+    size_t n_skip = irandom(0, n_cells - 1); // a random spot to start:
+
+    // fast forward to that position
+    for (size_t i=0;i<n_skip;++i)
+        runner.next();
+    auto endcell = runner.current();
+
+    int n_tested = 0;
+    int n_managed = 0;
+    std::pair<int, int> result;
+    // run over all cells on a part of the landscape and check height increment
+    while (runner.next() != endcell) {
+        if (runner.current() == nullptr) {
+            runner.reset(); runner.next();
+        }
+        if (runner.current()->isNull())
+            continue;
+
+        Cell &c = runner.current()->cell();
+
         if (c.state()->topHeight() >= mMinHeight) {
             ++n_tested;
             double h_inc_thresh = c.state()->value(miIncrementThreshold);
@@ -102,6 +180,7 @@ void AutoManagementModule::run()
                 // height increment is below threshold
                 // the cell is managed with a user-defined probability
                 double p_manage = c.state()->value(miManagement) * p_burnin;
+
                 if (p_manage==1. || drandom() < p_manage) {
                     // ok, now manage the stand!
                     //if (c.state()->topHeight() < 36)
@@ -115,14 +194,20 @@ void AutoManagementModule::run()
                     mGrid[c.cellIndex()] = Model::instance()->year();
                     ++n_managed;
                 }
+                if (do_cap) {
+                    if (n_managed > mgmt_cap) {
+                        // stop management
+                        lg->debug("Reached management cap of '{}' cells after testing {}% of cells.", mgmt_cap, n_tested/double(n_cells)*100.);
+                        break;
+                    }
+                }
             }
         }
+
     }
-
-    lg->info("AutoManagement completed. #tested: '{}', #managed: '{}'", n_tested, n_managed);
-
-    // fire output
-    Model::instance()->outputManager()->run("AutoManagement");
+    result.first = n_tested;
+    result.second = n_managed;
+    return result;
 
 }
 

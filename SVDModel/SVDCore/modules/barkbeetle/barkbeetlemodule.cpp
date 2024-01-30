@@ -21,7 +21,7 @@ void BarkBeetleModule::setup()
     auto settings = Model::instance()->settings();
 
     settings.requiredKeys("modules." + name(), {"climateVarGenerations", "climateVarFrost", "beetleOffspringFactor",
-                                                "kernelFile", "successOfColonization", "backgroundProbFormula",
+                                                "kernelFile", "successOfColonization", "backgroundProbFormula", "regionalBackgroundProb",
                                                 "windInteractionStrength"});
 
 
@@ -36,8 +36,16 @@ void BarkBeetleModule::setup()
     std::string bb_infest = settings.valueString(modkey("backgroundProbFormula"));
     if (!bb_infest.empty()) {
         mBackgroundProbFormula.setExpression(bb_infest);
+        mBackgroundProbVar = mBackgroundProbFormula.addVar("regionalProb");
         lg->info("backgroundProbFormula is active (value: {}). ", mBackgroundProbFormula.expression());
     }
+
+    std::string grid_file_name = Tools::path(settings.valueString(modkey("regionalBackgroundProb")));
+    if (!grid_file_name.empty()) {
+        mRegionalBackgroundProb.loadGridFromFile(grid_file_name);
+        lg->debug("Loaded regional background infestation probability grid: '{}'. Dimensions: {} x {}, with cell size: {}m.", grid_file_name, mRegionalBackgroundProb.sizeX(), mRegionalBackgroundProb.sizeY(), mRegionalBackgroundProb.cellsize());
+    }
+
 
     mWindInteractionFactor = settings.valueDouble(modkey("windInteractionStrength"));
     int k = settings.valueInt(modkey("beetleOffspringFactor"),-1);
@@ -118,6 +126,7 @@ std::vector<std::pair<std::string, std::string> > BarkBeetleModule::moduleVariab
             {"bbNEvents", "cumulative number of times the cell was affected by bark beetle"},
             {"bbLastEvent", "the year the cell was impacted last by bark beetle"},
             {"outbreakAge", "age (years) of the outbreak (the last time the cell was affected)"},
+            {"regionalProb", "probability of background infestation"}
     };
 
 }
@@ -137,6 +146,7 @@ double BarkBeetleModule::moduleVariable(const Cell *cell, size_t variableIndex) 
     case 3: return gr.n_disturbance;
     case 4: return gr.last_attack;
     case 5: return gr.outbreak_age;
+    case 6: return backgroundInfestationProb(*cell);
 
     }
 
@@ -195,7 +205,9 @@ void BarkBeetleModule::initialRandomInfestation()
         double p_start = 0.000685;
         if (!mBackgroundProbFormula.isEmpty()) {
             cwrap.setData(&cell);
-            p_start = mBackgroundProbFormula.calculate(cwrap);
+            double regional_prob = backgroundInfestationProb(cell);
+            *mBackgroundProbVar = regional_prob; // make available in the expression
+            p_start = mBackgroundProbFormula.calculate(cwrap, regional_prob);
         }
         // effective probability: susceptibility * climate-sensitive prob * subsampling,
         // i.e., when subsampling = 10, then the chance is 10x higher. Since probs are generaly low
@@ -265,6 +277,18 @@ void BarkBeetleModule::windBeetleInteraction()
         }
     }
     mStats.n_wind_infestation = n_started;
+}
+
+double BarkBeetleModule::backgroundInfestationProb(const Cell &cell) const
+{
+    if (mRegionalBackgroundProb.isEmpty())
+        return 0.;
+
+     PointF p = mGrid.cellCenterPoint(cell.cellIndex());
+     if (!mRegionalBackgroundProb.coordValid(p))
+         return 0;
+
+     return mRegionalBackgroundProb(p);
 }
 
 void BarkBeetleModule::spread()
@@ -435,6 +459,7 @@ size_t BarkBeetleModule::kernelIndex(double gen_count) const
     if (gen_count == 2.) return 2;
     if (gen_count == 2.5) return 3;
     if (gen_count == 3.) return 4;
-    throw logic_error_fmt("barkbeetle: invalid number of generations: '{}' (allowed are: 1,1.5,2,2.5,3)", gen_count);
+    if (gen_count > 3) return 4; // use the same kernel for everything above 3 generations
+    throw logic_error_fmt("barkbeetle: invalid number of generations: '{}' (allowed are: 1,1.5,2,2.5,3,3.5)", gen_count);
 
 }

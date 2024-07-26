@@ -38,7 +38,7 @@ CameraControl::~CameraControl()
 
 void CameraControl::cameraChanged()
 {
-    QtDataVisualization::Q3DCamera *camera = mSurface->graph()->scene()->activeCamera();
+    Q3DCamera *camera = mSurface->graph()->scene()->activeCamera();
     if (!camera)
         return;
     ui->targetX->setValue(static_cast<int>(camera->target().x()*100.));
@@ -85,7 +85,7 @@ void CameraControl::on_targetZ_actionTriggered(int action)
 void CameraControl::updateCamera()
 {
 
-    QtDataVisualization::Q3DCamera *camera = mSurface->graph()->scene()->activeCamera();
+    Q3DCamera *camera = mSurface->graph()->scene()->activeCamera();
     QVector3D new_target(
                 ui->targetX->value()/100.f,
                 ui->targetY->value()/100.f,

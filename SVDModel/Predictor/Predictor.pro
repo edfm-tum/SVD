@@ -13,6 +13,8 @@ TEMPLATE = lib
 CONFIG += staticlib
 # c++11: for Eigen c++14
 CONFIG += c++14
+# avoid conflict with eigen library
+CONFIG += no_keywords
 win32 {
 ### tensorflow compiled locally
 INCLUDEPATH += ../../../tensorflow ../../../tensorflow/tensorflow/contrib/cmake/build  ../../../tensorflow/tensorflow/contrib/cmake/build/external/eigen_archive
@@ -21,7 +23,10 @@ INCLUDEPATH += ../../../tensorflow/third_party/eigen3 ../../../tensorflow/tensor
 }
 unix {
 # INCLUDEPATH += /usr/include/tensorflow-cpp
+# default install on system:
 INCLUDEPATH += /usr/local/include/tensorflow
+# custom version / location
+# INCLUDEPATH += /home/werner/dev/tensorflow/libtensorflow_cc2.11/usr/local/include/tensorflow
 }
 # SVD modules
 INCLUDEPATH += ../SVDCore ../SVDCore/core ../SVDCore/tools ../SVDCore/third_party ../SVDCore/outputs
@@ -57,7 +62,7 @@ win32:CONFIG(debug, debug|release): DEFINES +=  TF_DEBUG_MODE=0
 #LIBS += -LE:/dev/tensorflow/tensorflow/contrib/cmake/build/RelWithDebInfo -ltensorflow
 
 #LIBS += -L../../tensorflow/lib14 -ltensorflow
-#LIBS += -L../../tensorflow/lib14cpu -ltensorflow
+#LIBS += -L../../tensorflow/lib14QStringcpu -ltensorflow
 
 
 # GPU

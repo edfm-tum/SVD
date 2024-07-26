@@ -1,6 +1,6 @@
 import QtQuick 2.0
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.3
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Rectangle {
     //width: 250
@@ -12,7 +12,7 @@ Rectangle {
     Image {
         id: splash_image
         source: "qrc:/SVD_splash.jpg"
-        visible: legend.caption == '';
+        visible: legend.caption === '';
         fillMode: Image.PreserveAspectFit
         anchors.fill: parent
         verticalAlignment: Image.Top
@@ -73,49 +73,45 @@ Rectangle {
 
                     GroupBox {
                         id: details
-                        flat: false
+                        //flat: false
                         anchors.leftMargin: 0
                         visible: showRulerDetails.checked
-                        anchors.top: showRulerDetails.bottom
+                        //anchors.top: showRulerDetails.bottom
                         height: visible?50:0
 
-                        anchors.topMargin: 10
+                        Layout.topMargin: 10
                         SpinBox {
                             id: minValueSpin
                             enabled: !rangeAuto.checked
-                            decimals: 2
-                            minimumValue: -10000
-                            maximumValue: 1000000
+                            //decimals: 2
+                            from: -10000
+                            to: 1000000
                             width: 80
                             value: legend.minValue
-                            onEditingFinished: legend.minValue = value
+                            onValueChanged: legend.minValue = value
                         }
                         SpinBox {
                             id: maxValueSpin
                             enabled: !rangeAuto.checked
-                            decimals: 2
+                            //decimals: 2
                             width: 80
-                            minimumValue: -10000
-                            maximumValue: 1000000
+                            from: -10000
+                            to: 1000000
                             value: legend.maxValue
                             anchors.left: minValueSpin.right
                             anchors.leftMargin: 10
-                            onEditingFinished: legend.maxValue = value
+                            onValueChanged: legend.maxValue = value
                         }
                         CheckBox {
                             id: rangeAuto
-                            anchors.left: maxValueSpin.right
-                            anchors.leftMargin: 5
+                            //anchors.left: maxValueSpin.right
+                            //anchors.leftMargin: 5
                             text: "Auto"
                             checked: legend.autoScale
                             onClicked: legend.autoScale=rangeAuto.checked
                         }
                     }
-                    GroupBox {
-                        anchors.top: details.bottom
-                        anchors.topMargin: 5
-                        anchors.leftMargin: 10
-                        flat: true
+                    Row {
                         Column {
                             id: colorRamp
                             anchors.topMargin: 10
@@ -135,52 +131,50 @@ Rectangle {
                                     height: 200
                                 }
                             }
+                        }
 
 
+                        Rectangle {
+                            //color: "grey"
+                            id: scalerect
+                            width: 50
+                            height: 150
+                            Text {
+                                id: maxValue
+                                text: legend.rangeLabels[4]
+                                y: -height/2
+                                x: 5
+                            }
+                            Text {
+                                id: upperQuartileValue
+                                text: legend.rangeLabels[3]
+                                y: scalerect.height/4 - height/2
+                                x: 5
+                                visible: colorRamp.height>100
+                            }
+                            Text {
+                                id: centerValue
+                                text: legend.rangeLabels[2]
+                                //anchors.verticalCenter:  colorRamp.verticalCenter
+                                y: scalerect.height/2 - height/2
+                                x: 5
+                            }
+                            Text {
+                                id: lowerQuartileValue
+                                text: legend.rangeLabels[1]
+                                y: colorRamp.height*3/4 - height/2
+                                x: 5
+                                visible: colorRamp.height>100
+                            }
+                            Text {
+                                id: minValue
+                                text: legend.rangeLabels[0]
+                                y: scalerect.height - height/2
+                                x: 5
+                            }
+                        }
 
-                        }
-                        Text {
-                            id: maxValue
-                            text: legend.rangeLabels[4]
-                            anchors.left: colorRamp.right
-                            anchors.top: colorRamp.top
-                            anchors.topMargin: -height/2
-                            anchors.leftMargin: 5
-                        }
-                        Text {
-                            id: upperQuartileValue
-                            text: legend.rangeLabels[3]
-                            anchors.left: colorRamp.right
-                            anchors.top:  colorRamp.top
-                            anchors.topMargin: colorRamp.height/4 - height/2
-                            anchors.leftMargin: 5
-                            visible: colorRamp.height>100
-                        }
-                        Text {
-                            id: centerValue
-                            text: legend.rangeLabels[2]
-                            anchors.left: colorRamp.right
-                            anchors.verticalCenter:  colorRamp.verticalCenter
-                            anchors.topMargin: height/2
-                            anchors.leftMargin: 5
-                        }
-                        Text {
-                            id: lowerQuartileValue
-                            text: legend.rangeLabels[1]
-                            anchors.left: colorRamp.right
-                            anchors.top:  colorRamp.top
-                            anchors.topMargin: colorRamp.height*3/4 - height/2
-                            anchors.leftMargin: 5
-                            visible: colorRamp.height>100
-                        }
-                        Text {
-                            id: minValue
-                            text: legend.rangeLabels[0]
-                            anchors.left: colorRamp.right
-                            anchors.bottom: colorRamp.bottom
-                            anchors.topMargin: height/2
-                            anchors.leftMargin: 5
-                        }
+
                     }
                     RowLayout {
 

@@ -33,7 +33,7 @@
 
 
 // dummy axis formatter
-class DummyAxisFormatter:  public QtDataVisualization::QValue3DAxisFormatter {
+class DummyAxisFormatter:  public QValue3DAxisFormatter {
 public:
     virtual QValue3DAxisFormatter *createNewInstance() const { return new DummyAxisFormatter();}
     virtual void recalculate() {}
@@ -48,7 +48,7 @@ private:
 SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
 {
 
-    QtDataVisualization::Q3DSurface *graph = new QtDataVisualization::Q3DSurface();
+    Q3DSurface *graph = new Q3DSurface();
     m_graph = graph;
     m_topography = nullptr;
     //QWidget::createWindowContainer();
@@ -67,8 +67,8 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     hLayout->addWidget(container, 1);
     hLayout->addLayout(vLayout);
     vLayout->setAlignment(Qt::AlignTop);
-    hLayout->setMargin(0);
-    vLayout->setMargin(0);
+    //hLayout->setMargin(0);
+    //vLayout->setMargin(0);
 
     if (!graph->hasContext()) {
         QMessageBox msgBox;
@@ -76,9 +76,9 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
         msgBox.exec();
     }
 
-    m_graph->setAxisX(new QtDataVisualization::QValue3DAxis);
-    m_graph->setAxisY(new QtDataVisualization::QValue3DAxis);
-    m_graph->setAxisZ(new QtDataVisualization::QValue3DAxis);
+    m_graph->setAxisX(new QValue3DAxis);
+    m_graph->setAxisY(new QValue3DAxis);
+    m_graph->setAxisZ(new QValue3DAxis);
 
     m_graph->axisX()->setLabelAutoRotation(30);
     m_graph->axisY()->setLabelAutoRotation(90);
@@ -93,13 +93,13 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     m_graph->axisZ()->setFormatter(new DummyAxisFormatter);
 
 
-    m_graph->activeTheme()->setType(QtDataVisualization::Q3DTheme::ThemePrimaryColors);
+    m_graph->activeTheme()->setType(Q3DTheme::ThemePrimaryColors);
 
     QFont font = m_graph->activeTheme()->font();
     font.setPointSize(12);
     m_graph->activeTheme()->setFont(font);
 
-    QtDataVisualization::Q3DTheme *theme = new QtDataVisualization::Q3DTheme(QtDataVisualization::Q3DTheme::ThemeDigia);
+    Q3DTheme *theme = new Q3DTheme(Q3DTheme::ThemeDigia);
     // theme->setAmbientLightStrength(0.3f);
     //theme->setBackgroundColor(Qt::white);
     theme->setBackgroundEnabled(false);
@@ -126,13 +126,13 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     m_graph->setActiveTheme(theme);
 
 
-    QObject::connect(m_graph->scene()->activeCamera(), &QtDataVisualization::Q3DCamera::targetChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->scene()->activeCamera(), &QtDataVisualization::Q3DCamera::zoomLevelChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->scene()->activeCamera(), &QtDataVisualization::Q3DCamera::xRotationChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->scene()->activeCamera(), &QtDataVisualization::Q3DCamera::yRotationChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph, &QtDataVisualization::Q3DSurface::aspectRatioChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->axisY(), &QtDataVisualization::QValue3DAxis::maxChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph, &QtDataVisualization::Q3DSurface::queriedGraphPositionChanged, this, &SurfaceGraph::queryPositionChanged);
+    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::targetChanged, this, &SurfaceGraph::cameraChanged);
+    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::zoomLevelChanged, this, &SurfaceGraph::cameraChanged);
+    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::xRotationChanged, this, &SurfaceGraph::cameraChanged);
+    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::yRotationChanged, this, &SurfaceGraph::cameraChanged);
+    QObject::connect(m_graph, &Q3DSurface::aspectRatioChanged, this, &SurfaceGraph::cameraChanged);
+    QObject::connect(m_graph->axisY(), &QValue3DAxis::maxChanged, this, &SurfaceGraph::cameraChanged);
+    QObject::connect(m_graph, &Q3DSurface::queriedGraphPositionChanged, this, &SurfaceGraph::queryPositionChanged);
 
     m_graph->setActiveInputHandler(new Custom3dInputHandler());
 }
@@ -183,7 +183,7 @@ void SurfaceGraph::clickCamera()
 {
     int preset = int(m_graph->scene()->activeCamera()->cameraPreset());
     qDebug() << preset;
-    // m_graph->scene()->activeCamera()->setCameraPreset(QtDataVisualization::Q3DCamera::CameraPreset( preset + 1) );
+    // m_graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPreset( preset + 1) );
     QVector3D target = m_graph->scene()->activeCamera()->target();
     target.setX(target.y() - 0.1f);
     m_graph->scene()->activeCamera()->setTarget(target);

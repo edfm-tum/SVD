@@ -17,13 +17,15 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ********************************************************************************************/
 
+#include "../Predictor/dnnshell.h"
 
 #include <QString>
+#include <QRegularExpression>
+
 static const char *version = "0.3";
 static const char *git_revision = "<gitcommit>";
 const char *currentVersion(){ return version;}
 const char *gitVersion(){ return git_revision;}
-
 // compiler version
 #ifdef Q_CC_MSVC
 #define MYCC "MSVC"
@@ -66,7 +68,7 @@ const char *gitVersion(){ return git_revision;}
 
 QString compiler()
 {
-    return QString("%1 %2 Qt %3").arg(MYCC).arg(BITS).arg(qVersion());
+    return QString("%1 %2 Qt %3 TF %4").arg(MYCC).arg(BITS).arg(qVersion()).arg(DNNShell::tensorFlowVersion());
 }
 
 QString verboseVersion()
@@ -74,4 +76,22 @@ QString verboseVersion()
     const char *bd = __DATE__; // build date
     QString s = QString("%1 (svn: %2, %3, %4)").arg(currentVersion()).arg(gitVersion()).arg(bd).arg(qVersion());
     return s;
+}
+
+QString verboseVersionHtml()
+{
+    QString s = QString("branch: %1, hash: <a href=\"https://github.com/edfm-tum/SVD/tree/%2\">%2</a>, date: %3").arg(GIT_BRANCH).arg(GIT_HASH).arg(BUILD_TIMESTAMP);
+    return s;
+
+}
+QString buildYear()
+{
+    QString s(BUILD_TIMESTAMP);
+    QRegularExpression yearRegex("(\\d{4})");
+    QRegularExpressionMatch match = yearRegex.match(s);
+    if (match.hasMatch()) {
+        QString year = match.captured(1); // Access the captured year
+        return year;
+    }
+    return s; // default
 }

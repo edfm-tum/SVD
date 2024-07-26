@@ -23,4 +23,6 @@ const char *currentVersion();
 const char *gitVersion();
 QString compiler();
 QString verboseVersion();
+QString verboseVersionHtml();
+QString buildYear();
 

@@ -41,7 +41,7 @@ void ConsoleShell::run()
         return;
     }
 
-    mStopwatch = QTime::currentTime();
+    mStopwatch.start();
 
     mController = new ModelController();
     mCreated = false;
@@ -148,9 +148,9 @@ void ConsoleShell::modelUpdate()
     //QTime().addMSecs(stime).toString(Qt::ISODateWithMs)
     //ui->lModelState->setText(QString("%1 - %2").arg( QTime(0,0).addMSecs(stime).toString(Qt::ISODate) ).arg(QString::fromStdString(RunState::instance()->asString())));
 
-    int stime = mStopwatch.elapsed();
+    qint64 elapsedMs = mStopwatch.elapsed(); // Get elapsed time in milliseconds
 
-    printf("\r %s: %s %s                       ", QTime(0,0).addMSecs(stime).toString(Qt::ISODate).toStdString().c_str(), RunState::instance()->asString().c_str(), "\033[0K\r");
+    printf("\r %s: %s %s                       ", QTime(0,0).addMSecs(elapsedMs).toString(Qt::ISODate).toStdString().c_str(), RunState::instance()->asString().c_str(), "\033[0K\r");
 
 
 

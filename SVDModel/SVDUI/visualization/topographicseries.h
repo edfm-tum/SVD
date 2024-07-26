@@ -27,7 +27,7 @@
 
 //using namespace QtDataVisualization;
 
-class TopographicSeries : public QtDataVisualization::QSurface3DSeries
+class TopographicSeries : public QSurface3DSeries
 {
 private:
     Q_OBJECT

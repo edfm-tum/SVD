@@ -70,7 +70,9 @@ In addition to the `enabled` and `type` setting, the fire module has the followi
 
     Probability that the fire does not spread after burning a cell.
 
--   ### `spreadDistProb` (numeric)
+-   
+
+    ### `spreadDistProb` (numeric)
 
     The parameter *p~dist~* used in the calculation of fire spread probabilities (see text above). Higher values translate to higher probabilities of fire spread from one cell to another.
 

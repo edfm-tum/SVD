@@ -94,7 +94,7 @@ public:
     double stateFrequencyGlobal(state_t stateId) const;
     double minimumDistanceTo(state_t stateId) const;
 
-    /// retrieve mean height increment over the last years
+    /// retrieve mean height increment over the last years (m)
     /// this facilitates current state change and state history
     double heightIncrement() const;
 

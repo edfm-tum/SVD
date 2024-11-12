@@ -33,7 +33,7 @@ private:
 
     Expression mBurnInProbability;
 
-    double mMinHeight; ///< stands < min height are never managed
+    double mMinHeight; ///< stands < min height are never managed (meters)
 
     size_t miIncrementThreshold;
     size_t miManagement;
@@ -42,8 +42,8 @@ private:
 
     /// grid with year of last management operation
     Grid<short int> mGrid;
-    Grid<double> mManagementCapGrid;
-    double mManagementCapModifier {1};
+    Grid<double> mManagementCapGrid; ///< grid with maximum area managed per year
+    double mManagementCapModifier {1}; ///< modifier to scale the cap-grid
 
     friend class AutoManagementOut;
 };

@@ -118,13 +118,11 @@ private:
     // store for transition probabilites for affected cells
     TransitionMatrix mWindMatrix;
 
-    //double mExtinguishProb {0.}; ///< prob. that a burned pixel stops spreading
-    //double mSpreadToDistProb {0.}; ///< the prob. that a fire (with current wind/slope) reaches the neighboring pixel
     Expression mWindSizeMultiplier; ///< scaling factor to change the fire size from the input file
     double mPstopAfterImpact { 0.1 }; ///< probability that impacts stops spreading on a disturbed cell
     double mPspreadUndisturbed { 0.1 }; ///< probability that impacts spread from a undisturbed cell
     double mPfetchFactor { 0.1 }; ///< "fetch factor", i.e. increase in probability for impact on cells adjacent to disturbed cells
-    double mStartParallel { 0. }; ///< start the wind spread sequential (0), or more in parallel (>0). When 1, all start points are used immediatel.y
+    double mStartParallel { 0. }; ///< start the wind spread sequential (0), or more in parallel (>0). When 1, all start points are used immediately
     bool mSaveDebugGrids { false }; ///< save intermediate grids for debugging
 
     // index of variables

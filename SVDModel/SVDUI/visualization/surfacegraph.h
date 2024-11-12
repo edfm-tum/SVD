@@ -40,7 +40,7 @@ public:
 
     void clickCamera();
 
-    QtDataVisualization::Q3DSurface *graph() { return m_graph; }
+    Q3DSurface *graph() { return m_graph; }
     TopographicSeries *topoSeries() { return m_topography; }
 
     int cameraCount() const { return mDefaultViews.count(); }
@@ -58,7 +58,7 @@ signals:
 
 private:
 
-    QtDataVisualization::Q3DSurface *m_graph;
+    Q3DSurface *m_graph;
     struct ViewParams {
         ViewParams();
         ~ViewParams();
@@ -67,7 +67,7 @@ private:
         double aspectRatio;
         float maxAxisYRange;
         QString backgroundColor;
-        QtDataVisualization::Q3DCamera *camera;
+        Q3DCamera *camera;
         bool valid;
     };
 

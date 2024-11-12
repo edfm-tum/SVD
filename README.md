@@ -13,7 +13,7 @@ A high-level conceptual view is depicted below:
 ## Documentation
 The documentation of SVD is available from various sources:
 ### [this docs folder](docs/README.md)
-### [Documentation on GitHub.io](https://svdmodel.github.io/SVD)
+### [Documentation on GitHub.io](https://edfm-tum.github.io/SVD/#/)
 ### Peer reviewed scientifc papers
 Rammer W, Seidl R, 2019. A scalable model of vegetation transitions using deep neural networks. Methods Ecol. Evol., [DOI: 10.1111/2041-210X.13171](https://doi.org/10.1111/2041-210X.13171), download [Supplementary information](https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.13171&file=mee313171-sup-0001-Supinfo.pdf)
 

@@ -77,3 +77,10 @@ See e.g. https://neptune.ai/blog/installing-tensorflow-2-gpu-guide or https://ww
 ```
 sudo apt install nvidia-cuda-toolkit
 ```
+
+### Notes about TF version
+
+when installing `tensorflow_cc` (from https://github.com/ika-rwth-aachen/libtensorflow_cc/releases):
+* use system-wide installations; (`dpkg -i ... `). Tried to install in a separate folder, but I failed to get it running
+* versions higher than TF 2.9 require (minor) changes in the source code
+* 

@@ -31,7 +31,7 @@
 #include "batchmanager.h"
 #include "dnn.h"
 
-
+#include <tensorflow/core/public/version.h>
 
 DNNShell::DNNShell()
 {
@@ -125,14 +125,14 @@ void DNNShell::doWork(Batch *batch)
     if (RunState::instance()->cancel()) {
         batch->setError(true);
         //RunState::instance()->dnnState()=ModelRunState::Stopping; // TODO: main
-        emit workDone(batch);
+        Q_EMIT workDone(batch);
         return;
     }
     if (mDNNs.size()==0) {
         lg->error("Cannot execute DNN batch because no DNN is available!");
         RunState::instance()->dnnState() = ModelRunState::Error;
         batch->setError(true);
-        emit workDone(batch);
+        Q_EMIT workDone(batch);
         return;
     }
 
@@ -170,7 +170,7 @@ void DNNShell::dnnFinished(void *vbatch)
 
     if (batch->hasError()) {
         RunState::instance()->setError("Error in DNN", RunState::instance()->dnnState());
-        emit workDone(batch);
+        Q_EMIT workDone(batch);
         QCoreApplication::processEvents();
         return;
     }
@@ -185,7 +185,7 @@ void DNNShell::dnnFinished(void *vbatch)
     lg->debug("finished data package {} [{}] (size={})", batch->packageId(), static_cast<void*>(batch), batch->usedSlots());
 
     //dumpObjectInfo();
-    emit workDone(batch);
+    Q_EMIT workDone(batch);
     QCoreApplication::processEvents();
 
     if (!isRunnig())
@@ -199,6 +199,11 @@ void DNNShell::dnnFinished(void *vbatch)
 bool DNNShell::isRunnig()
 {
     return mProcessing > 0;
+}
+
+const char *DNNShell::tensorFlowVersion()
+{
+    return TF_VERSION_STRING;
 }
 
 

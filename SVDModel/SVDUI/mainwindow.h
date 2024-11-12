@@ -149,6 +149,7 @@ private:
     void onModelCreated(); ///< called after the model is created (and ready to run)
     void delayExecution(int msecs);
 
+
     void populateInspector(QVector3D point);
 
     Ui::MainWindow *ui;
@@ -158,6 +159,7 @@ private:
     QQuickWidget *mQmlView;
     Legend *mLegend;
     QTimer mUpdateModelTimer;
+    QElapsedTimer mRunTimer;
 };
 
 #endif // MAINWINDOW_H

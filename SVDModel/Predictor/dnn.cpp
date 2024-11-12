@@ -90,8 +90,9 @@ Status DNN::loadGraph(string graph_file_name,
   Status load_graph_status =
       ReadBinaryProto(tensorflow::Env::Default(), graph_file_name, &graph_def);
   if (!load_graph_status.ok()) {
-    return tensorflow::errors::NotFound("Failed to load compute graph at '",
-                                        graph_file_name, "'");
+      // TF > 2.9
+    //return tensorflow::errors::NotFound("Failed to load compute graph at '",
+    //                                    graph_file_name, "'");
   }
 
   //session->reset(tensorflow::NewSession(tensorflow::SessionOptions()));

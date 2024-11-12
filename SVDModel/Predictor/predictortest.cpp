@@ -85,8 +85,9 @@ Status ReadLabelsFile(string file_name, std::vector<string>* result,
                       size_t* found_label_count) {
   std::ifstream file(file_name);
   if (!file) {
-    return tensorflow::errors::NotFound("Labels file ", file_name,
-                                        " not found.");
+      // TF > 2.9
+    //return tensorflow::errors::NotFound("Labels file ", file_name,
+    //                                    " not found.");
   }
   result->clear();
   string line;

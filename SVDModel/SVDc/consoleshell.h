@@ -27,7 +27,7 @@ private:
     int mYears;
     bool mCreated;
     bool mRunning;
-    QTime mStopwatch;
+    QElapsedTimer mStopwatch;
 };
 
 #endif // CONSOLESHELL_H

@@ -149,8 +149,7 @@ void MainWindow::modelStateChanged(QString s)
 
 void MainWindow::modelUpdate()
 {
-    int stime = ui->lModelState->property("starttime").toTime().elapsed();
-    //QTime().addMSecs(stime).toString(Qt::ISODateWithMs)
+    int stime = mRunTimer.elapsed();
 
     QString statusstring;
     if (RunState::instance()->isModelRunning()) {
@@ -398,7 +397,7 @@ void MainWindow::on_actionSetupProject_triggered()
         if (QMessageBox::question(this, "Confirm reload", "The model is already created. Create a new model?")==QMessageBox::No)
             return;
     }
-    ui->lModelState->setProperty("starttime", QTime::currentTime());
+    mRunTimer.start();
     mMC.reset();
     mMC.reset(new ModelController()); // this frees the current model
     mLandscapeVis->invalidate();
@@ -416,7 +415,7 @@ void MainWindow::on_actionRunSim_triggered()
 
     mMC->run( ui->sYears->value() );
 
-    ui->lModelState->setProperty("starttime", QTime::currentTime());
+    mRunTimer.start();
     mUpdateModelTimer.start(100);
 }
 

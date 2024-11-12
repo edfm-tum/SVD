@@ -19,6 +19,8 @@
 #ifndef DNN_H
 #define DNN_H
 
+#undef SWIG
+
 #include "spdlog/spdlog.h"
 namespace tensorflow { // forward declarations...
 class Session;

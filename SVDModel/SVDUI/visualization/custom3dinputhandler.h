@@ -4,7 +4,7 @@
 
 #include <QtDataVisualization/Q3DInputHandler>
 
-  using namespace QtDataVisualization;
+  //using namespace QtDataVisualization;
 
   class Custom3dInputHandler : public Q3DInputHandler
   {

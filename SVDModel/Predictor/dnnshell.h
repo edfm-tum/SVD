@@ -41,14 +41,15 @@ public:
     bool isRunnig();
     size_t batchesProcessed() const { return mBatchesProcessed; }
     size_t cellsProcessed() const { return mCellsProcessed; }
+    static const char *tensorFlowVersion();
 
 private:
-public slots:
+public Q_SLOTS:
     void setup(QString fileName);
     void doWork(Batch *batch);
 
     void dnnFinished(void *vbatch);
-signals:
+Q_SIGNALS:
     void workDone(Batch *batch);
 
 private:

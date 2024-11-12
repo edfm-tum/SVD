@@ -60,21 +60,37 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 
 # pre-compiled (local)
 # PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
-PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
+# PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
+# PRE_TARGETDEPS += /home/werner/dev/tensorflow/libtensorflow_cc2.11/usr/local/lib/libtensorflow_cc.so
 #PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
 
 LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 #LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
-LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage -lprotobuf
+LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
+LIBS += -Lusr/local/lib -ltensorflow_cc -lprotobuf -ltensorflow_framework
 
 }
 
-unix:!macx: LIBS += -L/usr/lib/tensorflow-cpp/ -ltensorflow_cc
+# querying git repo
+win32 {
+GIT_HASH="\\\"$$quote($$system(git rev-parse --short HEAD))\\\""
+GIT_BRANCH="\\\"$$quote($$system(git rev-parse --abbrev-ref HEAD))\\\""
+BUILD_TIMESTAMP="\\\"$$quote($$system(date /t))\\\""
+DEFINES += GIT_HASH=$$GIT_HASH GIT_BRANCH=$$GIT_BRANCH BUILD_TIMESTAMP=$$BUILD_TIMESTAMP
+} else {
+GIT_HASH="\\\"$$system(git -C \""$$_PRO_FILE_PWD_"\" rev-parse --short HEAD)\\\""
+GIT_BRANCH="\\\"$$system(git -C \""$$_PRO_FILE_PWD_"\" rev-parse --abbrev-ref HEAD)\\\""
+BUILD_TIMESTAMP="\\\"$$system(date -u +\""%Y-%m-%dT%H:%M:%SUTC\"")\\\""
+DEFINES += GIT_HASH=$$GIT_HASH GIT_BRANCH=$$GIT_BRANCH BUILD_TIMESTAMP=$$BUILD_TIMESTAMP
+}
 
-INCLUDEPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
-DEPENDPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
 
+# standard linux location
+# unix:!macx: LIBS += -L/usr/lib/tensorflow-cpp/ -ltensorflow_cc
+
+# INCLUDEPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
+# DEPENDPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -203,7 +203,12 @@ bool DNNShell::isRunnig()
 
 const char *DNNShell::tensorFlowVersion()
 {
-    return TF_VERSION_STRING;
+#ifdef USE_TENSORFLOW
+return TF_VERSION_STRING;
+#else
+    return "No Tensorflow";
+#endif
+
 }
 
 

@@ -18,6 +18,8 @@
 ********************************************************************************************/
 #include "dnn.h"
 
+#ifdef USE_TENSORFLOW
+
 #include "settings.h"
 #include "model.h"
 #include "tools.h"
@@ -820,3 +822,44 @@ void DNN::dumpTensorInfo(tensorflow::GraphDef &graph_def, std::string name_tenso
     } */
 
 }
+
+#else
+// dummy versions for non-Tensorflow-build
+
+std::list<InputTensorItem> DNN::mTensorDef; // static def
+
+DNN::DNN()
+{
+    if (spdlog::get("dnn"))
+        spdlog::get("dnn")->debug("DNN created: {}", static_cast<void*>(this));
+
+}
+
+DNN::~DNN()
+{
+
+}
+
+bool DNN::setupDNN(size_t aindex)
+{
+    return true;
+}
+
+void DNN::setupInput()
+{
+
+}
+
+void DNN::setupBatch(Batch *abatch, std::vector<TensorWrapper *> &tensors)
+{
+    throw std::logic_error("Setting up a DNN batch is not possible with the NON-Tenorflow version!");
+
+}
+
+Batch *DNN::run(Batch *abatch)
+{
+    throw std::logic_error("Running a DNN batch is not possible with the NON-Tenorflow version!");
+}
+
+#endif
+

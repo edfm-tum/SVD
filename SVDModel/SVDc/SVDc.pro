@@ -18,6 +18,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 INCLUDEPATH += ../SVDCore ../SVDCore/third_party ../SVDCore/tools ../SVDCore/core ../SVDCore/outputs
 
+include(../config.pri)
+
 
 SOURCES += \
     consoleshell.cpp \
@@ -31,29 +33,51 @@ HEADERS += \
     ../SVDUI/version.h \
     consoleshell.h
 
-
-win32:CONFIG (release, debug|release): LIBS += -L../Predictor/release -lPredictor
-else:win32:CONFIG (debug, debug|release): LIBS += -L../Predictor/debug -lPredictor
-
-# https://forum.qt.io/topic/22298/solved-change-of-library-but-creator-does-not-build-completely
-win32:CONFIG (release, debug|release): PRE_TARGETDEPS += ../Predictor/release/Predictor.lib
-else:win32:CONFIG (debug, debug|release): PRE_TARGETDEPS += ../Predictor/debug/Predictor.lib
-
-
-win32:CONFIG (release, debug|release): LIBS += -L../SVDCore/release -lSVDCore
-else:win32:CONFIG (debug, debug|release): LIBS += -L../SVDCore/debug -lSVDCore
-
-win32:CONFIG (release, debug|release): PRE_TARGETDEPS += ../SVDCore/release/SVDCore.lib
-else:win32:CONFIG (debug, debug|release): PRE_TARGETDEPS += ../SVDCore/debug/SVDCore.lib
-
 win32 {
-LIBS += -L../../../tensorflow/tensorflow/contrib/cmake/build/RelWithDebInfo -ltensorflow
-LIBS += -L../../../tensorflow\tensorflow\contrib\cmake\build\protobuf\src\protobuf\RelWithDebInfo -llibprotobuf
-LIBS += -L../../SVDModel/SVDCore/third_party/FreeImage -lFreeImage
+
+*msvc*: {
+    CONFIG (release, debug|release): {
+        LIBS += -L../Predictor/release -lPredictor
+        PRE_TARGETDEPS += ../Predictor/release/Predictor.lib
+        LIBS += -L../SVDCore/release -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/release/SVDCore.lib
+    } else {
+        LIBS += -L../Predictor/debug -lPredictor
+        PRE_TARGETDEPS += ../Predictor/debug/Predictor.lib
+        LIBS += -L../SVDCore/debug -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/debug/SVDCore.lib
+    }
+    contains(DEFINES, USE_TENSORFLOW): LIBS += -L../../tensorflow/lib14cpu -ltensorflow
+    LIBS += -L../../../SVDCore/third_party/FreeImage -lFreeImage
+
+
+} else {
+# for example, llvm
+    CONFIG (release, debug|release): {
+        LIBS += -L../Predictor/release -lPredictor
+        PRE_TARGETDEPS += ../Predictor/release/libPredictor.a
+        LIBS += -L../SVDCore/release -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/release/libSVDCore.a
+    } else {
+        LIBS += -L../Predictor/debug -lPredictor
+        PRE_TARGETDEPS += ../Predictor/debug/libPredictor.a
+        LIBS += -L../SVDCore/debug -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/debug/libSVDCore.a
+    }
+    contains(DEFINES, USE_TENSORFLOW): LIBS += -L"..\..\..\..\tensorflow\lib14cpu" -ltensorflow
+    LIBS += -L"..\..\..\SVDCore\third_party\FreeImage" -lFreeImage
+
+}
+
+
+
+LIBS += -L../../../../../tensorflow\tensorflow\contrib\cmake\build\protobuf\src\protobuf\RelWithDebInfo -llibprotobuf
 
 # for profiling only:
 # LIBS += -L"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0/lib/x64" -lcudart
 }
+
+
 linux-g++ {
 PRE_TARGETDEPS += ../SVDCore/libSVDCore.a
 PRE_TARGETDEPS += ../Predictor/libPredictor.a

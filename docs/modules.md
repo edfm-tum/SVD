@@ -49,6 +49,9 @@ Wildfire disturbance module that simulates pre-defined events.
 * ### [`wind`](module_wind.md)
 Wind disturbance module that simulates pre-defined events.
 
+* ### [`bark beetle`](module_barkbeetle.md)
+Bark beetle disturbance module that simulates spruce bark beetle dynamics.
+
 * ### [`management`](module_management.md)
 Management module that simulates pre-defined events.
 

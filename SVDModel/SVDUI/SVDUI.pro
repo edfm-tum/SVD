@@ -30,11 +30,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 INCLUDEPATH += ../SVDCore ../SVDCore/third_party ../SVDCore/tools ../SVDCore/core ../SVDCore/outputs visualization
 
+include(../config.pri)
+
+
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
     modelcontroller.cpp \
-    testdnn.cpp \
     integratetest.cpp \
     visualization/surfacegraph.cpp \
     visualization/topographicseries.cpp \
@@ -48,7 +50,6 @@ SOURCES += \
 HEADERS += \
         mainwindow.h \
     modelcontroller.h \
-    testdnn.h \
     integratetest.h \
     visualization/surfacegraph.h \
     visualization/topographicseries.h \
@@ -61,31 +62,56 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui \
-    testdnn.ui \
     visualization/cameracontrol.ui \
     aboutdialog.ui
 
-win32:CONFIG (release, debug|release): LIBS += -L../Predictor/release -lPredictor
-else:win32:CONFIG (debug, debug|release): LIBS += -L../Predictor/debug -lPredictor
+contains(DEFINES, USE_TENSORFLOW): SOURCES += testdnn.cpp
+contains(DEFINES, USE_TENSORFLOW): HEADERS += testdnn.h
+contains(DEFINES, USE_TENSORFLOW): FORMS += testdnn.ui
 
-# https://forum.qt.io/topic/22298/solved-change-of-library-but-creator-does-not-build-completely
-win32:CONFIG (release, debug|release): PRE_TARGETDEPS += ../Predictor/release/Predictor.lib
-else:win32:CONFIG (debug, debug|release): PRE_TARGETDEPS += ../Predictor/debug/Predictor.lib
-
-
-win32:CONFIG (release, debug|release): LIBS += -L../SVDCore/release -lSVDCore
-else:win32:CONFIG (debug, debug|release): LIBS += -L../SVDCore/debug -lSVDCore
-
-win32:CONFIG (release, debug|release): PRE_TARGETDEPS += ../SVDCore/release/SVDCore.lib
-else:win32:CONFIG (debug, debug|release): PRE_TARGETDEPS += ../SVDCore/debug/SVDCore.lib
 
 win32 {
 
-#LIBS += -L../../../tensorflow/tensorflow/contrib/cmake/build/RelWithDebInfo -ltensorflow
-LIBS += -L../../../tensorflow/tensorflow\contrib\cmake\build\protobuf\src\protobuf\RelWithDebInfo -llibprotobuf
-LIBS += -L../../tensorflow/lib14cpu -ltensorflow
+*msvc*: {
+    CONFIG (release, debug|release): {
+        LIBS += -L../Predictor/release -lPredictor
+        PRE_TARGETDEPS += ../Predictor/release/Predictor.lib
+        LIBS += -L../SVDCore/release -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/release/SVDCore.lib
+    } else {
+        LIBS += -L../Predictor/debug -lPredictor
+        PRE_TARGETDEPS += ../Predictor/debug/Predictor.lib
+        LIBS += -L../SVDCore/debug -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/debug/SVDCore.lib
+    }
+    #LIBS += -L../../tensorflow/lib14cpu -ltensorflow
+    LIBS += -L../../../SVDCore/third_party/FreeImage -lFreeImage
 
-LIBS += -L../../SVDModel/SVDCore/third_party/FreeImage -lFreeImage
+    contains(DEFINES, USE_TENSORFLOW): LIBS += -L../../../../tensorflow/lib25 -ltensorflow_cc
+
+
+} else {
+# for example, llvm
+    CONFIG (release, debug|release): {
+        LIBS += -L../Predictor/release -lPredictor
+        PRE_TARGETDEPS += ../Predictor/release/libPredictor.a
+        LIBS += -L../SVDCore/release -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/release/libSVDCore.a
+    } else {
+        LIBS += -L../Predictor/debug -lPredictor
+        PRE_TARGETDEPS += ../Predictor/debug/libPredictor.a
+        LIBS += -L../SVDCore/debug -lSVDCore
+        PRE_TARGETDEPS += ../SVDCore/debug/libSVDCore.a
+    }
+    contains(DEFINES, USE_TENSORFLOW): LIBS += -L"..\..\..\..\tensorflow\lib14cpu" -ltensorflow
+    LIBS += -L"..\..\..\SVDCore\third_party\FreeImage" -lFreeImage
+}
+
+
+
+#LIBS += -L../../../tensorflow/tensorflow/contrib/cmake/build/RelWithDebInfo -ltensorflow
+LIBS += -L../../../../../tensorflow/tensorflow\contrib\cmake\build\protobuf\src\protobuf\RelWithDebInfo -llibprotobuf
+
 
 
 #LIBS += -LE:/dev/tensorflow/tensorflow/contrib/cmake/build/RelWithDebInfo -ltensorflow
@@ -115,8 +141,8 @@ LIBS += -lfreeimage -lprotobuf
 #LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
 
 #LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
-INCLUDEPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
-DEPENDPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
+contains(DEFINES, USE_TENSORFLOW): INCLUDEPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
+contains(DEFINES, USE_TENSORFLOW): DEPENDPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
 
 }
 

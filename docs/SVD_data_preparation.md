@@ -1,6 +1,6 @@
 ## Setting up a project for SVD
 
-An efficient way to set up the required spatial and tabular data is to use R as much as possible. For text files (such as the project configuration file), use a powerful editor such as Notepad++ that is capable of syntax highlighting. Using a spreadsheet program such as Excel is fine, but it is advisable to create the actual input files for SVD in R (e.g., by editing Excel, importing Excel into R, writing input files in R).
+An efficient way to set up the required spatial and tabular data is to use R (or Python) as much as possible. For text files (such as the project configuration file), use a powerful editor such as Notepad++ that is capable of syntax highlighting. Using a spreadsheet program such as Excel is fine, but it is advisable to create the actual input files for SVD in R (e.g., by editing Excel, importing Excel into R, writing input files in R).
 
 ### Spatial data
 
@@ -8,15 +8,15 @@ SVD used one spatial grid that defines the extent of the landscape (see also [co
 
 -   the extent of the landscape (i.e., the "rectangle" around the actual project area)
 
--   the base resolution. SVD uses the resolution of this grid as the base resolution. 100m are the SVD default, but other resolutions can be used as well (note that some functions such as local neighborhood relationships depend inherently on the basic resolution)
+-   the base resolution. SVD uses the resolution of this grid as the base resolution. 100m are the SVD default, but other resolutions can be used as well (note that some functions such as local neighborhood relationships are linked to the basic resolution and thus functionality may change)
 
--   the spatial projection used - the lower left corner of this specific grid is used as the origin (0/0) in SVD
+-   the spatial projection used - the lower left corner of this specific grid is used as the origin of the local coordinate system (0/0) in SVD. Note that you can use *any* metric coordinate system - as long as all used geodata uses the same system consistently
 
--   all cells on the landscape that are part of the simulated area (use `NA` for cells not simulated).
+-   all cells on the landscape that are part of the simulated area (use `NA` for cells not simulated). 
 
 Note that any cell with a valid value here is expected to have input also other data sources (e.g., initial state of cells, SVD throws errors otherwise). Similarly, other input are only allowed for valid cells in the landscape grid (e.g., providing a initial state for a cell that is `NA` will throw an error).
 
-**Therefore**: Double-check all grids, particularly if you reproject / aggregate / combine data from different sources! Below are some examples how typical problems can be addressed.
+**Therefore**: Double-check all grids, particularly if you reproject / aggregate / combine data from different sources! A relatively safe approach is to start with the landscape, and `resample()` other grids (e.g., the initial states) to the exact specification of the landscape. Below are some examples how typical problems can be addressed.
 
 ```{r eval=FALSE}
 
@@ -46,7 +46,7 @@ init.state[][ !is.na(init.state[]) & is.na(lscp[]) ] <- NA
 
 #### Environment
 
-Variables that vary in space (think of site variables such as soil depth) are stored much like polygons in vector based GIS: space is divided into "polygons" and an attached data table specifies attributes for each polygon. For SVD, the spatial polygons are "rastered" to a grid with an `environmentId` as value. The attribute data is stored in table linking attributes to each `environmentId`. Note that the corner case of each cell being a "polygon" you can define attributes for each cell of the landscape.
+Variables that vary in space (think of site variables such as soil depth) are stored much like polygons in vector based GIS: space is divided into "polygons" and an attached data table specifies attributes for each polygon. For SVD, the spatial polygons are "rastered" to a grid with an `environmentId` as value. The attribute data is stored in table linking attributes to each `environmentId`. Note that as a corner case, you can define each as a "polygon", and thus  define attributes for each cell of the landscape.
 
 Below is a simple setup with unique `environmentId`s for each cell on the landscape. Note that this setup may be inefficient for very large landscapes.
 

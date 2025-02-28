@@ -18,7 +18,8 @@ The logging level during a simulation for the DNN (see also `logging.setup.level
 Multithreading is disabled if `false` (mainly for debugging) (default true)
 #### `model.threads` (numeric)
 number of threads used by the SVD model (without threads specifically for the DNN) (default 4)
-
+#### `filemask.<mask>` (string)
+specify one or multiple strings (mask) that can be used to adapt file paths used by SVD. For example, consider you set `filemask.run = experiment4`. Every instance of `$run$` in a file name is consequently replaced with `experiment4`. For example, `stategrid_$run$_$year$.tif` is expanded to `stategrid_experiment4_42.tif` (in year 42). 
 
 ## DNN specific settings
 

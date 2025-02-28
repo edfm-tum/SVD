@@ -172,7 +172,7 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
         }
         if (!has_self)
             return stateId;
-        throw logic_error_fmt("TransitionMatrix: no valid target found for state {}, key {}", stateId, key);
+        throw logic_error_fmt("TransitionMatrix: no valid target found for state {}, key {}. Maybe all probabilites = 0?", stateId, key);
 
     }
     if (p_sum>1. && !has_self)

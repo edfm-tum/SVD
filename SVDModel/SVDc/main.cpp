@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     printf("More at: https://github.com/edfm-tum/SVD \n");
     printf("(c) Werner Rammer, Rupert Seidl, 2019-%s \n", buildYear().toLocal8Bit().data());
     printf("version: %s\n", verboseVersionHtml().toLocal8Bit().data());
+    printf("%s\n", compiler().toLocal8Bit().data());
     printf("****************************************\n\n");
     if (a.arguments().count()<3) {
         printf("Usage: \n");
@@ -24,7 +25,7 @@ int main(int argc, char *argv[])
         printf("Options:\n");
         printf("you specify key=value pairs to overwrite values given in the configuration file.\n");
         printf("E.g.: SVDc project.conf 100 climate.file=climate/historic.txt filemask.run=50\n");
-        printf("See also https://github.com/edfm-tum/SVD\n.");
+        printf("See also https://edfm-tum.github.io/SVD/#/svdc\n.");
         return 0;
     }
     ConsoleShell svd_shell;

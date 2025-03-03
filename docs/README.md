@@ -4,7 +4,7 @@
 SVD is a modeling framework for the simulation of vegetation transitions on larger spatial scales.
 It is a [research tool](svd_papers.md) and released under a GPL open source license. 
 
-![Screenshot](img/screenshot_npka.jpg)
+<img src="img/screen_europe.png" alt="SVD with continental scale application" width="600">
 
 ## Installation
 *  [Installation guide](install.md)

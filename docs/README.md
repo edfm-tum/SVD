@@ -9,6 +9,11 @@ It is a [research tool](svd_papers.md) and released under a GPL open source lice
 ## Installation
 *  [Installation guide](install.md)
 
+## Using SVD
+* [SVD user interface](svdUI.md)
+* [SVDc console version](svdc.md)
+* [Guide to input data preparation](SVD_data_preparation.md)
+
 ## Setup of a project
 * [SVD setup](svd_setup.md)
 * [Configuring the landscape](configuring_the_landscape.md)
@@ -22,10 +27,6 @@ It is a [research tool](svd_papers.md) and released under a GPL open source lice
   * [Matrix module](module_matrix.md)
   * [Wind module](module_wind.md)
   * [Management module](module_management.md)
-
-## Using SVD
-* [SVD user interface](svdUI.md)
-* [Guide to input data preparation](SVD_data_preparation.md)
 
 ## Reference documentation
 * [configuration file](project_file.md)

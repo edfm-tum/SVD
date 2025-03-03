@@ -12,19 +12,19 @@ int main(int argc, char *argv[])
     setlocale(LC_ALL, "C");
 
 
-    printf("SVD console (%s - #%s)\n", currentVersion(), gitVersion());
+    printf("SVD console (%s)\n", currentVersion());
     printf("This is the console version of SVD, the Scaling Vegetation Dynamics model.\n");
-    printf("More at: https://svdmodel.github.io/SVD \n");
-    printf("(c) Werner Rammer, Rupert Seidl, 2019- \n");
-    printf("version: %s\n", verboseVersion().toLocal8Bit().data());
+    printf("More at: https://github.com/edfm-tum/SVD \n");
+    printf("(c) Werner Rammer, Rupert Seidl, 2019-%s \n", buildYear().toLocal8Bit().data());
+    printf("version: %s\n", verboseVersionHtml().toLocal8Bit().data());
     printf("****************************************\n\n");
     if (a.arguments().count()<3) {
         printf("Usage: \n");
-        printf("SVDc.exe <project-file> <years> <...other options>\n");
+        printf("SVDc.exe <config-file> <years> <...other options>\n");
         printf("Options:\n");
-        printf("you specify a number key=value pairs, and *after* loading of the project\n");
-        printf("the 'key' settings are set to 'value'. E.g.: ilandc project.xml 100 output.stand.enabled=false output.stand.landscape=false\n");
-        printf("See also http://iland.boku.ac.at/iLand+console\n.");
+        printf("you specify key=value pairs to overwrite values given in the configuration file.\n");
+        printf("E.g.: SVDc project.conf 100 climate.file=climate/historic.txt filemask.run=50\n");
+        printf("See also https://github.com/edfm-tum/SVD\n.");
         return 0;
     }
     ConsoleShell svd_shell;

@@ -6,14 +6,14 @@ The SVD management module simulates management actions on 100 m resolution (the 
 
 Management is triggered when:
 
--    height growth increment is below the state-specific threshold, and height is above `minHeight`
+-   height growth increment is below the state-specific threshold, and height is above `minHeight`
 
 -   regionally managed area has not yet reached the maximum in the current year (management cap)
 
 -   with a probability of state-specific probability \* burn-in factor (`pManagement` \* `burnInProbability`)
 
 | Column                   | Description                                                                                              |
-|----------------------|--------------------------------------------------|
+|-----------------------|-------------------------------------------------|
 | stateId                  | SVD state                                                                                                |
 | heightIncrementThreshold | externaly defined threshold; management only if recent height increment (m/year) is below that threshold |
 | pManagement              | probability of management after crossing the `heightIncrementThreshold`                                  |

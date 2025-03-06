@@ -44,7 +44,15 @@ A compiled and GPU-enabled version of tensorflow.dll (version 1.4) can be found 
 
 Follow the instructions to download and install `libtensorflow_cc`.Take care to use the GPU version!
 
-Use TF version up to 2.x
+### Notes about TensorFlow versions
+
+Getting the right combinations of TensorFlow, NVidia drivers, Qt libraries is tricky. 
+As noted above, for Windows we have a working Tensorflow.dll 1.4, which works with Qt5 versions of SVD (branch `qt5_resonate`). 
+
+
+when installing `tensorflow_cc` (from <https://github.com/ika-rwth-aachen/libtensorflow_cc/releases>): 
+* use system-wide installations; (`dpkg -i ...`). Tried to install in a separate folder, but I failed to get it running. Note, that 
+* versions higher than TF 2.9 require (minor) changes in the source code \*
 
 ## other installs
 
@@ -73,9 +81,7 @@ See e.g. <https://neptune.ai/blog/installing-tensorflow-2-gpu-guide> or <https:/
 sudo apt install nvidia-cuda-toolkit
 ```
 
-### Notes about TF version
 
-when installing `tensorflow_cc` (from <https://github.com/ika-rwth-aachen/libtensorflow_cc/releases>): \* use system-wide installations; (`dpkg -i ...`). Tried to install in a separate folder, but I failed to get it running. Note, that \* versions higher than TF 2.9 require (minor) changes in the source code \*
 
 ## SVD without TensorFlow
 

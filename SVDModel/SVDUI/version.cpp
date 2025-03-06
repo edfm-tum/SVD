@@ -77,7 +77,7 @@ QString verboseVersion()
 
 QString verboseVersionHtml()
 {
-    QString s = QString("branch: %1, hash: https://github.com/edfm-tum/SVD/tree/%2, date: %3").arg(GIT_BRANCH).arg(GIT_HASH).arg(BUILD_TIMESTAMP);
+    QString s = QString("branch: %1, hash: <a href='https://github.com/edfm-tum/SVD/tree/%2'>%2</a>, date: %3").arg(GIT_BRANCH).arg(GIT_HASH).arg(BUILD_TIMESTAMP);
     return s;
 
 }

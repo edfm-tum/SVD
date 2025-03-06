@@ -3,4 +3,4 @@
 # Without Tensorflow, SVD is "just" a simple state&transition model.
 # To enable tensorflow, uncomment line to add to DEFINES:
 
-#DEFINES += USE_TENSORFLOW
+DEFINES += USE_TENSORFLOW

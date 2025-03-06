@@ -876,10 +876,4 @@ void MainWindow::on_actionSave_as_grid_triggered()
 }
 
 
-void MainWindow::on_visQuickZoom_actionTriggered(int action)
-{
-    if (!mLandscapeVis->isValid())
-        return;
-
-}
 

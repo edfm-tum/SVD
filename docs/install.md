@@ -26,7 +26,7 @@ To build SVD:
 -   Build all sub-projects
 -   Run the `SVDUI.exe`
 
-### Compiling TensorFlow on Windows
+### Compiling SVD on Windows
 
 The tricky part is the compilation of the `Predictor` sub-project as this requires a local TensorFlow installation (for include files) and a compiled version of TensorFlow in a DLL on Windows. Check the `Predictor.pro` file which includes some links for further information.
 
@@ -47,12 +47,11 @@ Follow the instructions to download and install `libtensorflow_cc`.Take care to 
 ### Notes about TensorFlow versions
 
 Getting the right combinations of TensorFlow, NVidia drivers, Qt libraries is tricky. 
-As noted above, for Windows we have a working Tensorflow.dll 1.4, which works with Qt5 versions of SVD (branch `qt5_resonate`). 
 
+As noted above, for Windows we have a working Tensorflow.dll 1.4, which works with Qt5 versions of SVD (branch `qt5_resonate`). For Linux, also TensorFlow 2.x is working. The Qt 5 - version (branch `qt5-resonate`) works with TF up to 2.9 (for example, 2.9.3). The Qt 6 version (`main` branch) is updated to work with newer versions (e.g., 2.11).
 
-when installing `tensorflow_cc` (from <https://github.com/ika-rwth-aachen/libtensorflow_cc/releases>): 
-* use system-wide installations; (`dpkg -i ...`). Tried to install in a separate folder, but I failed to get it running. Note, that 
-* versions higher than TF 2.9 require (minor) changes in the source code \*
+The About-Dialog shows the version SVD is compiled against.
+
 
 ## other installs
 

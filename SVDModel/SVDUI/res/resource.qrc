@@ -2,11 +2,12 @@
     <qresource prefix="/">
         <file alias="mainicon">svd_icon1.png</file>
         <file>document-open.png</file>
-        <file>Play.png</file>
         <file>process-stop.png</file>
         <file>www.png</file>
         <file>camera.png</file>
         <file>SVD_splash.jpg</file>
         <file>qml/legend.qml</file>
+        <file>Play.png</file>
+        <file>transparent.png</file>
     </qresource>
 </RCC>

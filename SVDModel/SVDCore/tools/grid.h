@@ -531,11 +531,10 @@ template<class T>
 T Grid<T>::min() const
 {
     T minv = std::numeric_limits<T>::max();
-    T nullval = std::numeric_limits<T>::min();
     T* p;
     T* pend = end();
     for (p=begin(); p!=pend;++p)
-        minv = *p>nullval ? std::min(minv, *p) : minv;
+        minv = *p>nullValue() ? std::min(minv, *p) : minv;
     return minv;
 
 }

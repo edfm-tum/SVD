@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtQuick.Controls
 import QtQuick.Layouts
 
@@ -36,11 +36,6 @@ Rectangle {
                 id: rulerDesc
                 text: legend.description
                 wrapMode: Text.WordWrap
-                width: 100
-                anchors.top: rulerCaption.bottom
-                anchors.topMargin: 10
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
 
             }
 
@@ -74,43 +69,50 @@ Rectangle {
                     GroupBox {
                         id: details
                         //flat: false
-                        anchors.leftMargin: 0
                         visible: showRulerDetails.checked
-                        //anchors.top: showRulerDetails.bottom
-                        height: visible?50:0
-
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: visible ? implicitHeight : 0
                         Layout.topMargin: 10
-                        SpinBox {
-                            id: minValueSpin
-                            enabled: !rangeAuto.checked
-                            //decimals: 2
-                            from: -10000
-                            to: 1000000
-                            width: 80
-                            value: legend.minValue
-                            onValueChanged: legend.minValue = value
+
+                        ColumnLayout {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            CheckBox {
+                                id: rangeAuto
+                                //anchors.left: maxValueSpin.right
+                                //anchors.leftMargin: 5
+                                text: "Auto"
+                                checked: legend.autoScale
+                                onClicked: legend.autoScale=rangeAuto.checked
+                            }
+                            RowLayout {
+                                SpinBox {
+                                    id: minValueSpin
+                                    enabled: !rangeAuto.checked
+                                    editable: true
+                                    //decimals: 2
+                                    from: -10000
+                                    to: 1000000
+                                    value: legend.minValue
+                                    onValueChanged: if(legend.minValue !== value)
+                                                        legend.minValue = value
+                                }
+                                SpinBox {
+                                    id: maxValueSpin
+                                    enabled: !rangeAuto.checked
+                                    editable: true
+                                    //decimals: 2
+                                    from: -10000
+                                    to: 1000000
+                                    value: legend.maxValue
+                                    onValueChanged: if (legend.maxValue !== value)
+                                                            legend.maxValue = value
+                                }
+                            }
+
                         }
-                        SpinBox {
-                            id: maxValueSpin
-                            enabled: !rangeAuto.checked
-                            //decimals: 2
-                            width: 80
-                            from: -10000
-                            to: 1000000
-                            value: legend.maxValue
-                            anchors.left: minValueSpin.right
-                            anchors.leftMargin: 10
-                            onValueChanged: legend.maxValue = value
+
                         }
-                        CheckBox {
-                            id: rangeAuto
-                            //anchors.left: maxValueSpin.right
-                            //anchors.leftMargin: 5
-                            text: "Auto"
-                            checked: legend.autoScale
-                            onClicked: legend.autoScale=rangeAuto.checked
-                        }
-                    }
+
                     Row {
                         Column {
                             id: colorRamp
@@ -138,39 +140,46 @@ Rectangle {
                             //color: "grey"
                             id: scalerect
                             width: 50
-                            height: 150
+                            height: colorRamp.height
+
+                            property real leftPadding: 10
                             Text {
                                 id: maxValue
                                 text: legend.rangeLabels[4]
-                                y: -height/2
-                                x: 5
+                                anchors.top: parent.top
+                                anchors.left: parent.left
+                                x: leftPadding
                             }
                             Text {
                                 id: upperQuartileValue
                                 text: legend.rangeLabels[3]
-                                y: scalerect.height/4 - height/2
-                                x: 5
+                                anchors.top: parent.top
+                                anchors.topMargin: parent.height / 4 - height / 2
+                                x: leftPadding
                                 visible: colorRamp.height>100
                             }
                             Text {
                                 id: centerValue
                                 text: legend.rangeLabels[2]
-                                //anchors.verticalCenter:  colorRamp.verticalCenter
-                                y: scalerect.height/2 - height/2
-                                x: 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                x: leftPadding
                             }
                             Text {
                                 id: lowerQuartileValue
                                 text: legend.rangeLabels[1]
-                                y: colorRamp.height*3/4 - height/2
-                                x: 5
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: parent.height / 4 - height / 2
+                                anchors.left: parent.left
+                                x: leftPadding
                                 visible: colorRamp.height>100
                             }
                             Text {
                                 id: minValue
                                 text: legend.rangeLabels[0]
-                                y: scalerect.height - height/2
-                                x: 5
+                                anchors.bottom: parent.bottom
+                                anchors.left: parent.left
+                                x: leftPadding
                             }
                         }
 

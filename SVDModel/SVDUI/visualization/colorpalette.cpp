@@ -364,7 +364,7 @@ QImage ColorImageProvider::requestImage(const QString &id, QSize *size, const QS
         else
             return img;
     }
-    return QImage();
+    return QImage(":/transparent.png");
 }
 
 

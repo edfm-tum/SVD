@@ -139,23 +139,22 @@ Rectangle {
                         Rectangle {
                             //color: "grey"
                             id: scalerect
-                            width: 50
+                            width: colorRamp.width
                             height: colorRamp.height
 
-                            property real leftPadding: 10
                             Text {
                                 id: maxValue
                                 text: legend.rangeLabels[4]
                                 anchors.top: parent.top
                                 anchors.left: parent.left
-                                x: leftPadding
+                                leftPadding: 5
                             }
                             Text {
                                 id: upperQuartileValue
                                 text: legend.rangeLabels[3]
                                 anchors.top: parent.top
                                 anchors.topMargin: parent.height / 4 - height / 2
-                                x: leftPadding
+                                leftPadding: 5
                                 visible: colorRamp.height>100
                             }
                             Text {
@@ -163,7 +162,7 @@ Rectangle {
                                 text: legend.rangeLabels[2]
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
-                                x: leftPadding
+                                leftPadding: 5
                             }
                             Text {
                                 id: lowerQuartileValue
@@ -171,7 +170,7 @@ Rectangle {
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: parent.height / 4 - height / 2
                                 anchors.left: parent.left
-                                x: leftPadding
+                                leftPadding: 5
                                 visible: colorRamp.height>100
                             }
                             Text {
@@ -179,7 +178,7 @@ Rectangle {
                                 text: legend.rangeLabels[0]
                                 anchors.bottom: parent.bottom
                                 anchors.left: parent.left
-                                x: leftPadding
+                                leftPadding: 5
                             }
                         }
 

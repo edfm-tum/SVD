@@ -5,10 +5,10 @@
 #-------------------------------------------------
 
 QT       += core gui concurrent
-QT       += datavisualization
+QT       += graphs
 QT       += quick
 QT       += quickwidgets
-QT       += datavisualization
+QT       += graphswidgets
 
 CONFIG += c++11
 

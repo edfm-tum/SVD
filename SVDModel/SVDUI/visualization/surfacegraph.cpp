@@ -20,11 +20,10 @@
 
 #include "surfacegraph.h"
 #include "topographicseries.h"
-#include "custom3dinputhandler.h"
+// #include "custom3dinputhandler.h"
 
-#include <QtDataVisualization/QValue3DAxis>
-#include <QtDataVisualization/Q3DTheme>
-#include <QtDataVisualization/Q3DSurface>
+#include <QValue3DAxis>
+#include <Q3DSurfaceWidgetItem>
 
 #include <QPainter>
 #include <QMessageBox>
@@ -48,41 +47,43 @@ private:
 SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
 {
 
-    Q3DSurface *graph = new Q3DSurface();
+    Q3DSurfaceWidgetItem *graph = new Q3DSurfaceWidgetItem();
     m_graph = graph;
     m_topography = nullptr;
     //QWidget::createWindowContainer();
 
-    QWidget *container = QWidget::createWindowContainer(graph);
-    QSize screenSize = graph->screen()->size();
 
-    container->setMinimumSize(QSize(400, 300));
+
+    /*container->setMinimumSize(QSize(400, 300));
     container->setMaximumSize(screenSize);
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     container->setFocusPolicy(Qt::StrongFocus);
-    container->setParent(this);
+    container->setParent(this);*/
+    QQuickWidget *quickWidget = new QQuickWidget();
+    m_graph->setWidget(quickWidget);
 
     QHBoxLayout *hLayout = new QHBoxLayout(this);
     QVBoxLayout *vLayout = new QVBoxLayout();
-    hLayout->addWidget(container, 1);
+    hLayout->addWidget(quickWidget, 1);
+
     hLayout->addLayout(vLayout);
     vLayout->setAlignment(Qt::AlignTop);
     //hLayout->setMargin(0);
     //vLayout->setMargin(0);
 
-    if (!graph->hasContext()) {
+/*    if (!graph->hasContext()) {
         QMessageBox msgBox;
         msgBox.setText("Couldn't initialize the OpenGL context.");
         msgBox.exec();
-    }
+    } */
 
     m_graph->setAxisX(new QValue3DAxis);
     m_graph->setAxisY(new QValue3DAxis);
     m_graph->setAxisZ(new QValue3DAxis);
 
-    m_graph->axisX()->setLabelAutoRotation(30);
-    m_graph->axisY()->setLabelAutoRotation(90);
-    m_graph->axisZ()->setLabelAutoRotation(30);
+    //m_graph->axisX()->setLabelAutoRotation(30);
+    //m_graph->axisY()->setLabelAutoRotation(90);
+    //m_graph->axisZ()->setLabelAutoRotation(30);
 
     m_graph->axisY()->setTitleVisible(false);
 
@@ -92,24 +93,25 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     m_graph->axisY()->setFormatter(new DummyAxisFormatter);
     m_graph->axisZ()->setFormatter(new DummyAxisFormatter);
 
+    m_graph->activeTheme()->setTheme(QGraphsTheme::Theme::OrangeSeries);
+    //m_graph->activeTheme()->setType(QGraphsTheme::ThemePrimaryColors);
 
-    m_graph->activeTheme()->setType(Q3DTheme::ThemePrimaryColors);
-
-    QFont font = m_graph->activeTheme()->font();
+    QFont font = m_graph->activeTheme()->labelFont();
     font.setPointSize(12);
-    m_graph->activeTheme()->setFont(font);
+    m_graph->activeTheme()->setLabelFont(font);
 
-    Q3DTheme *theme = new Q3DTheme(Q3DTheme::ThemeDigia);
+    QGraphsTheme *theme = new QGraphsTheme();
     // theme->setAmbientLightStrength(0.3f);
     //theme->setBackgroundColor(Qt::white);
-    theme->setBackgroundEnabled(false);
+    theme->setBackgroundVisible(false);
+    theme->setPlotAreaBackgroundVisible(false);
     //theme->setBaseColor(QColor(QRgb(0x209fdf)));
     //theme->setColorStyle(Q3DTheme::ColorStyleUniform);
     //theme->setFont(QFont(QStringLiteral("Impact"), 35));
-    theme->setGridEnabled(false);
+    theme->setGridVisible(false);
     theme->setLabelTextColor(Qt::white);
-    theme->setLabelBorderEnabled(false);
-    theme->setLabelBackgroundEnabled(false);
+    theme->setLabelBackgroundVisible(false);
+    theme->setLabelBorderVisible(false);
 
 //    theme->setGridLineColor(QColor(QRgb(0x99ca53)));
 //    theme->setHighlightLightStrength(7.0f);
@@ -125,16 +127,15 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
 
     m_graph->setActiveTheme(theme);
 
+//    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::targetChanged, this, &SurfaceGraph::cameraChanged);
+//    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::zoomLevelChanged, this, &SurfaceGraph::cameraChanged);
+//    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::xRotationChanged, this, &SurfaceGraph::cameraChanged);
+//    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::yRotationChanged, this, &SurfaceGraph::cameraChanged);
+//    QObject::connect(m_graph, &Q3DSurface::aspectRatioChanged, this, &SurfaceGraph::cameraChanged);
+//    QObject::connect(m_graph->axisY(), &QValue3DAxis::maxChanged, this, &SurfaceGraph::cameraChanged);
+//    QObject::connect(m_graph, &Q3DSurface::queriedGraphPositionChanged, this, &SurfaceGraph::queryPositionChanged);
 
-    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::targetChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::zoomLevelChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::xRotationChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::yRotationChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph, &Q3DSurface::aspectRatioChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph->axisY(), &QValue3DAxis::maxChanged, this, &SurfaceGraph::cameraChanged);
-    QObject::connect(m_graph, &Q3DSurface::queriedGraphPositionChanged, this, &SurfaceGraph::queryPositionChanged);
-
-    m_graph->setActiveInputHandler(new Custom3dInputHandler());
+//    m_graph->setActiveInputHandler(new Custom3dInputHandler());
 }
 
 SurfaceGraph::~SurfaceGraph()
@@ -162,6 +163,10 @@ void SurfaceGraph::setup(Grid<float> &dem, float min_h, float max_h)
 
     m_topography->setItemLabelFormat(QStringLiteral("@yLabel m"));
 
+    connect(m_topography, &QSurface3DSeries::selectedPointChanged,
+            this, &SurfaceGraph::handlePointSelection);
+
+
 
     m_graph->addSeries(m_topography);
 
@@ -169,8 +174,8 @@ void SurfaceGraph::setup(Grid<float> &dem, float min_h, float max_h)
     ViewParams vp;
     for (int i=0;i<4;++i) {
         mDefaultViews.push_back(vp);
-        mDefaultViews[i].camera = new Q3DCamera();
-        mDefaultViews[i].camera->copyValuesFrom(*m_graph->scene()->activeCamera());
+        //mDefaultViews[i].camera = new Q3DCamera();
+        //mDefaultViews[i].camera->copyValuesFrom(*m_graph->scene()->activeCamera());
         mDefaultViews[i].aspectRatio = m_graph->aspectRatio();
         mDefaultViews[i].maxAxisYRange = m_graph->axisY()->max();
 
@@ -181,6 +186,7 @@ void SurfaceGraph::setup(Grid<float> &dem, float min_h, float max_h)
 
 void SurfaceGraph::clickCamera()
 {
+    /*
     int preset = int(m_graph->scene()->activeCamera()->cameraPreset());
     qDebug() << preset;
     // m_graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPreset( preset + 1) );
@@ -189,7 +195,7 @@ void SurfaceGraph::clickCamera()
     m_graph->scene()->activeCamera()->setTarget(target);
     m_graph->scene()->activeCamera()->setMaxZoomLevel(5000);
     m_graph->scene()->activeCamera()->setZoomLevel( m_graph->scene()->activeCamera()->zoomLevel() + 100 );
-
+*/
 }
 
 bool SurfaceGraph::isCameraValid(int cameraPreset)
@@ -226,6 +232,36 @@ void SurfaceGraph::queryPositionChanged(const QVector3D &pos)
     emit pointSelected(world_pos);
 }
 
+void SurfaceGraph::handlePointSelection(const QPoint &position)
+{
+    if (position == QSurface3DSeries::invalidSelectionPosition()) {
+        spdlog::get("main")->info("invalid position");
+    } else {
+         const QSurfaceDataProxy *proxy = m_topography->dataProxy();
+         if (proxy && position.x()>=0 && position.x() < proxy->rowCount() &&
+             position.y()>=0 && position.y() < proxy->columnCount()) {
+            // Get the specific data item
+            const QSurfaceDataItem item = proxy->itemAt(position);
+            //const QSurfaceDataItem item = proxy->array()->at(position.y())->at(position.x());
+            QVector3D coords = item.position(); // Get the 3D coordinates
+
+            // --- Display information ---
+            QString info = QString("Clicked at Index(%1, %2): Pos(%3, %4, %5)")
+                               .arg(position.y()) // column index
+                               .arg(position.x()) // row index
+                               .arg(coords.x())
+                               .arg(coords.y())
+                               .arg(coords.z());
+            //qDebug() << info;
+
+            emit pointSelected(coords);
+
+            spdlog::get("main")->info(info.toStdString());
+            // Update your UI element to display 'info' or coords
+         }
+    }
+}
+
 void SurfaceGraph::resetCameraPosition(int cameraPreset)
 {
    if (cameraPreset>=mDefaultViews.length())
@@ -233,7 +269,7 @@ void SurfaceGraph::resetCameraPosition(int cameraPreset)
 
    //auto *camera = mDefaultViews[cameraPreset].camera;
    //spdlog::get("main")->info("set viewparams: target {}, {}, {}", camera->target().x(), camera->target().y(), camera->target().z());
-
+/*
    m_graph->scene()->activeCamera()->copyValuesFrom(*mDefaultViews[cameraPreset].camera);
     m_graph->scene()->activeCamera()->setTarget( mDefaultViews[cameraPreset].camera->target() );
     m_graph->setAspectRatio(mDefaultViews[cameraPreset].aspectRatio);
@@ -243,14 +279,14 @@ void SurfaceGraph::resetCameraPosition(int cameraPreset)
    float rot = m_graph->scene()->activeCamera()->xRotation();
    m_graph->scene()->activeCamera()->setXRotation(rot + 1.f);
    m_graph->scene()->activeCamera()->setXRotation(rot);
-
+*/
 }
 
 void SurfaceGraph::saveCameraPosition(int cameraPreset)
 {
     if (cameraPreset>0 && cameraPreset<mDefaultViews.size()) {
-        mDefaultViews[cameraPreset].camera->copyValuesFrom(*m_graph->scene()->activeCamera());
-        mDefaultViews[cameraPreset].camera->setTarget(m_graph->scene()->activeCamera()->target());
+        //mDefaultViews[cameraPreset].camera->copyValuesFrom(*m_graph->scene()->activeCamera());
+        //mDefaultViews[cameraPreset].camera->setTarget(m_graph->scene()->activeCamera()->target());
         mDefaultViews[cameraPreset].aspectRatio = m_graph->aspectRatio();
         mDefaultViews[cameraPreset].maxAxisYRange = m_graph->axisY()->max();
         mDefaultViews[cameraPreset].valid = true;
@@ -261,7 +297,7 @@ void SurfaceGraph::saveCameraPosition(int cameraPreset)
 
 SurfaceGraph::ViewParams::ViewParams() : aspectRatio(0.), maxAxisYRange(0.f), valid(false)
 {
-    camera = nullptr;
+    //camera = nullptr;
 }
 
 SurfaceGraph::ViewParams::~ViewParams()
@@ -272,6 +308,7 @@ SurfaceGraph::ViewParams::~ViewParams()
 
 QString SurfaceGraph::ViewParams::asString()
 {
+    /*
     QStringList res;
     res << QString("xRotation=%1").arg(camera->xRotation())
         << QString("yRotation=%1").arg(camera->yRotation())
@@ -284,11 +321,13 @@ QString SurfaceGraph::ViewParams::asString()
         << QString("backgroundColor=%1").arg(backgroundColor)
         << QString("valid=%1").arg(valid ? "true" : "false");
     return res.join(",");
-
+*/
+    return "dummy";
 }
 
 void SurfaceGraph::ViewParams::setFromString(QString str)
 {
+    /*
     QStringList l = str.split(",");
     QMap<QString, QString> dat;
     for (auto s : l) {
@@ -305,6 +344,6 @@ void SurfaceGraph::ViewParams::setFromString(QString str)
     maxAxisYRange= dat["maxYAxis"].toFloat();
     backgroundColor = dat["backgroundColor"];
     valid = dat["valid"] == "true";
-
+*/
     //spdlog::get("main")->info("viewparams: target {}, {}, {}", camera->target().x(), camera->target().y(), camera->target().z());
 }

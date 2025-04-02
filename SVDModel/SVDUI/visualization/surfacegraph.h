@@ -20,9 +20,12 @@
 #ifndef SURFACEGRAPH_H
 #define SURFACEGRAPH_H
 
-#include <QtDataVisualization/Q3DSurface>
-#include <QtDataVisualization/QSurface3DSeries>
+//#include <Q3DSurface>
+#include <QSurface3DSeries>
 #include <QtWidgets/QSlider>
+
+#include <QtGraphsWidgets/QtGraphsWidgets> // Changed include
+#include <QtGraphs/QSurface3DSeries>     // Changed include (ensure it's the Graphs version)
 #include "topographicseries.h"
 
 
@@ -40,7 +43,7 @@ public:
 
     void clickCamera();
 
-    Q3DSurface *graph() { return m_graph; }
+    Q3DSurfaceWidgetItem *graph() { return m_graph; }
     TopographicSeries *topoSeries() { return m_topography; }
 
     int cameraCount() const { return mDefaultViews.count(); }
@@ -49,6 +52,7 @@ public:
     void setCameraString(int cameraPreset, QString str);
 public slots:
     void queryPositionChanged(const QVector3D &pos);
+    void handlePointSelection(const QPoint &position);
     void resetCameraPosition(int cameraPreset);
     void saveCameraPosition(int cameraPreset);
 
@@ -58,7 +62,7 @@ signals:
 
 private:
 
-    Q3DSurface *m_graph;
+    Q3DSurfaceWidgetItem *m_graph;
     struct ViewParams {
         ViewParams();
         ~ViewParams();
@@ -67,7 +71,7 @@ private:
         double aspectRatio;
         float maxAxisYRange;
         QString backgroundColor;
-        Q3DCamera *camera;
+        //Q3DCamera *camera;
         bool valid;
     };
 

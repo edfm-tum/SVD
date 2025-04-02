@@ -38,6 +38,7 @@ CameraControl::~CameraControl()
 
 void CameraControl::cameraChanged()
 {
+    /*
     Q3DCamera *camera = mSurface->graph()->scene()->activeCamera();
     if (!camera)
         return;
@@ -60,6 +61,7 @@ void CameraControl::cameraChanged()
         << QString("aspectRatio=%1").arg(mSurface->graph()->aspectRatio())
         << QString("maxYAxis=%1").arg(mSurface->graph()->axisY()->max());
     ui->cameraText->setPlainText(res.join("\n"));
+*/
 
 }
 
@@ -84,7 +86,7 @@ void CameraControl::on_targetZ_actionTriggered(int action)
 
 void CameraControl::updateCamera()
 {
-
+/*
     Q3DCamera *camera = mSurface->graph()->scene()->activeCamera();
     QVector3D new_target(
                 ui->targetX->value()/100.f,
@@ -95,6 +97,7 @@ void CameraControl::updateCamera()
     camera->setTarget(new_target);
     camera->setZoomLevel( ui->zoomFactor->value() );
     qDebug() << "Camera: target: " << camera->target() << ", zoom:" << camera->zoomLevel() << "aspect:" << mSurface->graph()->aspectRatio();
+*/
 }
 
 void CameraControl::on_zoomFactor_actionTriggered(int action)

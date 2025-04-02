@@ -210,7 +210,11 @@ void MainWindow::checkVisualization()
 void MainWindow::pointClickedOnVisualization(QVector3D world_pos)
 {
     //spdlog::get("main")->info("x/y: {}/{}", world_pos.x(), world_pos.y());
-    QString label=QString("%1m/%2m").arg(static_cast<int>(world_pos.x())).arg(static_cast<int>(world_pos.y()));
+    const auto &grid = Model::instance()->landscape()->grid();
+    double x = world_pos.x();
+    world_pos.setX( world_pos.z() + grid.metricRect().left());
+    world_pos.setZ( x + grid.metricRect().top());
+    QString label=QString("%1m/%2m").arg(static_cast<int>(world_pos.x())).arg(static_cast<int>(world_pos.z()));
     ui->visCoords->setText(label);
     ui->visCoordsInspector->setText(label);
     populateInspector(world_pos);
@@ -703,9 +707,9 @@ void MainWindow::populateInspector(QVector3D point)
     if (!mMC->state()->isModelValid())
         return;
     auto &grid = mMC->model()->instance()->landscape()->grid();
-    if (!grid.coordValid(static_cast<double>(point.x()), static_cast<double>(point.y())))
+    if (!grid.coordValid(static_cast<double>(point.x()), static_cast<double>(point.z())))
         return;
-    const auto &cell = grid(static_cast<double>(point.x()), static_cast<double>(point.y()));
+    const auto &cell = grid(static_cast<double>(point.x()), static_cast<double>(point.z()));
     if (cell.isNull())
         return;
     CellWrapper cw(&cell.cell());

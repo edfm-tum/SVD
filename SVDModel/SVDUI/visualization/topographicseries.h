@@ -21,11 +21,11 @@
 #define TOPOGRAPHICSERIES_H
 
 #include <QObject>
-#include <QtDataVisualization/QSurface3DSeries>
+#include <QtGraphs/QSurface3DSeries>
 
 #include "grid.h"
 
-//using namespace QtDataVisualization;
+
 
 class TopographicSeries : public QSurface3DSeries
 {

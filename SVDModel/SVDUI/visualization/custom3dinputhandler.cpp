@@ -1,5 +1,5 @@
 #include "custom3dinputhandler.h"
-
+/*
 
 #include <QtDataVisualization/Q3DCamera>
 #include <math.h>
@@ -59,3 +59,4 @@ void Custom3dInputHandler::wheelEvent(QWheelEvent *event)
 
 //  scene()->activeCamera()->setTarget(new_target);
 }
+*/

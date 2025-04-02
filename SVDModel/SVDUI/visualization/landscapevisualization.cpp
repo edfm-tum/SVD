@@ -136,15 +136,15 @@ void LandscapeVisualization::renderToFile(QString filename)
 {
     if (!isValid())
         return;
-
-    QImage img = mGraph->graph()->renderToImage(16, QSize(6000, 4000));
     QString file_name;
     if (filename.isEmpty())
         file_name = QString::fromStdString(Tools::path("render.png"));
     else
         file_name = QString::fromStdString(Tools::path(filename.toStdString()));
 
-    img.save(file_name);
+    auto image = mGraph->graph()->renderToImage(QSize(6000,4000));
+    image->saveToFile(file_name);
+
     spdlog::get("main")->info("Saved image to {}", file_name.toStdString());
 
 }
@@ -360,9 +360,9 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     QRgb fill_color=mBGColor.rgba();
     QRgb alpha = qRgba(255,255,255, mAlpha);
 
-    int line_y = 0;
-    for (int y = grid.sizeY()-1; y>=0; y-=mStride, ++line_y) {
-        QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(line_y))); // write directly to the buffer (without a potential detach)
+
+    for (int y = grid.sizeY()-1; y>=0; y-=mStride) {
+        QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(y))); // write directly to the buffer (without a potential detach)
         for (int x=0; x<grid.sizeX(); x+=mStride, ++line) {
             const GridCell &c = grid(x,y);
             if (!c.isNull()) {
@@ -406,9 +406,9 @@ void LandscapeVisualization::doRenderState()
     //QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(cline)); // write directly to the buffer (without a potential detach)
 
     int n_filled=0;
-    int line_y=0;
-    for (int y = grid.sizeY()-1; y>=0; y-=mStride, ++line_y) {
-        QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(line_y))); // write directly to the buffer (without a potential detach)
+
+    for (int y = grid.sizeY()-1; y>=0; y-=mStride) {
+        QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(y))); // write directly to the buffer (without a potential detach)
         for (int x=0; x<grid.sizeX(); x+=mStride, ++line) {
             const GridCell &c = grid(x,y);
             if (!c.isNull()) {
@@ -446,7 +446,7 @@ void LandscapeVisualization::checkTexture()
         if (Model::instance()->landscape()->grid().sizeX() != mDem.sizeX()) {
             // for upscaling to DEM size
             mUpscaleRenderTexture = QImage(mDem.sizeX(), mDem.sizeY(), QImage::Format_ARGB32_Premultiplied);
-            mUpscaleFactor = mDem.sizeX() / Model::instance()->landscape()->grid().sizeX();
+            mUpscaleFactor = mDem.sizeX() / double(Model::instance()->landscape()->grid().sizeX());
             spdlog::get("main")->info("DEM Visualization uses an factor of {}", mUpscaleFactor);
             // mRenderTexture = mUpscaleRenderTexture;
             //mGraph->topoSeries()->setTexture(mUpscaleRenderTexture);

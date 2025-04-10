@@ -19,11 +19,9 @@
 #include "inputtensoritem.h"
 
 #include "strtools.h"
-#include <list>
 #include <algorithm>
 #include <vector>
 
-#include "fetchdata.h"
 
 static std::map< std::string, InputTensorItem::DataContent> data_contents = {
     {"Invalid",       InputTensorItem::Invalid},

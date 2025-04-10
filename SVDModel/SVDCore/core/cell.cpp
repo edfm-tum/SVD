@@ -105,11 +105,11 @@ void Cell::update()
 void Cell::setState(state_t new_state)
 {
     // TODO: reconsider!
-//    if (new_state==0) {
-//        spdlog::get("main")->error("Attempting to set state=0! Details:");
-//        dumpDebugData();
-//        return;
-//    }
+   // if (new_state==0) {
+   //     spdlog::get("main")->error("Attempting to set state=0! Details:");
+   //     dumpDebugData();
+   //     return;
+   // }
     mStateId = new_state;
     if (new_state<0)
         mState=nullptr;

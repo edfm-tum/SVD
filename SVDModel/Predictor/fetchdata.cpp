@@ -210,14 +210,14 @@ void FetchDataStandard::fetchState(Cell *cell, BatchDNN* batch, size_t slot)
 {
     // the current state
     TensorWrapper *t = batch->tensor(mItem->index);
-    if (t->dataType() == InputTensorItem::DT_UINT16) {
+    if (static_cast<InputTensorItem::DataType>(t->dataType()) == InputTensorItem::DT_UINT16) {
         TensorWrap2d<short int> *tw = static_cast<TensorWrap2d<short int>*>(t);
         short int *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
         *p = cell->stateId(); // TODO: check!
         return;
     }
-    if (t->dataType() == InputTensorItem::DT_INT16) {
+    if (static_cast<InputTensorItem::DataType>(t->dataType()) == InputTensorItem::DT_INT16) {
         TensorWrap2d<short int> *tw = static_cast<TensorWrap2d<short int>*>(t);
         short int *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
@@ -225,7 +225,7 @@ void FetchDataStandard::fetchState(Cell *cell, BatchDNN* batch, size_t slot)
         return;
     }
 
-    if (t->dataType() == InputTensorItem::DT_INT32) {
+    if (static_cast<InputTensorItem::DataType>(t->dataType()) == InputTensorItem::DT_INT32) {
         TensorWrap2d<int32_t> *tw = static_cast<TensorWrap2d<int32_t>*>(t);
         int32_t *p = tw->example(slot);
         // stateId starts with 1, the state tensor is 0-based
@@ -328,8 +328,8 @@ void FetchDataVars::setup(const Settings *settings, const std::string &key, cons
         mExpressions.push_back(new Expression(match.str(1)));
         next++;
       }
-      if (item.type != InputTensorItem::DT_FLOAT) {
-          lg->error("Setup of Tensor {} (type: {}): Datatype 'float' expected.", item.name, item.contentString(item.content));
+      if ( (item.type != InputTensorItem::DT_FLOAT) && (item.type != InputTensorItem::DT_INT32) ) {
+          lg->error("Setup of Tensor {} (type: {}): Datatype 'float' or 'int32' expected.", item.name, item.contentString(item.content));
           has_error = true;
       }
       if (item.ndim != 1 || item.sizeX != mExpressions.size()) {
@@ -349,12 +349,29 @@ void FetchDataVars::setup(const Settings *settings, const std::string &key, cons
 void FetchDataVars::fetch(Cell *cell, BatchDNN *batch, size_t slot)
 {
     TensorWrapper *t = batch->tensor(mItem->index);
-    TensorWrap2d<float> *tw = static_cast<TensorWrap2d<float>*>(t);
-    float *p = tw->example(slot);
     CellWrapper cw(cell);
-    for (auto &expr : mExpressions) {
-        *p++ = static_cast<float>( expr->calculate(cw) );
+
+    switch (static_cast<InputTensorItem::DataType>(t->dataType())) {
+    case InputTensorItem::DT_FLOAT: {
+        TensorWrap2d<float> *tw = static_cast<TensorWrap2d<float>*>(t);
+        float *p = tw->example(slot);
+        for (auto &expr : mExpressions) {
+            *p++ = static_cast<float>( expr->calculate(cw) );
+        }
+        break;
     }
+    case InputTensorItem::DT_INT32: {
+        TensorWrap2d<int32_t> *tw = static_cast<TensorWrap2d<int32_t>*>(t);
+        int32_t *p = tw->example(slot);
+        for (auto &expr : mExpressions) {
+            *p++ = static_cast<int32_t>( expr->calculate(cw) );
+        }
+        break;
+
+    }
+    default: throw std::logic_error("Invalid datatype in FetchDataVars.");
+    }
+
 
 }
 

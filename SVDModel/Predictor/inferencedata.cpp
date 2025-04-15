@@ -56,6 +56,9 @@ void InferenceData::setResult(state_t state, restime_t time)
 
 void InferenceData::writeResult()
 {
+    if (!Model::instance()->states()->isValid(mNextState) || mNextState < 0 ) {
+        spdlog::get("main")->error("InferenceData:writeResult(): Trying to set invalid state: new state '{}', old state: '{}', cell-index: {}!", mNextState, mOldState, mIndex);
+    }
     // write back:
     Cell &cell = Model::instance()->landscape()->cell(mIndex);
     cell.setNextStateId(mNextState);

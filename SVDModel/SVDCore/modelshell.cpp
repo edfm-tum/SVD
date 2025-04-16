@@ -22,7 +22,6 @@
 #include "../Predictor/inferencedata.h"
 #include "../Predictor/batchdnn.h"
 #include "grid.h"
-#include "outputs/outputmanager.h"
 
 // needed only for visualization (to be removed again)
 #include "modules/fire/firemodule.h"

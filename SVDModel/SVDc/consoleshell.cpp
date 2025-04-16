@@ -177,6 +177,10 @@ void ConsoleShell::modelUpdate()
 void ConsoleShell::finishedYear(int year)
 {
     printf("\nyear %d finished.\n", year);
+    auto status = mController->systemStatus();
+    auto cells_processed = std::atoi(status["modelCellsProcessed"].c_str());
+    auto cells_per_sec = std::atof(status["cellsPerSecond"].c_str());
+    printf("Total cells processed: %d, cells per second: %f", cells_processed, cells_per_sec);
 }
 
 void ConsoleShell::finished()

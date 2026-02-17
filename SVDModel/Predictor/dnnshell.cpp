@@ -31,7 +31,9 @@
 #include "batchmanager.h"
 #include "dnn.h"
 
+#ifdef USE_TENSORFLOW
 #include <tensorflow/core/public/version.h>
+#endif
 
 DNNShell::DNNShell()
 {

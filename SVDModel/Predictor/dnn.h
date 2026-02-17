@@ -22,6 +22,7 @@
 #undef SWIG
 
 #include "spdlog/spdlog.h"
+#ifdef USE_TENSORFLOW
 namespace tensorflow { // forward declarations...
 class Session;
 class Tensor;
@@ -29,6 +30,7 @@ class Tensor;
 class Input;
 class GraphDef;
 }
+#endif
 class Batch; // forward
 
 #include "inputtensoritem.h"
@@ -60,7 +62,9 @@ public:
 
 private:
 
+#ifdef USE_TENSORFLOW
     static TensorWrapper *buildTensor(size_t batch_size, InputTensorItem &item);
+#endif
     // logging
     std::shared_ptr<spdlog::logger> lg;
 
@@ -73,6 +77,7 @@ private:
     std::vector<std::string> mOutputTensorNames; ///< names of the output tensors (e.g. output/Softmax)
     size_t mNStateCls; ///< number of output classes for state
     size_t mNResTimeCls; ///< number of classes for residence time
+#ifdef USE_TENSORFLOW
     tensorflow::Status getTopClassesOldCode(const tensorflow::Tensor &classes, const int n_top, tensorflow::Tensor *indices, tensorflow::Tensor *scores);
 
     /// retrieve the top n classes in "classes" and store results in 'indices' and 'scores'.
@@ -86,7 +91,7 @@ private:
 
     /// select randomly an index 0..n-1, with values the weights.
     int chooseProbabilisticIndex(float *values, int n, int skip_index=-1);
-
+#endif
 
     /// definition of input tensors
     static std::list<InputTensorItem> mTensorDef;

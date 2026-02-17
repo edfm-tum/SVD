@@ -19,6 +19,9 @@
 #include "fetchdata.h"
 
 #include <regex>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
 
 #include "model.h"
 #include "tensorhelper.h"
@@ -484,7 +487,7 @@ float FetchDataFunction::calculateDistToSeedSource(Cell *cell)
                         min_dist_sq = std::min(min_dist_sq, x*x-x+0.25f + y*y-y+0.25f);
                     }
             }
-    float min_dist = std::min(sqrt(min_dist_sq), 12.5f); // training data goes to 1250m distance, unit here is 100m steps
+    float min_dist = std::min(sqrt(min_dist_sq), 12.5); // training data goes to 1250m distance, unit here is 100m steps
     return min_dist / 10.f; // convert to m/1000
 
 }

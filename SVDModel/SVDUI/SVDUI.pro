@@ -129,13 +129,14 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 
 # pre-compiled (local)
 # PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
-PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
+contains(DEFINES, USE_TENSORFLOW): PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
 #PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
 
 LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 
-LIBS += -lfreeimage -lprotobuf
+LIBS += -lfreeimage
+contains(DEFINES, USE_TENSORFLOW): LIBS += -lprotobuf
 # FreeImage on Linux: see https://codeyarns.com/2014/02/11/how-to-install-and-use-freeimage/
 # basically sudo apt-get install libfreeimage3 libfreeimage-dev
 #LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
@@ -146,7 +147,7 @@ contains(DEFINES, USE_TENSORFLOW): DEPENDPATH += $$PWD/../../../../../../usr/lib
 
 }
 
-unix:!macx: LIBS += -L/usr/lib/tensorflow-cpp/ -ltensorflow_cc -ltensorflow_framework
+contains(DEFINES, USE_TENSORFLOW): unix:!macx: LIBS += -L/usr/lib/tensorflow-cpp/ -ltensorflow_cc -ltensorflow_framework
 
 # querying git repo
 win32 {

@@ -37,7 +37,7 @@ unix {
 # get tensorflow pre-built from here: https://github.com/ika-rwth-aachen/libtensorflow_cc
 # INCLUDEPATH += /usr/include/tensorflow-cpp
 # default install on system:
-INCLUDEPATH += /usr/local/include/tensorflow
+contains(DEFINES, USE_TENSORFLOW): INCLUDEPATH += /usr/local/include/tensorflow
 # custom version / location
 # INCLUDEPATH += /home/werner/dev/tensorflow/libtensorflow_cc2.11/usr/local/include/tensorflow
 }

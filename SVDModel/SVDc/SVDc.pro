@@ -92,7 +92,8 @@ LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 #LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
 LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
-LIBS += -Lusr/local/lib -ltensorflow_cc -lprotobuf -ltensorflow_framework
+LIBS += -L/usr/local/lib
+contains(DEFINES, USE_TENSORFLOW): LIBS += -ltensorflow_cc -ltensorflow_framework -lprotobuf
 
 }
 

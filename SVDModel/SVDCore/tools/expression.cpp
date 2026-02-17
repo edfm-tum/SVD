@@ -15,7 +15,7 @@
 **
 **    You should have received a copy of the GNU General Public License
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-********************************************************************************************/
+********************************************************************************************/ 
 
 #include "expression.h"
 #include "strtools.h"
@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cassert>
 #include <mutex>
+#include <cmath>
 #include "randomgen.h"
 
 /** @class Expression
@@ -215,7 +216,7 @@ void Expression::setExpression(const std::string& aExpression)
 
     m_expr=const_cast<char*>(m_expression.c_str());
 
-    m_pos=m_expr;  // set starting point...
+    m_pos=m_expr;  // set starting point... 
 
     for (int i=0; i<MAXLOCALVAR; i++)
         m_varSpace[i]=0.;
@@ -283,6 +284,9 @@ void  Expression::parse(ExpressionWrapper *wrapper)
         m_execList[m_execIndex].Value=0;
         m_execList[m_execIndex++].Index=0;
         checkBuffer(m_execIndex);
+        
+        compile(); // NEW: compile to bytecode
+        
         m_parsed=true;
 
         mModelObject = old_wrap;
@@ -461,7 +465,7 @@ void  Expression::parse_level4()
             checkBuffer(m_execIndex);
         }
         if (m_token!="}" && m_token!=")") // error
-            throw std::logic_error("Expression::unbalanced number of parentheses in [" + m_expression + "].");
+            throw std::logic_error("Expression::unbalanced number of parentheses in [" + m_expression + "]");
         next_token();
     }
 }
@@ -509,169 +513,360 @@ int Expression::getFuncIndex(const std::string& functionName)
     return idx;
 }
 
+void Expression::compile() {
+    m_program.clear();
+    m_program.reserve(static_cast<size_t>(m_execIndex) + 1);
+
+    // Iterating the old list (m_execList is a C-array, m_execIndex is count)
+    for (int i = 0; i < m_execIndex; ++i) {
+        const auto& item = m_execList[i];
+        Instruction instr;
+        std::memset(&instr, 0, sizeof(Instruction)); // Clear padding
+
+        switch (item.Type) {
+        case etNumber:
+            instr.code = OP_PUSH_IMM;
+            instr.data.val = item.Value;
+            break;
+
+        case etVariable:
+            instr.data.index = item.Index;
+
+            if (item.Index < 100) {
+                instr.code = OP_LOAD_LOCAL; // on stack
+            } else if (item.Index < 1000) {
+                instr.code = OP_LOAD_MODEL_VAR; // dynamic variable from the model
+            } else {
+                instr.code = OP_LOAD_EXTERN_VAR; // variable from an external list of vars
+            }
+            break;
+
+        case etOperator:
+            switch (item.Index) {
+            case '+': instr.code = OP_ADD; break;
+            case '-': instr.code = OP_SUB; break;
+            case '*': instr.code = OP_MUL; break;
+            case '/': instr.code = OP_DIV; break;
+            case '^': instr.code = OP_POW; break;
+            case '_': instr.code = OP_NEG; break;
+            }
+            break;
+
+        case etFunction:
+            instr.data.count = (int)item.Value; // Store argument count
+            switch (item.Index) {
+            case 0: instr.code = OP_SIN; break;
+            case 1: instr.code = OP_COS; break;
+            case 2: instr.code = OP_TAN; break;
+            case 3: instr.code = OP_EXP; break;
+            case 4: instr.code = OP_LOG; break;
+            case 5: instr.code = OP_SQRT; break;
+            case 6: instr.code = OP_MIN; break;
+            case 7: instr.code = OP_MAX; break;
+            case 8: instr.code = OP_IF; break;
+            // ... custom functions
+            case 9: instr.code = OP_INCSUM; break;
+            case 10: instr.code = OP_POLYGON; break;
+            case 11: instr.code = OP_MODULO; break;
+            case 12: instr.code = OP_SIGMOID; break;
+            case 13: instr.code = OP_RND; break;
+            case 14: instr.code = OP_RNDG; break;
+            case 15: instr.code = OP_LIMIT; break;
+            case 16: instr.code = OP_ROUND; break;
+            case 17: instr.code = OP_IN; break;
+            // SVD specific
+            case 18: instr.code = OP_LOCALNB; break;
+            case 19: instr.code = OP_INTERMEDIATENB; break;
+            case 20: instr.code = OP_GLOBALNB; break;
+            case 21: instr.code = OP_DISTANCE; break;
+            case 22: instr.code = OP_SPECIESPROPORTION; break;
+            }
+            break;
+
+        case etCompare:
+            switch (item.Index) {
+            case opEqual: instr.code = OP_EQ; break;
+            case opNotEqual: instr.code = OP_NE; break;
+            case opLowerThen: instr.code = OP_LT; break;
+            case opGreaterThen: instr.code = OP_GT; break;
+            case opGreaterOrEqual: instr.code = OP_GE; break;
+            case opLowerOrEqual: instr.code = OP_LE; break;
+            }
+            break;
+
+        case etLogical:
+            switch (item.Index) {
+            case opAnd: instr.code = OP_AND; break;
+            case opOr: instr.code = OP_OR; break;
+            }
+            break;
+
+        default: break;
+        }
+        m_program.push_back(instr);
+    }
+
+    Instruction stop;
+    stop.code = OP_STOP;
+    m_program.push_back(stop);
+}
+
 double Expression::execute(double *varlist, ExpressionWrapper *object, bool *rLogicResult) const
 {
     if (!m_parsed)
         const_cast<Expression*>(this)->parse(object);
-    const double *varSpace = varlist?varlist:m_varSpace;
-    ExtExecListItem *exec=m_execList;
-    int i;
-    double result;
-    double Stack[20];
-    bool   LogicStack[20];
-    bool   *lp=LogicStack;
-    double *p=Stack;  // p=head pointer
-    *lp++=true;
-    if (isEmpty()) {
-        return 0.;
+    
+    // 1. Safety Check
+    if (m_program.empty()) return 0.0;
+
+    // 2. Setup Variable Space
+    // If varlist is null, fall back to internal storage
+    const double* locals = varlist ? varlist : m_varSpace;
+
+    // 3. Setup Stack
+    // Using a raw array is fastest. 256 depth is usually sufficient for expressions.
+    double stack[256];
+    double* sp = stack; // Points to the next FREE slot
+
+    // 4. Setup Instruction Pointer to the first instruction
+    const Instruction* ip = m_program.data();
+
+    // 5. The inner loop
+    while (true) {
+
+        switch (ip->code) {
+        case OP_STOP:
+            // Return the value sitting at the top of the stack
+            // If stack is empty (shouldn't happen), return 0.0
+            if (rLogicResult) *rLogicResult = (sp > stack && *(sp - 1) != 0.0);
+            return (sp > stack) ? *(sp - 1) : 0.0;
+
+            // -----------------------------------------------------
+            // DATA LOADING
+            // -----------------------------------------------------
+        case OP_PUSH_IMM:
+            *sp++ = ip->data.val;
+            break;
+
+        case OP_LOAD_LOCAL:
+            // No bounds check here for speed (guaranteed by parser)
+            *sp++ = locals[ip->data.index];
+            break;
+
+        case OP_LOAD_MODEL_VAR:
+            // Helper call - 'const_cast' might be needed if getModelVar isn't const
+            *sp++ = const_cast<Expression*>(this)->getModelVar(ip->data.index, object);
+            break;
+
+        case OP_LOAD_EXTERN_VAR:
+            *sp++ = const_cast<Expression*>(this)->getExternVar(ip->data.index);
+            break;
+
+            // -----------------------------------------------------
+            // ARITHMETIC (In-place modification of stack)
+            // -----------------------------------------------------
+        case OP_ADD:
+            sp--;           // Pop
+            *(sp-1) += *sp; // Add to the value below
+            break;
+        case OP_SUB:
+            sp--;
+            *(sp-1) -= *sp;
+            break;
+        case OP_MUL:
+            sp--;
+            *(sp-1) *= *sp;
+            break;
+        case OP_DIV:
+            sp--;
+            *(sp-1) /= *sp;
+            break;
+
+        case OP_POW:
+            sp--;
+            *(sp-1) = std::pow(*(sp-1), *sp);
+            break;
+
+        case OP_NEG:
+            // Unary minus: just negate the top, don't move stack pointer
+            *(sp-1) = -(*(sp-1));
+            break;
+
+            // -----------------------------------------------------
+            // FUNCTIONS
+            // -----------------------------------------------------
+        case OP_SIN: *(sp-1) = std::sin(*(sp-1)); break;
+        case OP_COS: *(sp-1) = std::cos(*(sp-1)); break;
+        case OP_TAN: *(sp-1) = std::tan(*(sp-1)); break;
+        case OP_EXP: *(sp-1) = std::exp(*(sp-1)); break;
+        case OP_LOG: *(sp-1) = std::log(*(sp-1)); break; // Natural Log
+        case OP_SQRT: *(sp-1) = std::sqrt(*(sp-1)); break;
+
+            // -----------------------------------------------------
+            // VARIADIC FUNCTIONS (Min, Max)
+            // -----------------------------------------------------
+        case OP_MIN: {
+            int count = ip->data.count;
+            // Stack has: [arg1] [arg2] ... [argN] <--- sp
+            // We move sp back to [arg1]
+            sp -= count;
+            double m = *sp;
+            // Scan forward
+            for (int k = 1; k < count; ++k) {
+                if (sp[k] < m) m = sp[k];
+            }
+            // Overwrite arg1 with result and advance sp by 1
+            *sp++ = m;
+            break;
+        }
+        case OP_MAX: {
+            int count = ip->data.count;
+            sp -= count;
+            double m = *sp;
+            for (int k = 1; k < count; ++k) {
+                if (sp[k] > m) m = sp[k];
+            }
+            *sp++ = m;
+            break;
+        }
+
+            // -----------------------------------------------------
+            // LOGIC (Using 1.0 / 0.0)
+            // -----------------------------------------------------
+            // Compare Top (sp-1) with Below (sp-2). Pop one.
+        case OP_EQ: sp--; *(sp-1) = (*(sp-1) == *sp) ? 1.0 : 0.0; break;
+        case OP_NE: sp--; *(sp-1) = (*(sp-1) != *sp) ? 1.0 : 0.0; break;
+        case OP_GT: sp--; *(sp-1) = (*(sp-1) > *sp)  ? 1.0 : 0.0; break;
+        case OP_LT: sp--; *(sp-1) = (*(sp-1) < *sp)  ? 1.0 : 0.0; break;
+        case OP_GE: sp--; *(sp-1) = (*(sp-1) >= *sp) ? 1.0 : 0.0; break;
+        case OP_LE: sp--; *(sp-1) = (*(sp-1) <= *sp) ? 1.0 : 0.0; break;
+
+        case OP_AND:
+            sp--;
+            // Standard C++ bool cast: anything != 0 is true
+            *(sp-1) = (*(sp-1) != 0.0 && *sp != 0.0) ? 1.0 : 0.0;
+            break;
+        case OP_OR:
+            sp--;
+            *(sp-1) = (*(sp-1) != 0.0 || *sp != 0.0) ? 1.0 : 0.0;
+            break;
+
+        case OP_IF:
+            // Structure: if(condition, val_true, val_false)
+            // Stack: [Condition] [TrueVal] [FalseVal] <--- sp
+            sp -= 3;
+            // If condition != 0, pick TrueVal (offset 1), else FalseVal (offset 2)
+            *sp = (*sp != 0.0) ? *(sp+1) : *(sp+2);
+            sp++;
+            break;
+
+        // -----------------------------------------------------
+        // SPECIAL CUSTOM FUNCTIONS
+        // -----------------------------------------------------
+        case OP_INCSUM:
+            m_incSumVar += *(sp-1);
+            *(sp-1) = m_incSumVar;
+            break;
+
+        case OP_MODULO:
+            sp--;
+            *(sp-1)=fmod(*(sp-1), *sp);
+            break;
+
+
+        case OP_RND:
+            sp--;
+            *(sp-1) = udfRandom(0, *(sp-1), *sp);
+            break;
+
+        case OP_RNDG:
+            sp--;
+            *(sp-1) = udfRandom(1, *(sp-1), *sp);
+            break;
+
+        case OP_ROUND:
+            *(sp-1) = std::floor(*(sp-1) + 0.5);
+            break;
+
+        case OP_SIGMOID:
+            sp-=3;
+            *(sp-1) = udfSigmoid(*(sp-1), *sp, *(sp+1), *(sp+2));
+            break;
+
+        case OP_POLYGON: {
+            int count = ip->data.count;
+            double x = *(sp - count);
+            double result = udfPolygon(x, sp-1, count);
+
+            sp-= count;
+            *sp++ = result;
+            break;
+        }
+        case OP_IN: {
+            // Stack: [Val] [L1] [L2] ... [Ln] <--- sp
+            int count = ip->data.count;
+            double val = *(sp - count);
+
+            // udfIn receives Stack which is 'sp - 1' (last arg, vn)
+            // ArgCount is total number of arguments (e.g. 3 for in(x, v1, v2))
+            // Value is the first argument (x)
+            double result = udfIn(val, sp - 1, count);
+            sp -= count; // pop all args
+            *sp++ = result; // push result
+            break;
+        }
+        
+        case OP_LIMIT: {
+            // limit(value, min, max)
+            double val = *(sp-3);
+            double minv = *(sp-2);
+            double maxv = *(sp-1);
+            if (minv > maxv) std::swap(minv, maxv);
+            *(sp-3) = std::max(minv, std::min(val, maxv));
+            sp-=2;
+            break;
+        }
+        
+        // SVD Specific
+        case OP_LOCALNB: {
+            int count = ip->data.count;
+            *(sp - count) = udfNeighborhood(object, 1, sp-1, count);
+            sp -= (count - 1);
+            break;
+        }
+        case OP_INTERMEDIATENB: {
+            int count = ip->data.count;
+            *(sp - count) = udfNeighborhood(object, 2, sp-1, count);
+            sp -= (count - 1);
+            break;
+        }
+        case OP_GLOBALNB: {
+            int count = ip->data.count;
+            *(sp - count) = udfNeighborhood(object, 3, sp-1, count);
+            sp -= (count - 1);
+            break;
+        }
+        case OP_DISTANCE: {
+            int count = ip->data.count;
+            *(sp - count) = udfNeighborhood(object, 4, sp-1, count);
+            sp -= (count - 1);
+            break;
+        }
+        case OP_SPECIESPROPORTION: {
+            int count = ip->data.count;
+            *(sp - count) = udfSpeciesProportion(object, sp-1, count);
+            sp -= (count - 1);
+            break;
+        }
+
+
+        default:
+            throw std::logic_error("invalid token during (compiled) execution: " + m_expression);
+        }
+
+        // Move to next instruction
+        ip++;
     }
-    while (exec->Type!=etStop) {
-        switch (exec->Type) {
-        case etOperator:
-            p--;
-            switch (exec->Index) {
-                  case '+': *(p-1)=*(p-1) + *p;  break;
-                  case '-': *(p-1)=*(p-1)-*p;  break;
-                  case '*': *(p-1)=*(p-1) * *p;  break;
-                  case '/': *(p-1)=*(p-1) / *p;  break;
-                  case '^': *(p-1)=pow(*(p-1), *p);  break;
-                  case '_': *p=-*p; p++; break;  // unary operator -
-                  }
-            break;
-        case etVariable:
-            if (exec->Index<100)
-                *p++=varSpace[exec->Index];
-            else if (exec->Index<1000)
-                *p++=getModelVar(exec->Index,object);
-            else
-                *p++=getExternVar(exec->Index);
-            break;
-        case etNumber:
-            *p++=exec->Value;
-            break;
-        case etFunction:
-            p--;
-            switch (exec->Index) {
-            case 0: *p=sin(*p); break;
-            case 1: *p=cos(*p); break;
-            case 2: *p=tan(*p); break;
-            case 3: *p=exp(*p); break;
-            case 4: *p=log(*p); break;
-            case 5: *p=sqrt(*p); break;
-                // min, max, if:  variable number of arguments
-            case 6:      // min
-                for (i=0;i<exec->Value-1;i++,p--)
-                    *(p-1)=(*p<*(p-1))?*p:*(p-1);
-                break;
-            case 7:  //max
-                for (i=0;i<exec->Value-1;i++,p--)
-                    *(p-1)=(*p>*(p-1))?*p:*(p-1);
-                break;
-            case 8: // if
-                if (*(p-2)==1) // true
-                    *(p-2)=*(p-1);
-                else
-                    *(p-2)=*p; // false
-                p-= 2; // drop both arguments
-                break;
-            case 9: // incremental sum
-                m_incSumVar+=*p;
-                *p=m_incSumVar;
-                break;
-            case 10: // polygon-function
-                *(p-(int)(exec->Value-1))=udfPolygon(*(p-(int)(exec->Value-1)), p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            case 11: // modulo division: result= remainder of arg1/arg2
-                p--;
-                *p=fmod(*p, *(p+1));
-                break;
-            case 12: // user-defined-function: sigmoid
-                *(p-3)=udfSigmoid(*(p-3), *(p-2), *(p-1), *p);
-                p-=3; // drop three args (4-1) ...
-                break;
-            case 13: case 14: // rnd(from, to) bzw. rndg(mean, stddev)
-                p--;
-                *p=udfRandom(exec->Index-13, *p, *(p+1));
-                break;
-            case 15: {// limit(value, lower_bound, upper_bound)
-                double m = *(p-2)<*(p-1)?*(p-1):*(p-2); // limit to lower
-                *(p-2) = m>*p?*p:m;  // ... and then to upper bound
-                p-=2; // drop the arguments
-                break;
-            }
-            case 16: // round number
-                *p=floor(*p + 0.5); break;
-            case 17: // in(x, ....) - return true if x equals one of the arguments
-                *(p-(int)(exec->Value-1))=udfIn(*(p-(int)(exec->Value-1)), p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            case 18: // localNB
-                *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 1, p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            case 19: // intermediateNB
-                *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 2, p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            case 20: // globalNB
-                *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 3, p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            case 21: // distance()
-                *(p-(int)(exec->Value-1)) = udfNeighborhood(object, 4, p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            case 22: // stateSpecies()
-                *(p-(int)(exec->Value-1)) = udfSpeciesProportion(object, p, (int)exec->Value);
-                p-=(int) (exec->Value-1);
-                break;
-            }
-            p++;
-            break;
-        case etLogical:
-            p--;
-            lp--;
-            switch (exec->Index) {
-                case opAnd: *(lp-1)=(*(lp-1) && *lp);  break;
-                case opOr:  *(lp-1)=(*(lp-1) || *lp);  break;
-            }
-            if (*(lp-1))
-                *(p-1)=1;
-            else
-                *(p-1)=0;
-            break;
-        case etCompare: {
-            p--;
-            bool LogicResult=false;
-            switch (exec->Index) {
-                 case opEqual: LogicResult=(*(p-1)==*p); break;
-                 case opNotEqual: LogicResult=(*(p-1)!=*p); break;
-                 case opLowerThen: LogicResult=(*(p-1)<*p); break;
-                 case opGreaterThen: LogicResult=(*(p-1)>*p); break;
-                 case opGreaterOrEqual: LogicResult=(*(p-1)>=*p); break;
-                 case opLowerOrEqual: LogicResult=(*(p-1)<=*p); break;
-                 }
-            if (LogicResult) {
-                *(p-1)=1;   // 1 means true...
-            } else {
-                *(p-1)=0;
-            }
-
-            *lp++=LogicResult;
-            break; }
-        case etStop: case etUnknown: case etDelimeter: throw std::logic_error("invalid token during execution.");
-        } // switch()
-
-        exec++;
-    }
-    if (p-Stack!=1)
-        throw std::logic_error("Expression::execute: stack unbalanced: in: " + m_expression);
-    result=*(p-1);
-    if (rLogicResult)
-        *rLogicResult = *(lp-1);
-
-    return result;
 }
 
 double * Expression::addVar(const std::string& VarName)
@@ -692,7 +887,7 @@ double *  Expression::getVarAdress(const std::string& VarName)
     if (idx>=0 && idx<MAXLOCALVAR)
         return &m_varSpace[idx];
     else
-        throw std::logic_error("Expression::getVarAdress: Invalid variable <"+ VarName +"> ");
+        throw std::logic_error("Expression::getVarAdress: Invalid variable <"+ VarName + "> ");
 }
 
 int  Expression::getVarIndex(const std::string& variableName)
@@ -824,13 +1019,15 @@ double Expression::udfIn(double Value, double *Stack, int ArgCount) const
     // signature: in(x, v1, v2, v3, ..., vn)
     if (ArgCount<2)
         throw std::logic_error("Expression: in() function: not enough parameters");
-    double *p = Stack - (ArgCount-2); // point at the first value (v1)
-    while (p <= Stack) {
-        if (*p == Value)
-            return static_cast<double>(True);
-        ++p;
+    
+    // Stack points to the last argument (vn).
+    // We check against v1...vn (ArgCount-1 values).
+    double *p = Stack;
+    for (int i=0; i<ArgCount-1; ++i) {
+        if (*p == Value) return 1.0; // True
+        p--;
     }
-    return static_cast<double>(False);
+    return 0.0; // False
 }
 
 
@@ -872,22 +1069,6 @@ double Expression::udfSpeciesProportion(ExpressionWrapper *object, double *Stack
         ++p;
     }
     return result;
-
-//    if (ArgCount<2)
-//        throw std::logic_error("Expression: in() function: not enough parameters");
-//    double *p = Stack - (ArgCount-2); // point at the first value (v1)
-//    while (p <= Stack) {
-//        if (*p == 1) // todo: fix!!!
-//            return static_cast<double>(True);
-//        ++p;
-//    }
-    return static_cast<double>(False);
-
-    // TODO: here we miss the actual logic
-    // what needs to be done:
-    // - var_type = height increment ->
-    // get to cell -> history: calculate delta(structure) / sum(residence time) -> strucutre-class changes per year (*2 / *4 to get to m)
-    return *p;
 }
 
 
@@ -934,7 +1115,8 @@ void Expression::linearize(const double low_value, const double high_value, cons
     mLinearLow = low_value;
     mLinearHigh  = high_value;
     mLinearStep = (high_value - low_value) / (double(steps));
-    for (int i=0;i<=steps;i++) {
+    mLinearInvStep = 1. / mLinearStep;
+    for (int i=0;i<=steps+1;i++) { // Add one extra step for safety/interpolation at high end
         double x = mLinearLow + i*mLinearStep;
         double r = calculate(x);
         mLinearized.push_back(r);
@@ -956,49 +1138,21 @@ void Expression::linearize2d(const double low_x, const double high_x,
     mLinearHighY = high_y;
 
     mLinearStep = (high_x - low_x) / (double(stepsx));
+    mLinearInvStep = 1. / mLinearStep;
     mLinearStepY = (high_y - low_y) / (double(stepsy));
-    for (int i=0;i<=stepsx;i++) {
-        for (int j=0;j<=stepsy;j++) {
+    mLinearInvStepY = 1. / mLinearStepY;
+    
+    for (int i=0;i<=stepsx+1;i++) {
+        for (int j=0;j<=stepsy+1;j++) {
             double x = mLinearLow + i*mLinearStep;
             double y = mLinearLowY + j*mLinearStepY;
             double r = calculate(x,y);
             mLinearized.push_back(r);
         }
     }
-    mLinearStepCountY = stepsy + 1;
+    mLinearStepCountY = stepsy + 2; // +2 because we added +1 to stepsy loop? No, stepsy+1 points + 1 extra?
+    // In loop: j goes 0..stepsy+1. Total points: stepsy+2.
+    
     mLinearizeMode = 2;
 
-}
-
-
-/// calculate the linear approximation of the result value
-double Expression::linearizedValue(const double x) const
-{
-    if (x<mLinearLow || x>=mLinearHigh)
-        return calculate(x,0.,true); // standard calculation without linear optimization- but force calculation to avoid infinite loop
-    size_t lower = int((x-mLinearLow) / mLinearStep); // the lower point
-    if (lower+1>=mLinearized.size())
-      assert(lower+1<mLinearized.size());
-    const std::vector<double> &data = mLinearized;
-    // linear interpolation
-    double result = data[lower] + (data[lower+1]-data[lower])/mLinearStep*(x-(mLinearLow+lower*mLinearStep));
-    return result;
-}
-
-/// calculate the linear approximation of the result value
-double Expression::linearizedValue2d(const double x, const double y) const
-{
-    if (x<mLinearLow || x>=mLinearHigh || y<mLinearLowY || y>=mLinearHighY)
-        return calculate(x,y,true); // standard calculation without linear optimization- but force calculation to avoid infinite loop
-    int lowerx = int((x-mLinearLow) / mLinearStep); // the lower point (x-axis)
-    int lowery = int((y-mLinearLowY) / mLinearStepY); // the lower point (y-axis)
-    size_t idx = mLinearStepCountY*lowerx + lowery;
-    assert(idx + mLinearStepCountY+1 <mLinearized.size());
-    const std::vector<double> &data = mLinearized;
-    // linear interpolation
-    // mean slope in x - direction
-    double slope_x = ( (data[idx+mLinearStepCountY]-data[idx])/mLinearStepY + (data[idx+mLinearStepCountY+1]-data[idx+1])/mLinearStepY ) / 2.;
-    double slope_y = ( (data[idx+1]-data[idx])/mLinearStep + (data[idx+mLinearStepCountY+1]-data[idx+mLinearStepCountY])/mLinearStep ) / 2.;
-    double result = data[idx] + (x-(mLinearLow+lowerx*mLinearStep))*slope_x + (y-(mLinearLowY+lowery*mLinearStepY))*slope_y;
-    return result;
 }

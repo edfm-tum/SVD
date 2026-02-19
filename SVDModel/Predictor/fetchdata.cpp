@@ -274,14 +274,15 @@ void FetchDataStandard::fetchResTimeHistory(Cell *cell, BatchDNN *batch, size_t 
 
 void FetchDataStandard::fetchNeighbors(Cell *cell, BatchDNN* batch, size_t slot)
 {
-    const size_t n_neighbors = 62; // 2x32
+    //const size_t n_neighbors = 62; // 2x32
     TensorWrapper *t = batch->tensor(mItem->index);
     TensorWrap2d<float> *tw = static_cast<TensorWrap2d<float>*>(t);
     float *p = tw->example(slot);
+    const size_t n_neighbors = tw->n();
 
     auto neighbors = cell->neighborSpecies();
     if (neighbors.size() != n_neighbors)
-        throw std::logic_error("Invalid number of neighbors...");
+        throw logic_error_fmt("Invalid number of neighbors. Expected (DNN): {}, in SVD-cells: {}!", n_neighbors, neighbors.size());
 
     for (size_t i=0;i<n_neighbors;++i)
         *p++ = static_cast<float>(neighbors[i]);

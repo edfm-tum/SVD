@@ -423,7 +423,7 @@ void FetchDataFunction::fetch(Cell *cell , BatchDNN *batch, size_t slot)
         return;
     }
     default:
-        throw logic_error_fmt("FetchDataFunction: invalid Function: {}.", mFn );
+        throw logic_error_fmt("FetchDataFunction: invalid Function: {}.", static_cast<int>(mFn) );
     }
     *p = value;
 

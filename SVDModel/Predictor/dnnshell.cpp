@@ -140,11 +140,11 @@ void DNNShell::doWork(Batch *batch)
 
 
     if (batch->state()!=Batch::Fill)
-        lg->error("Batch {} [{}] is in the wrong state {}, size: {}", batch->packageId(), static_cast<void*>(batch), batch->state(), batch->usedSlots());
+        lg->error("Batch {} [{}] is in the wrong state {}, size: {}", batch->packageId(), static_cast<void*>(batch), static_cast<int>(batch->state()), batch->usedSlots());
 
     batch->changeState(Batch::DNNInference);
     mProcessing++;
-    lg->debug("DNNShell: received package {}. Starting DNN (batch: {}, state: {}, active threads now: {}, #processing: {}) ", batch->packageId(), static_cast<void*>(batch), batch->state(), mThreads->activeThreadCount(), mProcessing);
+    lg->debug("DNNShell: received package {}. Starting DNN (batch: {}, state: {}, active threads now: {}, #processing: {}) ", batch->packageId(), static_cast<void*>(batch), static_cast<int>(batch->state()), mThreads->activeThreadCount(), static_cast<int>(mProcessing));
 
     QtConcurrent::run( mThreads,
                        [](DNNShell *shell, Batch *batch, DNN *dnn){

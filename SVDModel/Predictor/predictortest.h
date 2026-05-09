@@ -18,16 +18,8 @@
 ********************************************************************************************/
 #ifndef PREDICTORTEST_H
 #define PREDICTORTEST_H
-//#include "tensorflow/core/platform/status.h"
-//#include "status.h"
 
 #include <QString>
-
-namespace tensorflow {
-class Session;
-class Tensor;
-//class Status;
-}
 
 class PredictorTest
 {
@@ -44,10 +36,7 @@ public:
     // tensortest:
     void tensorTest();
 private:
-   bool getTopClasses(const tensorflow::Tensor &classes, const int n_top, tensorflow::Tensor *indices, tensorflow::Tensor *scores);
-   tensorflow::Session *session;
    std::string label_file;
-
 
 };
 

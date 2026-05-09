@@ -109,6 +109,20 @@ std::string InputTensorItem::datatypeString(InputTensorItem::DataType dtype)
 
 }
 
+size_t InputTensorItem::sizeOf(InputTensorItem::DataType dtype)
+{
+    switch (dtype) {
+    case DT_FLOAT: return sizeof(float);
+    case DT_INT16: return sizeof(int16_t);
+    case DT_INT32: return sizeof(int32_t);
+    case DT_INT64: return sizeof(int64_t);
+    case DT_UINT16: return sizeof(uint16_t);
+    case DT_BOOL: return sizeof(bool);
+    case DT_BFLOAT16: return 2;
+    default: return 0;
+    }
+}
+
 std::string InputTensorItem::allDataTypeStrings()
 {
     return keys_to_string(data_types);

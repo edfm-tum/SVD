@@ -132,6 +132,10 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 contains(DEFINES, USE_TENSORFLOW): PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
 #PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
 
+# ONNX Runtime is expected in /opt/onnxruntime
+LIBS += -L/opt/onnxruntime/lib -lonnxruntime
+
+
 LIBS += -L../SVDCore -lSVDCore
 LIBS += -L../Predictor -lPredictor
 

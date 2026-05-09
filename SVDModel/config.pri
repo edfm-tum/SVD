@@ -7,22 +7,24 @@
 
 # ONNX Runtime configuration
 unix {
-# ONNX Runtime is expected in /opt/onnxruntime
-# Override this in config.pri if needed
-!isEmpty(ONNXRUNTIME_DIR) {
+    # ONNX Runtime is expected in /opt/onnxruntime
+    # Override this in config.pri if needed
+    isEmpty(ONNXRUNTIME_DIR): ONNXRUNTIME_DIR = /opt/onnxruntime
+    
     INCLUDEPATH += $$ONNXRUNTIME_DIR/include
     LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
-} else {
-    INCLUDEPATH += /opt/onnxruntime/include
-    LIBS += -L/opt/onnxruntime/lib -lonnxruntime
-}
 }
 
 win32 {
-# ONNX Runtime on Windows
-# Set ONNXRUNTIME_DIR in your environment or here
-!isEmpty(ONNXRUNTIME_DIR) {
+    # ONNX Runtime on Windows
+    # Set ONNXRUNTIME_DIR in your environment or here
+    isEmpty(ONNXRUNTIME_DIR): ONNXRUNTIME_DIR = C:/dev/onnxruntime
+    
     INCLUDEPATH += $$ONNXRUNTIME_DIR/include
-    LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
-}
+    # For MSVC, the library is usually onnxruntime.lib
+    CONFIG(debug, debug|release) {
+        LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
+    } else {
+        LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
+    }
 }

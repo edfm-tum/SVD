@@ -84,12 +84,20 @@ bool DNN::setupDNN(size_t aindex)
 
     try {
         Ort::SessionOptions session_options;
-        // Optimization: limit threads to 1 to prevent contention with SVD model threads
-        session_options.SetIntraOpNumThreads(1);
-        session_options.SetInterOpNumThreads(1);
+        // Threading Optimization:
+        // By default, set to 1 to prevent contention with SVD worker threads.
+        // Can be overridden in settings (e.g., dnn.threads.intra=4)
+        // Threading Optimization:
+        // Set to 0 by default to allow ONNX Runtime to utilize all available cores.
+        // This is preferred as DNN inference is the most compute-intensive part
+        // and should finish as quickly as possible.
+        int intra_threads = settings.valueInt("dnn.threads.intra", 0);
+        int inter_threads = settings.valueInt("dnn.threads.inter", 0);
+        session_options.SetIntraOpNumThreads(intra_threads);
+        session_options.SetInterOpNumThreads(inter_threads);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
-        lg->trace("Attempting to load the ONNX model...");
+        lg->trace(fmt::runtime("Loading ONNX model (Threads: intra={}, inter={})..."), intra_threads, inter_threads);
 #ifdef _WIN32
         std::wstring wfile(file.begin(), file.end());
         mSession = std::make_unique<Ort::Session>(mEnv, wfile.c_str(), session_options);
@@ -100,16 +108,17 @@ bool DNN::setupDNN(size_t aindex)
 
         // Extract and verify input/output node names
         size_t num_input_nodes = mSession->GetInputCount();
-        mInputNames.clear();
-        mInputNodeNames.clear();
         Ort::AllocatorWithDefaultOptions allocator;
 
+        mInputNames.clear();
+        mInputNodeNames.clear();
         for (size_t i = 0; i < num_input_nodes; i++) {
             auto input_name = mSession->GetInputNameAllocated(i, allocator);
             mInputNames.push_back(std::string(input_name.get()));
-            mInputNodeNames.push_back(mInputNames.back().c_str());
-            lg->debug("Input node {}: '{}'", i, mInputNames.back());
         }
+        // Stabilize pointers by populating mInputNodeNames AFTER all strings are in mInputNames
+        for (const auto &name : mInputNames)
+            mInputNodeNames.push_back(name.c_str());
 
         size_t num_output_nodes = mSession->GetOutputCount();
         mOutputNames.clear();
@@ -117,11 +126,63 @@ bool DNN::setupDNN(size_t aindex)
         for (size_t i = 0; i < num_output_nodes; i++) {
             auto output_name = mSession->GetOutputNameAllocated(i, allocator);
             mOutputNames.push_back(std::string(output_name.get()));
-            mOutputNodeNames.push_back(mOutputNames.back().c_str());
-            lg->debug("Output node {}: '{}'", i, mOutputNames.back());
         }
-        
-        // TODO: Verification that mInputNodeNames and mOutputNodeNames match SVD expectations
+        for (const auto &name : mOutputNames)
+            mOutputNodeNames.push_back(name.c_str());
+
+        // Verification that mInputNodeNames and mOutputNodeNames match SVD expectations
+        if (mTensorDef.size() != num_input_nodes) {
+            lg->error(fmt::runtime("Model verification failed: The model has {} inputs, but SVD metadata defines {} inputs."), num_input_nodes, mTensorDef.size());
+            return false;
+        }
+
+        // Verify Inputs
+        size_t input_idx = 0;
+        for (const auto &td : mTensorDef) {
+            bool found = false;
+            for (size_t i=0; i<num_input_nodes; ++i) {
+                if (mInputNames[i] == td.name) {
+                    found = true;
+                    // Check shape
+                    auto type_info = mSession->GetInputTypeInfo(i);
+                    auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
+                    auto shape = tensor_info.GetShape();
+                    // Basic shape check: ndim+1 (including batch)
+                    if (shape.size() != static_cast<size_t>(td.ndim + 1)) {
+                        lg->error(fmt::runtime("Model verification failed for input '{}': Expected {} dimensions, but model has {}."), td.name, td.ndim + 1, shape.size());
+                        return false;
+                    }
+                    // Type check
+                    if (tensor_info.GetElementType() != mapDataType(td.type)) {
+                        lg->error(fmt::runtime("Model verification failed for input '{}': Data type mismatch."), td.name);
+                        return false;
+                    }
+                    break;
+                }
+            }
+            if (!found) {
+                lg->error(fmt::runtime("Model verification failed: Input node '{}' defined in SVD metadata not found in model."), td.name);
+                return false;
+            }
+            input_idx++;
+        }
+
+        // Verify Outputs
+        for (const auto &out_name : mOutputTensorNames) {
+            bool found = false;
+            for (size_t i=0; i<num_output_nodes; ++i) {
+                if (mOutputNames[i] == out_name) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                lg->error(fmt::runtime("Model verification failed: Required output node '{}' not found in model."), out_name);
+                return false;
+            }
+        }
+
+        lg->info(fmt::runtime("Model verification successful: All {} inputs and {} required outputs matched."), num_input_nodes, mOutputTensorNames.size());
 
     } catch (const Ort::Exception& e) {
         lg->error("ONNX Runtime error: {}", e.what());
@@ -405,12 +466,15 @@ void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const s
                 queue.push( std::pair<float, size_t>(*p,j));
             }
         }
-        int j=0;
+        // Fill results in descending order (highest score first at index 0)
+        // Since we have a min-heap, we pop the smallest of the top-K first.
+        // We fill from index queue.size()-1 down to 0.
+        int j = static_cast<int>(queue.size()) - 1;
         while( !queue.empty() ) {
             res_ind.example(i)[j] = static_cast<int32_t>(queue.top().second);
             res_scores.example(i)[j] = queue.top().first;
             queue.pop();
-            ++j;
+            --j;
         }
     }
 }

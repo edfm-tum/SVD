@@ -97,10 +97,12 @@ void DNNShell::setup(QString fileName)
             QCoreApplication::processEvents();
         }
 
-        if (RunState::instance()->modelState() != ModelRunState::ErrorDuringSetup)
-            DNN::setupInput();
-        else
+        if (RunState::instance()->modelState() != ModelRunState::ErrorDuringSetup) {
+            for (auto *dnn : mDNNs)
+                dnn->setupInput();
+        } else {
             lg->debug("Error during model setup - setup of DNN interrupted.");
+        }
 
     } catch (const std::exception &e) {
         RunState::instance()->dnnState()=ModelRunState::ErrorDuringSetup;

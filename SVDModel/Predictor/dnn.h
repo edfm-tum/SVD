@@ -25,11 +25,13 @@
 #include <onnxruntime_cxx_api.h>
 
 class Batch; // forward
+class Settings; // forward
 
 #include "inputtensoritem.h"
 #include "tensorhelper.h"
 #include <list>
 #include <memory>
+
 
 class DNN
 {
@@ -42,7 +44,7 @@ public:
     bool setupDNN(size_t aindex);
 
     /// set up the links to the main model
-    static void setupInput();
+    void setupInput();
 
     static void setupBatch(Batch *abatch, std::vector<TensorWrapper*> &tensors);
 
@@ -57,6 +59,7 @@ public:
 private:
 
     static TensorWrapper *buildTensor(size_t batch_size, InputTensorItem &item);
+    std::string findMetadataSectionByTensorName(Settings *mg, const std::string &tensor_name, const std::vector<std::string> &sections);
 
     // logging
     std::shared_ptr<spdlog::logger> lg;
@@ -70,6 +73,8 @@ private:
     std::vector<std::string> mOutputTensorNames; ///< names of the output tensors (e.g. output/Softmax)
     size_t mNStateCls; ///< number of output classes for state
     size_t mNResTimeCls; ///< number of classes for residence time
+    size_t mOutIndexState; ///< index of state prediction result in output tensors
+    size_t mOutIndexRestime; ///< index oof residence time prediction result in output tensors
 
     /// retrieve the top n classes in "classes" and store results in 'indices' and 'scores'.
     /// this function uses CPU

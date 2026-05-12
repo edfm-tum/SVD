@@ -50,6 +50,25 @@ DNN::~DNN()
 {
 }
 
+// Add this helper declaration to dnn.h:
+// std::string findMetadataSectionByTensorName(Settings &mg, const std::string &tensor_name, const std::vector<std::string> &sections);
+
+std::string DNN::findMetadataSectionByTensorName(Settings *mg, const std::string &tensor_name, const std::vector<std::string> &sections)
+{
+    for (const auto &s : sections) {
+        std::string key = "input." + s + ".tensorName";
+        // If tensorName is defined, check if it matches the ONNX name
+        if (mg->hasKey(key) && mg->valueString(key) == tensor_name) {
+            return s;
+        }
+        // Fallback: if tensorName is missing, default to matching the raw section string directly
+        if (!mg->hasKey(key) && s == tensor_name) {
+            return s;
+        }
+    }
+    return "";
+}
+
 bool DNN::setupDNN(size_t aindex)
 {
     lg = spdlog::get("setup"); // use "setup" channel for logging during startup phase
@@ -130,59 +149,6 @@ bool DNN::setupDNN(size_t aindex)
         for (const auto &name : mOutputNames)
             mOutputNodeNames.push_back(name.c_str());
 
-        // Verification that mInputNodeNames and mOutputNodeNames match SVD expectations
-        if (mTensorDef.size() != num_input_nodes) {
-            lg->error(fmt::runtime("Model verification failed: The model has {} inputs, but SVD metadata defines {} inputs."), num_input_nodes, mTensorDef.size());
-            return false;
-        }
-
-        // Verify Inputs
-        size_t input_idx = 0;
-        for (const auto &td : mTensorDef) {
-            bool found = false;
-            for (size_t i=0; i<num_input_nodes; ++i) {
-                if (mInputNames[i] == td.name) {
-                    found = true;
-                    // Check shape
-                    auto type_info = mSession->GetInputTypeInfo(i);
-                    auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
-                    auto shape = tensor_info.GetShape();
-                    // Basic shape check: ndim+1 (including batch)
-                    if (shape.size() != static_cast<size_t>(td.ndim + 1)) {
-                        lg->error(fmt::runtime("Model verification failed for input '{}': Expected {} dimensions, but model has {}."), td.name, td.ndim + 1, shape.size());
-                        return false;
-                    }
-                    // Type check
-                    if (tensor_info.GetElementType() != mapDataType(td.type)) {
-                        lg->error(fmt::runtime("Model verification failed for input '{}': Data type mismatch."), td.name);
-                        return false;
-                    }
-                    break;
-                }
-            }
-            if (!found) {
-                lg->error(fmt::runtime("Model verification failed: Input node '{}' defined in SVD metadata not found in model."), td.name);
-                return false;
-            }
-            input_idx++;
-        }
-
-        // Verify Outputs
-        for (const auto &out_name : mOutputTensorNames) {
-            bool found = false;
-            for (size_t i=0; i<num_output_nodes; ++i) {
-                if (mOutputNames[i] == out_name) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                lg->error(fmt::runtime("Model verification failed: Required output node '{}' not found in model."), out_name);
-                return false;
-            }
-        }
-
-        lg->info(fmt::runtime("Model verification successful: All {} inputs and {} required outputs matched."), num_input_nodes, mOutputTensorNames.size());
 
     } catch (const Ort::Exception& e) {
         lg->error("ONNX Runtime error: {}", e.what());
@@ -275,8 +241,10 @@ Batch * DNN::run(Batch *abatch)
 
         // We need to map the output tensors back to SVD structures.
         // Assuming output_tensors[0] is State and output_tensors[1] is Residence Time based on metadata.
-        float* state_output_ptr = output_tensors[0].GetTensorMutableData<float>();
-        float* time_output_ptr = output_tensors[1].GetTensorMutableData<float>();
+        float* state_output_ptr = output_tensors[mOutIndexState].GetTensorMutableData<float>();
+        float* time_output_ptr = output_tensors[mOutIndexRestime].GetTensorMutableData<float>();
+        if (state_output_ptr == nullptr || time_output_ptr == nullptr)
+            throw std::logic_error("DNN output does not contain data pointers");
 
         // Wrap results for getTopClasses
         TensorWrap2d<float> outputs_state_wrap(batch->batchSize(), mNStateCls);
@@ -320,7 +288,7 @@ Batch * DNN::run(Batch *abatch)
         return batch;
 
     } catch(const std::exception &e) {
-        lg->error("error in DNN: {}", e.what());
+        lg->error("Error in DNN: {}", e.what());
         batch->setError(true);
         return batch;
     }
@@ -339,14 +307,17 @@ ONNXTensorElementDataType DNN::mapDataType(InputTensorItem::DataType type)
     }
 }
 
-// Rest of the existing methods...
+
 void DNN::setupInput()
 {
     mTensorDef.clear();
     size_t n_models = Model::instance()->settings().valueUInt("dnn.count", 1);
-    if (n_models == 0)     {
+    if (n_models == 0) {
         spdlog::get("dnn")->debug("dnn.count is 0, canceling setup of network metadata.");
         return;
+    }
+    if (n_models > 1) {
+        spdlog::get("dnn")->info("dnn.count is >1, DNN metadata is re-used for every DNN");
     }
     std::string metafilename = Tools::path(Model::instance()->settings().valueString("dnn.metadata"));
     if (!Tools::fileExists(metafilename))
@@ -359,27 +330,69 @@ void DNN::setupInput()
     std::shared_ptr<spdlog::logger> lg = spdlog::get("dnn");
     lg->debug("Found sections: {}", join(sections));
 
-    for (auto &s : sections) {
-        mg.requiredKeys("input."+s, {"enabled", "dim", "sizeX", "sizeY", "dtype", "type"});
-        bool has_name = mg.hasKey("input." + s + ".tensorName");
-        if (!mg.valueBool("input." + s + ".enabled"))
-            continue;
+    size_t num_input_nodes = mSession->GetInputCount();
 
-        InputTensorItem item(has_name ? mg.valueString("input."+ s +".tensorName") : s, 
-                             mg.valueString("input."+ s +".dtype"),
-                             mg.valueUInt("input." + s + ".dim"),
-                             mg.valueUInt("input." + s + ".sizeX"),
-                             mg.valueUInt("input." + s + ".sizeY"),
-                             mg.valueString("input."+ s +".type"));
+    // Core Fix: Populate mTensorDef strictly following the ONNX mInputNames sequence
+    for (size_t i = 0; i < num_input_nodes; ++i) {
+        const std::string &target_onnx_name = mInputNames[i];
+
+        std::string section_name = findMetadataSectionByTensorName(&mg, target_onnx_name, sections);
+        if (section_name.empty()) {
+            throw logic_error_fmt("Model verification failed: Input node '{}' required by ONNX model is missing from SVD metadata config.", target_onnx_name);
+        }
+
+        std::string s_prefix = "input." + section_name;
+        mg.requiredKeys(s_prefix, {"enabled", "dim", "sizeX", "sizeY", "dtype", "type"});
+
+        if (!mg.valueBool(s_prefix + ".enabled")) {
+            throw logic_error_fmt("Model verification failed: Input node '{}' is required by ONNX model but flagged as disabled in metadata.", target_onnx_name);
+        }
+
+        // Extract metadata mapping
+        InputTensorItem item(target_onnx_name,
+                             mg.valueString(s_prefix + ".dtype"),
+                             mg.valueUInt(s_prefix + ".dim"),
+                             mg.valueUInt(s_prefix + ".sizeX"),
+                             mg.valueUInt(s_prefix + ".sizeY"),
+                             mg.valueString(s_prefix + ".type"));
+
+        // Validate types directly during array construction
+        auto type_info = mSession->GetInputTypeInfo(i);
+        auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
+        auto shape = tensor_info.GetShape();
+
+        // Type validation check
+        if (tensor_info.GetElementType() != mapDataType(item.type)) {
+            throw logic_error_fmt("Model verification failed for input '{}': Data type mismatch between ONNX contract and SVD configuration.", target_onnx_name);
+        }
+
+        // Shape validation check: ndim+1 (accounting for dynamic batch indices)
+        if (shape.size() != static_cast<size_t>(item.ndim + 1)) {
+            throw logic_error_fmt("Model verification failed for input '{}': Expected {} dimensions, but model defines {}.", target_onnx_name, item.ndim + 1, shape.size());
+        }
 
         mTensorDef.push_back(item);
-        InputTensorItem *ti =& mTensorDef.back();
+        InputTensorItem *ti = &mTensorDef.back();
         ti->mFetch = FetchData::createFetchObject(ti);
         if (!ti->mFetch) {
             throw std::logic_error("Could not create a fetch object for tensor " + item.name);
         }
-        ti->mFetch->setup(&mg, "input." + s, item);
+        ti->mFetch->setup(&mg, s_prefix, item);
     }
+
+    // Verify Outputs
+    //size_t num_output_nodes = mSession->GetOutputCount();
+    int i_state = index_of(mOutputNames, Model::instance()->settings().valueString("dnn.state.name"));
+    int i_restime = index_of(mOutputNames, Model::instance()->settings().valueString("dnn.restime.name"));
+    if (i_state < 0)
+        throw logic_error_fmt("Model check failed: Required output node ('dnn.state.name') '{}' not found in model", Model::instance()->settings().valueString("dnn.state.name"));
+    if (i_restime < 0)
+        throw logic_error_fmt("Model check failed: Required output node ('dnn.restime.name') '{}' not found in model", Model::instance()->settings().valueString("dnn.restime.name"));
+
+    mOutIndexState = i_state;
+    mOutIndexRestime = i_restime;
+
+    lg->info("DNN model verification successful: All {} inputs synchronized and matched.", num_input_nodes);
 }
 
 TensorWrapper *DNN::buildTensor(size_t batch_size, InputTensorItem &item)

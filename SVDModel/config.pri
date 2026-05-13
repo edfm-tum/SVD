@@ -1,9 +1,10 @@
-# This switch controls if SVD is built against Tensorflow.
+# This switch controls if SVD is built against ONNX Runtime.
 # This is required for using DNNs (so you will need that most likely).
-# Without Tensorflow, SVD is "just" a simple state&transition model.
-# To enable tensorflow, uncomment line to add to DEFINES:
+# Without ONNX, SVD is "just" a simple state&transition model.
+DEFINES += USE_ONNXRUNTIME
 
-# DEFINES += USE_ONNXRUNTIME
+# Uncomment the following line to enable CUDA support for ONNX Runtime
+# DEFINES += USE_CUDA
 
 # ONNX Runtime configuration
 unix {

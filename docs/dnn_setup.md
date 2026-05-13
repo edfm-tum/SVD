@@ -1,8 +1,7 @@
 # Configuring the DNN
 
-SVD integrates [Tensorflow](http://tensorflow.org) and allows thus to run
-any trained Deep Neural Network within the framework. 
-
+SVD integrates [ONNX Runtime](https://onnxruntime.ai/) and allows thus to run
+any trained Deep Neural Network (in `.onnx` format) within the framework.
 A conceptual view is depicted below: 
 
 ![DNN data flow](img/dnn_dataflow.png)

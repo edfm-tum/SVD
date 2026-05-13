@@ -6,17 +6,17 @@ You can either use the precompiled version of SVD, or build SVD for yourself.
 
 The `executable` folder contains all the required files and libraries for Windows. There is no separate installation. To run SVD, start the `SVDUI.exe` ([instructions](svdUI.md)).
 
-Note: Due to file size limits of GitHub, the library `tensorflow.dll` is zipped (`tensorflow.zip`) in the `executable` folder. Therefore unzipping (into the same folder) is required.
+For DNN inference, SVD now uses **ONNX Runtime**. The required library `onnxruntime.dll` (CPU version) is included in the `executable` folder.
 
 ## Instructions for compiling SVD
 
 The SVD model is a stand alone modelling software written in C++ and available under a GPL license. SVD builds on the [Qt](https://qt.io) framework, and is best compiled and modified with the tools provided by Qt (e.g. the QtCreator IDE).
 
-Currently, building SVD (and TensorFlow) is available for Windows and Linux.
+Currently, building SVD is available for Windows, Linux, and macOS.
 
 SVD consists of a number of sub-projects:
 
--   `Predictor`: the link to TensorFlow; this part includes TensorFlow-headers and contains the logic for communicating with TensorFlow
+-   `Predictor`: the link to ONNX Runtime; this part includes ONNX-headers and contains the logic for communicating with the inference engine.
 -   `SVDCore`: The main part of the model (representation of the simulated area, data, ...)
 -   `SVDUI`: The Qt-based user interface
 
@@ -24,70 +24,79 @@ To build SVD:
 
 -   open the `SVDModel.pro` file in QtCreator
 -   Build all sub-projects
--   Run the `SVDUI.exe`
+-   Run the `SVDUI.exe` (Windows) or the resulting binary (Linux/Mac)
 
-### Compiling SVD on Windows
+### Compiling SVD with ONNX Runtime
 
-The tricky part is the compilation of the `Predictor` sub-project as this requires a local TensorFlow installation (for include files) and a compiled version of TensorFlow in a DLL on Windows. Check the `Predictor.pro` file which includes some links for further information.
+SVD requires the ONNX Runtime C++ API. You can either download precompiled binaries or build it from source.
 
-Contact Werner Rammer ([werner.rammer\@tum.de](mailto:werner.rammer@tum.de){.email}) for help.
+#### Windows
 
-### Compiling TensorFlow
+1.  Download the ONNX Runtime binaries (e.g., `onnxruntime-win-x64-n.n.n.zip`) from the [official releases](https://github.com/microsoft/onnxruntime/releases).
+2.  Extract the archive to a local directory (e.g., `C:\dev\onnxruntime`).
+3.  In SVD's `SVDModel/config.pri`, set the `ONNXRUNTIME_DIR` to this path if it differs from the default.
+4.  Copy `onnxruntime.dll` to your build output folder (where `SVDUI.exe` resides).
 
-Compiling TensorFlow with CMake on Windows is hard. I did go through this (see [here](https://github.com/tensorflow/tensorflow/issues/15254) and will likely (have to) touch the issue again. See e.g. this for current state of compiling TF on Windows: <https://github.com/tensorflow/tensorflow/issues/77156>
+#### Linux (Ubuntu / Fedora)
 
-A compiled and GPU-enabled version of tensorflow.dll (version 1.4) can be found in the `executable` folder.
+The build system expects ONNX Runtime to be located in `/opt/onnxruntime`.
 
-### Use of precompiled Tensorflow binaries in Linux
+1.  Download the Linux x64 binaries (e.g., `onnxruntime-linux-x64-n.n.n.tgz`).
+2.  Extract and move to `/opt/onnxruntime`:
+    ```bash
+    sudo mkdir -p /opt/onnxruntime
+    sudo tar -xzf onnxruntime-linux-x64-*.tgz -C /opt/onnxruntime --strip-components=1
+    ```
+3.  Add the library path to your environment or ensure `ldconfig` can find it:
+    ```bash
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/onnxruntime/lib
+    ```
 
-<https://github.com/ika-rwth-aachen/libtensorflow_cc>
+#### macOS
 
-Follow the instructions to download and install `libtensorflow_cc`.Take care to use the GPU version!
+1.  Download the macOS binaries (universal or x64/arm64 depending on your hardware).
+2.  Extract to a preferred location and update `ONNXRUNTIME_DIR` in `SVDModel/config.pri`.
+3.  Alternatively, you can install via Homebrew, but ensure the paths in `config.pri` match.
 
-### Notes about TensorFlow versions
+### Using GPU acceleration (CUDA)
 
-Getting the right combinations of TensorFlow, NVidia drivers, Qt libraries is tricky. 
+To use NVIDIA GPUs for faster DNN inference:
 
-As noted above, for Windows we have a working Tensorflow.dll 1.4, which works with Qt5 versions of SVD (branch `qt5_resonate`). For Linux, also TensorFlow 2.x is working. The Qt 5 - version (branch `qt5-resonate`) works with TF up to 2.9 (for example, 2.9.3). The Qt 6 version (`main` branch) is updated to work with newer versions (e.g., 2.11).
-
-The About-Dialog shows the version SVD is compiled against.
-
+1.  **Requirement:** You must have an NVIDIA GPU and compatible drivers installed.
+2.  **ONNX Runtime:** Download the **GPU-enabled** version of ONNX Runtime (e.g., `onnxruntime-win-x64-gpu-*`).
+3.  **CUDA & cuDNN:** Install the versions of CUDA and cuDNN that are compatible with the ONNX Runtime version you downloaded (check the [ONNX Runtime documentation](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements)).
+4.  **Build Configuration:** In `SVDModel/config.pri`, uncomment the line:
+    `DEFINES += USE_CUDA`
+5.  **Execution:** When SVD starts, it will attempt to initialize the CUDA execution provider. Check the log output to verify if it succeeded or fell back to CPU.
 
 ## other installs
 
-FreeImage - package <https://freeimage.sourceforge.io/>
+### FreeImage
 
-Is used in SVD for loading and saving GeoTIFF files.
+Used in SVD for loading and saving GeoTIFF files.
 
-```         
-sudo apt-get install libfreeimage-dev
+**Linux:**
+```bash
+sudo apt-get install libfreeimage-dev   # Ubuntu
+sudo dnf install FreeImage-devel        # Fedora
 ```
 
-OpenGL Used for rendering the landscape
+### OpenGL
 
-```         
-sudo apt-get install libgl-dev
-sudo apt-get install libgl1-mesa-dev
+Used for rendering the landscape.
+
+**Linux:**
+```bash
+sudo apt-get install libgl-dev libgl1-mesa-dev  # Ubuntu
+sudo dnf install mesa-libGL-devel               # Fedora
 ```
 
-To use GPU on Linux
+## SVD without ONNX
 
-Install CUDA
+SVD can be used *without* ONNX Runtime. This version is not able to use DNNs for estimating state transitions, but can still be useful, e.g., as a pure state-and-transition-model using the [matrix module](module_matrix.md).
 
-See e.g. <https://neptune.ai/blog/installing-tensorflow-2-gpu-guide> or <https://www.tensorflow.org/install/pip>
+To build SVD without ONNX, you need to update the file `SVDModel/config.pri`. To *disable* ONNX, comment out this line:
 
-```         
-sudo apt install nvidia-cuda-toolkit
-```
+`DEFINES += USE_ONNXRUNTIME`
 
-
-
-## SVD without TensorFlow
-
-SVD can be used *without* TensorFlow. This version is not able to use TensorFlow for running DNNs (and therefore estimating state transition using DNNs), but can still be useful, e.g. as a pure state-and-transition-model ([matrix module](module_matrix.md)). Without the dependency to TensorFlow compilation and deployment / installation is much easier. We do this, for example, to use SVD for teaching.
-
-To build SVD without TensorFlow, you need to update the file `SVDModel\config.pri`. To *disable* TensorFlow, uncomment this line:
-
-`DEFINES += USE_TENSORFLOW`
-
-Save and recompile (make sure that `qmake` is also executed).
+Save and recompile (ensure that `qmake` is executed).

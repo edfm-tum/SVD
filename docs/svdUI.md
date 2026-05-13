@@ -3,11 +3,11 @@
 ## SVD software
 A pre-built version of the SVD model software is currently available only for 
 Windows (https://github.com/SVDmodel/SVD/executable). The software bundles 
-a compiled version of TensorFlow ([with GPU support](https://www.tensorflow.org/install/gpu), `tensorflow.dll`). 
-In order to use this version of SVD, a compatible GPU and the necessary libraries are required (e.g. 
-CUDA, see https://www.tensorflow.org/install/gpu).
+a compiled version of ONNX Runtime (`onnxruntime.dll`). 
 
-SVD versions that do not require GPU support are planned for the future. 
+By default, the bundled version uses the CPU for calculations and does not require a GPU. 
+SVD can also leverage NVIDIA GPUs for faster DNN inference if the GPU-enabled version 
+of ONNX Runtime and the necessary libraries (CUDA, cuDNN) are installed (see [Installation guide](install.md)).
 
 Alternatively, SVD can be compiled from source (see [Installation guide](install.md)).
 

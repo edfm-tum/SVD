@@ -116,6 +116,27 @@ bool DNN::setupDNN(size_t aindex)
         session_options.SetInterOpNumThreads(inter_threads);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
+#ifdef USE_CUDA
+        try {
+            OrtCUDAProviderOptions cuda_options;
+            
+            // Multi-GPU Distribution
+            // aindex is 1-based (from mDNNs.size() during setup)
+            int gpu_count = settings.valueInt("dnn.gpuCount", 1);
+            if (gpu_count > 1) {
+                cuda_options.device_id = static_cast<int>((aindex - 1) % static_cast<size_t>(gpu_count));
+                lg->info("Using ONNX Runtime with CUDA acceleration (GPU ID: {} out of {}).", cuda_options.device_id, gpu_count);
+            } else {
+                cuda_options.device_id = 0; // Default to first GPU
+                lg->info("Using ONNX Runtime with CUDA acceleration (GPU ID: 0).");
+            }
+
+            session_options.AppendExecutionProvider_CUDA(cuda_options);
+        } catch (const Ort::Exception& e) {
+            lg->warn("Failed to enable CUDA: {}. Falling back to CPU.", e.what());
+        }
+#endif
+
         lg->trace(fmt::runtime("Loading ONNX model (Threads: intra={}, inter={})..."), intra_threads, inter_threads);
 #ifdef _WIN32
         std::wstring wfile(file.begin(), file.end());

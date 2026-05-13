@@ -294,12 +294,13 @@ void MainWindow::initiateLogging()
     auto combined_logger = std::make_shared<spdlog::async_logger>("main", sinks.begin(), sinks.end(), spdlog::thread_pool());
     spdlog::register_logger(combined_logger);
     combined_logger->set_level(spdlog::level::debug);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
+    spdlog::flush_every(std::chrono::seconds(2));
 
     combined_logger = std::make_shared<spdlog::async_logger>("dnn", sinks.begin(), sinks.end(), spdlog::thread_pool());
     spdlog::register_logger(combined_logger);
     combined_logger->set_level(spdlog::level::debug);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
 
     //auto combined_logger = std::make_shared<spdlog::logger>("console", begin(sinks), end(sinks));
 

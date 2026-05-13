@@ -184,8 +184,8 @@ void Model::inititeLogging()
 
     auto combined_logger = std::make_shared<spdlog::async_logger>("main", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(combined_logger);
-    combined_logger->flush_on(spdlog::level::err);
-
+    combined_logger->flush_on(spdlog::level::info);
+    spdlog::flush_every(std::chrono::seconds(2));
     int idx = indexOf(levels, settings().valueString("logging.model.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.model.level") + "' is not a valid logging level for logging.model.level. Valid are: " + join(levels) );
@@ -193,7 +193,7 @@ void Model::inititeLogging()
 
     combined_logger = std::make_shared<spdlog::async_logger>("setup", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(combined_logger);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
     idx = indexOf(levels, settings().valueString("logging.setup.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.setup.level") + "' is not a valid logging level for logging.setup.level. Valid are: " + join(levels) );
@@ -202,7 +202,7 @@ void Model::inititeLogging()
 
     combined_logger = std::make_shared<spdlog::async_logger>("dnn", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(combined_logger);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
     idx = indexOf(levels, settings().valueString("logging.dnn.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.dnn.level") + "' is not a valid logging level for logging.dnn.level. Valid are: " + join(levels) );
@@ -210,7 +210,7 @@ void Model::inititeLogging()
 
     combined_logger = std::make_shared<spdlog::async_logger>("modules", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     spdlog::register_logger(combined_logger);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
     idx = indexOf(levels, settings().valueString("logging.modules.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.modules.level") + "' is not a valid logging level for logging.modules.level. Valid are: " + join(levels) );

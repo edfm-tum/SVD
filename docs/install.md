@@ -81,6 +81,12 @@ To use NVIDIA GPUs for faster DNN inference:
 1.  **Requirement:** You must have an NVIDIA GPU and compatible drivers installed.
 2.  **ONNX Runtime:** Download the **GPU-enabled** version of ONNX Runtime (e.g., `onnxruntime-linux-x64-gpu-*`).
 3.  **CUDA & cuDNN:** Install the versions of CUDA and cuDNN that are compatible with the ONNX Runtime version you downloaded (check the [ONNX Runtime documentation](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements)).
+    *   **Note:** Newer versions of ONNX Runtime (e.g., 1.17+) often require **cuDNN 9.x**.
+    *   **Ubuntu Installation:** To install cuDNN 9, you typically need to add the NVIDIA repository and run:
+        ```bash
+        sudo apt-get install libcudnn9-cuda-12
+        ```
+    *   **Verification:** Use `ldd /opt/onnxruntime/lib/libonnxruntime_providers_cuda.so` to ensure all dependencies (like `libcudnn.so.9`) are found.
 4.  **Build Configuration:** In `SVDModel/config.pri`, uncomment the line:
     `DEFINES += USE_CUDA`
 5.  **Execution:** When SVD starts, it will attempt to initialize the CUDA execution provider. Check the log output to verify if it succeeded or fell back to CPU.

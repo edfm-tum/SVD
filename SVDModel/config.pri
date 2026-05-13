@@ -13,7 +13,7 @@ unix {
     isEmpty(ONNXRUNTIME_DIR): ONNXRUNTIME_DIR = /opt/onnxruntime
     
     INCLUDEPATH += $$ONNXRUNTIME_DIR/include
-    LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
+    LIBONNXRUNTIME = -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
 }
 
 win32 {
@@ -24,8 +24,8 @@ win32 {
     INCLUDEPATH += $$ONNXRUNTIME_DIR/include
     # For MSVC, the library is usually onnxruntime.lib
     CONFIG(debug, debug|release) {
-        LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
+        LIBONNXRUNTIME = -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
     } else {
-        LIBS += -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
+        LIBONNXRUNTIME = -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
     }
 }

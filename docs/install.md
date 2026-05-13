@@ -28,7 +28,10 @@ To build SVD:
 
 ### Compiling SVD with ONNX Runtime
 
-SVD requires the ONNX Runtime C++ API. You can either download precompiled binaries or build it from source.
+SVD requires the ONNX Runtime C++ API. 
+
+> [!IMPORTANT]
+> **Do NOT use `pip install`, `nuget`, or other package managers** for installing ONNX Runtime for SVD. These are intended for Python or .NET environments. For SVD (C++), you must download the precompiled **shared library** binaries (headers and `.so` / `.dll` files) directly from the [Official GitHub Releases](https://github.com/microsoft/onnxruntime/releases).
 
 #### Windows
 
@@ -41,29 +44,42 @@ SVD requires the ONNX Runtime C++ API. You can either download precompiled binar
 
 The build system expects ONNX Runtime to be located in `/opt/onnxruntime`.
 
-1.  Download the Linux x64 binaries (e.g., `onnxruntime-linux-x64-n.n.n.tgz`).
-2.  Extract and move to `/opt/onnxruntime`:
-    ```bash
-    sudo mkdir -p /opt/onnxruntime
-    sudo tar -xzf onnxruntime-linux-x64-*.tgz -C /opt/onnxruntime --strip-components=1
-    ```
-3.  Add the library path to your environment or ensure `ldconfig` can find it:
-    ```bash
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/onnxruntime/lib
-    ```
+**Example: Manual installation for GPU support**
+
+```bash
+# 1. Choose a version compatible with your CUDA/cuDNN (e.g., 1.17.1)
+VERSION="1.17.1"
+FILENAME="onnxruntime-linux-x64-gpu-${VERSION}.tgz"
+
+# 2. Download from GitHub
+wget https://github.com/microsoft/onnxruntime/releases/download/v${VERSION}/${FILENAME}
+
+# 3. Extract and move to /opt/onnxruntime
+sudo mkdir -p /opt/onnxruntime
+sudo tar -xzf ${FILENAME} -C /opt/onnxruntime --strip-components=1
+
+# 4. Cleanup
+rm ${FILENAME}
+
+# 5. Configure the dynamic linker so the OS can find the libraries
+echo "/opt/onnxruntime/lib" | sudo tee /etc/ld.so.conf.d/onnxruntime.conf
+sudo ldconfig
+```
+
+If you only need CPU support, replace `gpu` with `cpu` in the filename above.
 
 #### macOS
 
 1.  Download the macOS binaries (universal or x64/arm64 depending on your hardware).
 2.  Extract to a preferred location and update `ONNXRUNTIME_DIR` in `SVDModel/config.pri`.
-3.  Alternatively, you can install via Homebrew, but ensure the paths in `config.pri` match.
+3.  Alternatively, you can install via Homebrew (`brew install onnxruntime`), but ensure the paths in `config.pri` match (Homebrew usually installs to `/usr/local` on Intel or `/opt/homebrew` on Apple Silicon).
 
 ### Using GPU acceleration (CUDA)
 
 To use NVIDIA GPUs for faster DNN inference:
 
 1.  **Requirement:** You must have an NVIDIA GPU and compatible drivers installed.
-2.  **ONNX Runtime:** Download the **GPU-enabled** version of ONNX Runtime (e.g., `onnxruntime-win-x64-gpu-*`).
+2.  **ONNX Runtime:** Download the **GPU-enabled** version of ONNX Runtime (e.g., `onnxruntime-linux-x64-gpu-*`).
 3.  **CUDA & cuDNN:** Install the versions of CUDA and cuDNN that are compatible with the ONNX Runtime version you downloaded (check the [ONNX Runtime documentation](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements)).
 4.  **Build Configuration:** In `SVDModel/config.pri`, uncomment the line:
     `DEFINES += USE_CUDA`

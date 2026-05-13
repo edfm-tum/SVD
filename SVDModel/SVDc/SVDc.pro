@@ -88,8 +88,11 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 # PRE_TARGETDEPS += /home/werner/dev/tensorflow/libtensorflow_cc2.11/usr/local/lib/libtensorflow_cc.so
 #PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
 
-LIBS += -L../SVDCore -lSVDCore
+# Library order is critical: Predictor depends on SVDCore and onnxruntime
 LIBS += -L../Predictor -lPredictor
+LIBS += -L../SVDCore -lSVDCore
+LIBS += $$LIBONNXRUNTIME
+
 #LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
 LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
 LIBS += -L/usr/local/lib

@@ -66,7 +66,7 @@ private:
 
     // DNN specifics
     size_t mIndex; ///< internal number of the DNN
-    bool mDummyDNN; ///< if true, then the tensorflow components are not really used (for debug builds)
+    bool mDummyDNN; ///< if true, then the DNN components are not really used (for debug builds)
 
     bool mTopK_tf; ///< use framework for the state top k calculation (not supported by ORT currently)
     size_t mTopK_NClasses; ///< number of classes used for the top k algorithm

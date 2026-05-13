@@ -65,9 +65,9 @@ FORMS += \
     visualization/cameracontrol.ui \
     aboutdialog.ui
 
-contains(DEFINES, USE_TENSORFLOW): SOURCES += testdnn.cpp
-contains(DEFINES, USE_TENSORFLOW): HEADERS += testdnn.h
-contains(DEFINES, USE_TENSORFLOW): FORMS += testdnn.ui
+contains(DEFINES, USE_ONNXRUNTIME): SOURCES += testdnn.cpp
+contains(DEFINES, USE_ONNXRUNTIME): HEADERS += testdnn.h
+contains(DEFINES, USE_ONNXRUNTIME): FORMS += testdnn.ui
 
 
 win32 {
@@ -84,10 +84,7 @@ win32 {
         LIBS += -L../SVDCore/debug -lSVDCore
         PRE_TARGETDEPS += ../SVDCore/debug/SVDCore.lib
     }
-    #LIBS += -L../../tensorflow/lib14cpu -ltensorflow
     LIBS += -L../../../SVDCore/third_party/FreeImage -lFreeImage
-
-    contains(DEFINES, USE_TENSORFLOW): LIBS += -L../../../../tensorflow/lib25 -ltensorflow_cc
 
 
 } else {
@@ -103,7 +100,6 @@ win32 {
         LIBS += -L../SVDCore/debug -lSVDCore
         PRE_TARGETDEPS += ../SVDCore/debug/libSVDCore.a
     }
-    contains(DEFINES, USE_TENSORFLOW): LIBS += -L"..\..\..\..\tensorflow\lib14cpu" -ltensorflow
     LIBS += -L"..\..\..\SVDCore\third_party\FreeImage" -lFreeImage
 }
 
@@ -129,8 +125,6 @@ PRE_TARGETDEPS += ../Predictor/libPredictor.a
 
 # pre-compiled (local)
 # PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
-contains(DEFINES, USE_TENSORFLOW): PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
-#PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
 
 # Library order is critical: Predictor depends on SVDCore and onnxruntime
 LIBS += -L../Predictor -lPredictor
@@ -138,18 +132,11 @@ LIBS += -L../SVDCore -lSVDCore
 LIBS += $$LIBONNXRUNTIME
 
 LIBS += -lfreeimage
-contains(DEFINES, USE_TENSORFLOW): LIBS += -lprotobuf
 # FreeImage on Linux: see https://codeyarns.com/2014/02/11/how-to-install-and-use-freeimage/
 # basically sudo apt-get install libfreeimage3 libfreeimage-dev
 #LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
 
-#LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
-contains(DEFINES, USE_TENSORFLOW): INCLUDEPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
-contains(DEFINES, USE_TENSORFLOW): DEPENDPATH += $$PWD/../../../../../../usr/lib/tensorflow-cpp
-
 }
-
-contains(DEFINES, USE_TENSORFLOW): unix:!macx: LIBS += -L/usr/lib/tensorflow-cpp/ -ltensorflow_cc -ltensorflow_framework
 
 # querying git repo
 win32 {

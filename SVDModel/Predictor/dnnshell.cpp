@@ -31,10 +31,6 @@
 #include "batchmanager.h"
 #include "dnn.h"
 
-#ifdef USE_TENSORFLOW
-#include <tensorflow/core/public/version.h>
-#endif
-
 DNNShell::DNNShell()
 {
     mThreads = new QThreadPool();
@@ -205,14 +201,13 @@ bool DNNShell::isRunnig()
     return mProcessing > 0;
 }
 
-const char *DNNShell::tensorFlowVersion()
+const char *DNNShell::onnxVersion()
 {
-#ifdef USE_TENSORFLOW
-return TF_VERSION_STRING;
+#ifdef USE_ONNXRUNTIME
+    return Ort::GetApi().GetVersionString();
 #else
-    return "No Tensorflow";
+    return "No ONNX";
 #endif
-
 }
 
 

@@ -223,12 +223,12 @@ void MainWindow::pointClickedOnVisualization(QVector3D world_pos)
 
 void MainWindow::on_actionTest_DNN_triggered()
 {
-#ifdef USE_TENSORFLOW
+#ifdef USE_ONNXRUNTIME
     // open test DNN form and show model
     TestDNN *testdnn = new TestDNN();
     testdnn->show();
 #else
-    QMessageBox::information(this, "SVD", "Only availabe in SVD with Tensorflow");
+    QMessageBox::information(this, "SVD", "Only availabe in SVD with ONNX Runtime");
 #endif
 }
 
@@ -336,12 +336,12 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::on_pushButton_5_clicked()
 {
-#ifdef USE_TENSORFLOW
+#ifdef USE_ONNXRUNTIME
     initiateLogging();
     PredTest it;
     it.testTensor();
 #else
-    QMessageBox::information(this, "SVD", "Only availabe in SVD with Tensorflow");
+    QMessageBox::information(this, "SVD", "Only availabe in SVD with ONNX Runtime");
 #endif
 }
 
@@ -349,12 +349,12 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pbTestTF_clicked()
 {
-#ifdef USE_TENSORFLOW
+#ifdef USE_ONNXRUNTIME
     initiateLogging();
     PredTest it;
     it.testDevicePlacement();
 #else
-    QMessageBox::information(this, "SVD", "Only availabe in SVD with Tensorflow");
+    QMessageBox::information(this, "SVD", "Only availabe in SVD with ONNX Runtime");
 #endif
 
 }

@@ -204,7 +204,7 @@ bool DNNShell::isRunnig()
 const char *DNNShell::onnxVersion()
 {
 #ifdef USE_ONNXRUNTIME
-    return Ort::GetApi().GetVersionString();
+    return OrtGetApiBase()->GetVersionString();
 #else
     return "No ONNX";
 #endif

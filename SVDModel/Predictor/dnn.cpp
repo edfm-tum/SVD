@@ -118,6 +118,12 @@ bool DNN::setupDNN(size_t aindex)
 
 #ifdef USE_CUDA
         try {
+            // Diagnostic: List available providers to see if CUDA is built-in/visible
+            std::vector<std::string> providers = Ort::GetAvailableProviders();
+            std::string prov_list;
+            for (const auto& p : providers) prov_list += p + " ";
+            lg->debug("Available ONNX Runtime providers: {}", prov_list);
+
             OrtCUDAProviderOptions cuda_options;
             
             // Multi-GPU Distribution
@@ -134,6 +140,11 @@ bool DNN::setupDNN(size_t aindex)
             session_options.AppendExecutionProvider_CUDA(cuda_options);
         } catch (const Ort::Exception& e) {
             lg->warn("Failed to enable CUDA: {}. Falling back to CPU.", e.what());
+#ifndef _WIN32
+            // On Linux, this is often caused by missing CUDA/cuDNN libraries in LD_LIBRARY_PATH
+            char* ld_path = std::getenv("LD_LIBRARY_PATH");
+            lg->info("Diagnostic - LD_LIBRARY_PATH: {}", ld_path ? ld_path : "not set");
+#endif
         }
 #endif
 

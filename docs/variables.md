@@ -16,8 +16,9 @@ Variable|Description
 
 ### Additional variables
 In addition to the standard variables, further environment- and state-specific variables are available. 
-* Environment variables: additional columns in the `landscape.file` table (see [landscape setup](configuring_the_landscape.md)
+* Environment variables: additional columns in the `landscape.file` table (see [landscape setup](configuring_the_landscape.md))
 * State variables: content of the `states.extraFile` table, and module specific variables (see [states](states.md) for details)
+* Climate variables: if the config `climate.publishVariables` is `true`, climate variables are also available (names are the column names given in the climate data file `climate.file`)
 
 A list of all available variables can be found in the log file.
 

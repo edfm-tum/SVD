@@ -96,4 +96,37 @@ polygon(value, x1,y1, x2,y2, x3,y3, ..., xn,yn)|return is: *y1* if value<x1, *yn
 sigmoid(x, type, param1, param2)|The value of "sigmoid" curve at *x*. The type of curve is designated by *type* with the two parameters *param1* and *param2*. Type is one of: 0: [logistic](http://en.wikipedia.org/wiki/Logistic_function), 1: [Hill function](http://en.wikipedia.org/wiki/Hill_function), 2: 1-logistic, 3: 1-hill|`sigmoid(x, 0, 10, 100)`
 rnd(from, to)|returns a uniformly distributed random function between *from* and *to*.|`rnd(0,1)`
 rndg(mean, stddev)|returns a random number drawn from a Gaussian normal distribution with *mean* as the mean value *stddev* as the standard deviation.|`rndg(0,1)`
+limit(value, min, max)|limits *value* to the range [*min*, *max*].|`limit(x, 0, 1)`
+
+### SVD specific functions
+These functions are only available in the context of a `cell` (e.g. for DNN input transformations or in transition matrices).
+
+Name, Arguments|Description|Example
+------|--------|-------
+localNB(state1, ...)|calculates the sum of the proportion [0..1] of the given states in the local neighborhood (3x3 cells).|`localNB(1, 2)`
+intermediateNB(state1, ...)|calculates the sum of the proportion [0..1] of the given states in the intermediate neighborhood (a circle within a 7x7 grid, see below).|`intermediateNB(5)`
+globalNB(state1, ...)|calculates the sum of the proportion [0..1] of the given states in the global neighborhood (size depends on configuration).|`globalNB(10)`
+distance(state1, ...)|calculates the minimum distance (in meters) to any of the provided states.|`distance(1, 5)`
+speciesProportion(specIndex1, ...)|calculates the sum of the proportions [0..1] of the given species (by index) in the current cell.|`speciesProportion(0, 1)`
+
+#### Neighborhood Layouts
+The neighborhood functions `localNB` and `intermediateNB` scan the following cells around the focal cell (`O`):
+
+**localNB (3x3 grid, 8 cells):**
+```
+X X X
+X O X
+X X X
+```
+
+**intermediateNB (7x7 circular, 36 cells):**
+```
+. . X X X . .
+. X X X X X .
+X X X X X X X
+X X X O X X X
+X X X X X X X
+. X X X X X .
+. . X X X . .
+```
 

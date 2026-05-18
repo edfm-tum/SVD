@@ -1,10 +1,10 @@
-## Bark Beetle Module
+# Bark Beetle Module
 
-**Purpose**
+## Purpose
 
 This module simulates the spread of bark beetle infestations within the landscape. It incorporates the effects of regional wind events, beetle susceptibility, climate, and probabilistic spread mechanics to realistically model bark beetle dynamics.
 
-**Sequence of Steps**
+## Sequence of Steps
 
 -   Background infestation: Starts background infestations based on a probability function that may incorporate a regional background infestation probability grid. Susceptibility and climate data influence the chance of an infestation starting in a cell.
 
@@ -17,7 +17,7 @@ This module simulates the spread of bark beetle infestations within the landscap
     -   Dispersal: Beetles spread probabilistically from infested cells with their range determined by a climate-dependent kernel. Spread success in a target cell is influenced by its susceptibility and the probability value from the kernel.
     -   Mortality: Infested cells may experience mortality based on factors such as base mortality rate, frost events, and outbreak age.
 
-**Details**
+## Details
 
 -   **Initial infestation:** for large landscapes, the model subsamples a different set of points to test in each year (for landscapes \> 10 Mio px the factor is 100). If `regionalBackgroundProb` is provided, the expression is used to calculate the probability for the cell. If also `regionalBackgroundProb` grid is provided, then the value of of the probability grid can be used in the expression as the variable `regionalProb`. A value of 0.000685 is used when no expression is given. The resulting probability is linearly scaled with the subsampling-factor.
 
@@ -40,7 +40,7 @@ This module simulates the spread of bark beetle infestations within the landscap
 
 -   **Bark beetle generations:** The number of bark beetle generations in a single year is driven by beetle phenology, and thus strongly by climate. We use the "PhenIPS" approach (also used in iLand) and calculate the potential number of beetle generations based on daily climate (t_min, t_max, radiation), an assumption on LAI, and latitude. We use a C++ implementation (based on iLand's) embedded in R to pre-process climate data.
 
-**Configuration**
+## Configuration
 
 The module is configured in the project file. In addition to the `enabled` and `type` setting, the bark beetle module offers these options:
 
@@ -77,9 +77,9 @@ Filepath to the file defining state-specific properties (like bark beetle suscep
 #### `saveDebugGrids` (boolean)
 Enables saving of intermediate debugging grids.
 
-**Input Data**
+## Input Data
 
-**kernelFile**
+### kernelFile
 
 This file defines the bark beetle dispersal kernel. It has a CSV format with the following columns:
 
@@ -89,7 +89,7 @@ This file defines the bark beetle dispersal kernel. It has a CSV format with the
 | vk     | Offspring factor (should match the configured value in `beetleOffspringFactor`)                                     | integer   |
 | ...    | 121 further columns, representing dispersal probabilities to cells in a grid of 11x11 cells around the source cell. | double    |
 
-**State-Specific Variables**
+### State-Specific Variables
 
 The bark beetle module requires the following state-specific variables. These are defined in the file specified by the `stateFile` option.
 
@@ -97,7 +97,7 @@ The bark beetle module requires the following state-specific variables. These ar
 |----------------|-----------------------------------------|----------------|
 | pBarkBeetleDamage | Susceptibility of the state to bark beetle infestation (value between 0 and 1). | double    |
 
-**Variables**
+## Variables
 
 The bark beetle module provides the following variables that can be used in expressions:
 
@@ -111,6 +111,6 @@ The bark beetle module provides the following variables that can be used in expr
 | outbreakAge | age (years) of the outbreak (the last time the cell was affected) |
 | regionalProb | probability of background infestation |
 
-**Output**
+## Output
 
 The module can provide tabular and gridded [output](outputs.md#BarkBeetle).

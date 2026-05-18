@@ -43,44 +43,36 @@ Fires are not started by SVD, but are triggered externally by a time series of f
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md).\
+The module is configured in the [project file](project_file.md).
 In addition to the `enabled` and `type` setting, the fire module has the following settings:
 
--   
+#### `transitionFile` (filepath)
+The file containing a transition matrix (see [matrix module](module_matrix.md)) for post fire states (see above).
 
-    ### `transitionFile` (filepath)
+#### `ignitionFile` (filepath)
+The data table with the list of ignition points and fire sizes.
 
-    The file containing a transition matrix (see [matrix module](module_matrix.md)) for post fire states (see above).
+#### `stateFile` (filepath)
+Data file with additional state-specific variables that specify per-state burn probabilities.
 
--   
+#### `extinguishProb` (numeric)
+Probability that the fire does not spread after burning a cell.
 
-    ### `ignitionFile` (filepath)
+#### `spreadDistProb` (numeric)
+The parameter *p~dist~* used in the calculation of fire spread probabilities (see text above). Higher values translate to higher probabilities of fire spread from one cell to another.
 
-    The data table with the list of ignition points and fire sizes.
+#### `fireSizeMultiplier` (expression)
+If not empty, the expression is used to scale the maximum fire size provided from the ignition file. Many fire do not reach the maximum size because of topography (lack of contiguous flammable area) or other reasons. This can be countered by scaling fire sizes, so that on average the realized fire sizes match the input. The expression takes one parameter, the fire size from the ignition file.
 
--   
+## Variables
+The fire module provides the following variables that can be used in expressions:
 
-    ### `stateFile` (filepath)
-
-    Data file with additional state-specific variables that specify per-state burn probabilities.
-
--   
-
-    ### `extinguishProb` (numeric)
-
-    Probability that the fire does not spread after burning a cell.
-
--   
-
-    ### `spreadDistProb` (numeric)
-
-    The parameter *p~dist~* used in the calculation of fire spread probabilities (see text above). Higher values translate to higher probabilities of fire spread from one cell to another.
-
--   
-
-    ### `fireSizeMultiplier` (expression)
-
-if not empty, the expression is used to scale the maximum fire size provided from the ignition file. Many fire do not reach the maximum size because of topography (lack of contiguous flammable area) or other reasons. This can be countered by scaling fire sizes, so that on average the realized fire sizes match the input. The expression takes one parameter, the fire size from the ignition file.
+| Variable | Description |
+|----------|-------------|
+| fireSpread | progress of the last fire (value is the iteration) |
+| fireNFires | cumulative number of fires |
+| fireNHighSeverity | cumulative number of high severity fires |
+| fireLastBurn | the year of the last fire on a cell (or 0 if never burned) |
 
 ## Output
 

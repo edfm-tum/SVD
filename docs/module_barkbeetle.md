@@ -44,71 +44,38 @@ This module simulates the spread of bark beetle infestations within the landscap
 
 The module is configured in the project file. In addition to the `enabled` and `type` setting, the bark beetle module offers these options:
 
--   
+#### `climateVarGenerations` (string)
+Name of the climate variable with the number of potential bark beetle generations (`Pheinps`).
 
-    ### `climateVarGenerations` (string)
+#### `climateVarFrost` (string)
+Name of the climate variable with the number of days where the minimum temperature falls below -15 °C.
 
-    Name of the climate variable with the number of potential bark beetle generations (`Pheinps`).
+#### `beetleOffspringFactor` (integer)
+Factor impacting the size of the dispersal kernel. Use a value defined in the kernel file `kernelFile`(e.g., 1, 1.5, 2, 2.5, 3).
 
--   
+#### `kernelFile` (filepath)
+Filepath to a CSV file containing the dispersal kernel data (see table below for format).
 
-    ### `climateVarFrost` (string)
+#### `successOfColonization` (double)
+Global scaling factor for colonization success, influencing the overall spread rate.
 
-    Name of the climate variable with the number of days where the minimum temperature falls below -15 °C.
+#### `backgroundProbFormula` (string)
+(Optional) Formula to calculate background infestation probability (see expression syntax). Note that you can include the value of `regionalBackgroundProb` as well as climate variables in the expression. Uses a variable `regionalProb`.
 
--   
+#### `regionalBackgroundProb` (filepath)
+(Optional) Filepath to a grid with regional background infestation probabilities.
 
-    ### `beetleOffspringFactor` (integer)
+#### `windInteractionStrength` (double)
+Factor determining the increase in susceptibility of wind-disturbed cells to beetle infestations.
 
-    Factor impacting the size of the dispersal kernel. Use a value defined in the kernel file `kernelFile`(e.g., 1, 1.5, 2, 2.5, 3).
+#### `transitionFile` (filepath)
+Filepath to the transition matrix file defining the allowed state changes after beetle infestation.
 
--   
+#### `stateFile` (filepath)
+Filepath to the file defining state-specific properties (like bark beetle susceptibility)
 
-    ### `kernelFile` (filepath)
-
-    Filepath to a CSV file containing the dispersal kernel data (see table below for format).
-
--   
-
-    ### `successOfColonization` (double)
-
-    Global scaling factor for colonization success, influencing the overall spread rate.
-
--   
-
-    ### `backgroundProbFormula` (string)
-
-    (Optional) Formula to calculate background infestation probability (see expression syntax). Note that you can include the value of `regionalBackgroundProb` as well as climate variables in the expression Uses a variable `regionalProb`. If blank the
-
--   
-
-    ### `regionalBackgroundProb` (filepath)
-
-    (Optional) Filepath to a grid with regional background infestation probabilities.
-
--   
-
-    ### `windInteractionStrength` (double)
-
-    Factor determining the increase in susceptibility of wind-disturbed cells to beetle infestations.
-
--   
-
-    ### `transitionFile` (filepath)
-
-    Filepath to the transition matrix file defining the allowed state changes after beetle infestation.
-
--   
-
-    ### `stateFile` (filepath)
-
-    Filepath to the file defining state-specific properties (like bark beetle susceptibility)
-
--   
-
-    ### `saveDebugGrids` (boolean)
-
-    Enables saving of intermediate debugging grids.
+#### `saveDebugGrids` (boolean)
+Enables saving of intermediate debugging grids.
 
 **Input Data**
 
@@ -129,6 +96,20 @@ The bark beetle module requires the following state-specific variables. These ar
 | Variable Name     | Description                                                                     | Data Type |
 |----------------|-----------------------------------------|----------------|
 | pBarkBeetleDamage | Susceptibility of the state to bark beetle infestation (value between 0 and 1). | double    |
+
+**Variables**
+
+The bark beetle module provides the following variables that can be used in expressions:
+
+| Variable | Description |
+|----------|-------------|
+| bbgen | number of pot. bark beetle generations (Pheinps) |
+| frost_days | number of days with minimum temperture below -15° (from climate data) |
+| susceptibility | stand susceptibility for bark beetle infestations |
+| bbNEvents | cumulative number of times the cell was affected by bark beetle |
+| bbLastEvent | the year the cell was impacted last by bark beetle |
+| outbreakAge | age (years) of the outbreak (the last time the cell was affected) |
+| regionalProb | probability of background infestation |
 
 **Output**
 

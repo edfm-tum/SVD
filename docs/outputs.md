@@ -4,6 +4,8 @@
 * [ResTimeGrid](#ResTimeGrid)
 * [StateChange](#StateChange)
 * [StateHist](#StateHist)
+* [StateMatrix](#StateMatrix)
+* [BarkBeetle](#BarkBeetle)
 * [Fire](#Fire)
 * [Wind](#Wind)
 * [Management](#Management)
@@ -67,6 +69,41 @@ state | stateId | Int
 n | number of cells that are currently in the state `state` | Int
 
 
+<a name="StateMatrix"></a>
+## StateMatrix
+Outputs the number of cumulative state transition between any two states.
+
+### Parameters
+ * `interval`: output is only generated every `interval` years.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+stateId | state Id of the originating state | Int
+stateToId | state Id of the target state | Int
+n | cumulated number of cells that transitioned from `stateId` to `stateToId` | Int
+
+
+<a name="BarkBeetle"></a>
+## BarkBeetle
+Output on bark beetle activity and grids with the year of the last bark beetle attack on a cell.
+
+Grids are saved as ASCII grids or GeoTIFFs to the location specified by the `lastBarkBeetleGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last impact on a cell or 0 for cells never affected by beetles.
+
+### Parameters
+* `lastBarkBeetleGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+n_background_infestation | number of cells that have a bark beetle infestatation due to random background infestations (wind-triggered cells are not included) | Int
+n_wind_infestation | number of cells that have a bark beetle infestatation due to wind | Int
+n_impact | number of cells that are affected by bark beetles (and thus change its state) | Int
+n_active_yearend | number of cells with living bark beetles at the end of the year (i.e., which will be actively spreading next year) | Int
+
+
 <a name="Fire"></a>
 ## Fire
 Output on fire events (one event per line) and grids for the year of the last burn.
@@ -90,7 +127,7 @@ share_high_severity | share of pixels burning with high severity (0..1) | Double
 
 <a name="Wind"></a>
 ## Wind
-Output on wind storm events (one event per line) and grids for the year of the last windthrows.
+Output on wind storm events (one storm per line) and grids for the year of the last windthrows.
 
 Grids are saved as ASCII grids or GeoTIFFs to the location specified by the`lastWindGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.
 
@@ -100,23 +137,26 @@ Grids are saved as ASCII grids or GeoTIFFs to the location specified by the`last
 ### Columns
 Column|Description|Data type
 ------|-----------|---------
-year | simulation year of the wind storm event | Int
-id | unique identifier of a single storm | Int
-x | x coordinate (m) of the ignition point | Double
-y | y coordinate (m) of the ignition point | Double
-regions_planned | number of planned 10km gridcells affected | Double
-regions_affected | number of realized 10km gridcells affected | Double
-cells_forested | number of forested gridcells available in the regions planned | Double
-mean_susceptibility | mean susceptibility of the forested gridcells| Double
-cells_planned | planned storm size (ha) | Double
-cells_affected | realized storm size (ha) | Double
+year | simulation year of the storm event | Int
+id | unique identifier of a single storm event | Int
+x | x coordinate (m) of the centerpoint of the initial regional grid cell | Double
+y | y coordinate (m) of the centerpoint of the initial regional grid cell | Double
+proportion | (predefined) proportion of affected cells (per event) | Double
+regions_planned | # of regions planned to be affected | Int
+regions_affected | realized number of regions (10x10km) by the storm event | Int
+cells_forested | total number of forested cells (ha) in all regions | Int
+mean_susceptibility | mean wind susceptibility of forested cells (ha) in all regions | Double
+cells_planned | number of ha planned to be affected (over all regions) | Double
+cells_affected | number of ha affected by the storm (over all regions) | Double
 
 
 
 <a name="Management"></a>
 ## Management
-Output on managed states in .csv table.
+Output of the AutoManagement module. The output contains a histogram of how many cells were managed per state. Each line is holds a single state; note: only states with at least one affected cell are saved.
 
+### Parameters
+* `lastMgmtGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
 * `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
 
 
@@ -124,8 +164,5 @@ Output on managed states in .csv table.
 Column|Description|Data type
 ------|-----------|---------
 year | simulation year | Int
-state | stateId | Int
-n | number of cells that are were managed | Int
-
-
-
+stateId | unique identifier of a state | Int
+n | number of cells affected by management of this state in this year | Int

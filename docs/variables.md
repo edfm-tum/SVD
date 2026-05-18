@@ -3,7 +3,8 @@
 ## Cell variables
 Every single cell on the landscape is described by a specific state and a given environment. Expressions
 (see below) that are evaluated in the context of a cell can access state- and environment-specific
-variables.
+variables. Note that [modules](modules.md) also provide additional variables that are available if the 
+respective module is enabled (e.g., [fire](module_fire.md), [wind](module_wind.md), or [bark beetle](module_barkbeetle.md)).
 
 ### Standard variables
 Variable|Description

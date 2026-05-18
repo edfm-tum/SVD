@@ -20,44 +20,35 @@ Management is triggered when:
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md).\
+The module is configured in the [project file](project_file.md).
 In addition to the `enabled` and `type` setting, the management module has the following settings:
 
--   
+#### `transitionFile` (filepath)
+The file containing a transition matrix (see [matrix module](module_matrix.md)) for post management states (see above).
 
-    ### `transitionFile` (filepath)
+#### `stateFile` (filepath)
+Data file with additional state-specific variables that specify per-state damage probabilities.
 
-    The file containing a transition matrix (see [matrix module](module_matrix.md)) for post management states (see above).
+#### `minHeight` (numeric)
+Height after which management becomes possible (meters)
 
--   
+#### `burnInProbability` (expression)
+If not empty, the expression is used to scale the management actions that would happen in the first year to several years afterwards. Example: `polygon(yr, 0, 0, 1, 0, 1, 0.5, 10, 1)`; from year 0 to 1 the probability of management is 0. From year 1 to year 10 the management probability increases from 0.5 to 1.
 
-    ### `stateFile` (filepath)
+#### `managementCapGrid` (filepath)
+Spatial grid (with user-defined resolution, e.g. 100x100km) that provides an upper limit to area managed (in hectares) per year and grid cell.
 
-    Data file with additional state-specific variables that specify per-state damage probabilities.
+#### `managementCapModifier` (numeric)
+Multiplicative factor that modifies the value provided in `managementCapGrid.` For example, consider a 10x10km grid and a value in the grid of 1000, and `managementCapModifier` of 1.2. This would result in a maximum of forest management per year on the cell (100km2) of 1200 ha / year.
 
--   
+## Variables
+The management module provides the following variables that can be used in expressions:
 
-    ### `minHeight` (numeric)
-
-    Height after which management becomes possible (meters)
-
--   
-
-    ### `burnInProbability` (expression)
-
-if not empty, the expression is used to scale the management actions that would happen in the first year to several years afterwards. Example: `polygon(yr, 0, 0, 1, 0, 1, 0.5, 10, 1)`; from year 0 to 1 the probability of management is 0. From year 1 to year 10 the management probability increases from 0.5 to 1.
-
--   
-
-    ### `managementCapGrid` (filepath)
-
-    Spatial grid (with user-defined resolution, e.g. 100x100km) that provides an upper limit to area managed (in hectares) per year and grid cell.
-
--   
-
-    ### `managementCapModifier` (numeric)
-
-    Multiplicative factor that modifies the value provided in `managementCapGrid.` For example, consider a 10x10km grid and a value in the grid of 1000, and `managementCapModifier` of 1.2. This would result in a maximum of forest management per year on the cell (100km2) of 1200 ha / year.
+| Variable | Description |
+|----------|-------------|
+| height | stand topheight (m) |
+| heightIncrement | lower bound of height increment (based on current state & history) in m/yr |
+| lastYear | simulation year of last management on cell (0 if never managed) |
 
 ## Output
 

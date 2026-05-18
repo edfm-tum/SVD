@@ -104,18 +104,13 @@ bool DNN::setupDNN(size_t aindex)
     try {
         Ort::SessionOptions session_options;
         // Threading Optimization:
-        // By default, set to 1 to prevent contention with SVD worker threads.
-        // Can be overridden in settings (e.g., dnn.threads.intra=4)
-        // Threading Optimization:
-        // Set to 0 by default to allow ONNX Runtime to utilize all available cores.
-        // This is preferred as DNN inference is the most compute-intensive part
-        // and should finish as quickly as possible.
         int intra_threads = settings.valueInt("dnn.threads.intra", 0);
         int inter_threads = settings.valueInt("dnn.threads.inter", 0);
         session_options.SetIntraOpNumThreads(intra_threads);
         session_options.SetInterOpNumThreads(inter_threads);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
+        bool using_cuda = false;
 #ifdef USE_CUDA
         try {
             // Diagnostic: List available providers to see if CUDA is built-in/visible
@@ -131,13 +126,12 @@ bool DNN::setupDNN(size_t aindex)
             int gpu_count = settings.valueInt("dnn.gpuCount", 1);
             if (gpu_count > 1) {
                 cuda_options.device_id = static_cast<int>((aindex - 1) % static_cast<size_t>(gpu_count));
-                lg->info("Using ONNX Runtime with CUDA acceleration (GPU ID: {} out of {}).", cuda_options.device_id, gpu_count);
             } else {
                 cuda_options.device_id = 0; // Default to first GPU
-                lg->info("Using ONNX Runtime with CUDA acceleration (GPU ID: 0).");
             }
 
             session_options.AppendExecutionProvider_CUDA(cuda_options);
+            using_cuda = true;
         } catch (const Ort::Exception& e) {
             lg->warn("Failed to enable CUDA: {}. Falling back to CPU.", e.what());
 #ifndef _WIN32
@@ -148,7 +142,20 @@ bool DNN::setupDNN(size_t aindex)
         }
 #endif
 
-        lg->trace(fmt::runtime("Loading ONNX model (Threads: intra={}, inter={})..."), intra_threads, inter_threads);
+        lg->info("--- DNN Setup Summary (Instance #{}) ---", aindex);
+        lg->info("Hardware: {}", using_cuda ? "GPU (CUDA)" : "CPU");
+        if (using_cuda) {
+            int gpu_count = settings.valueInt("dnn.gpuCount", 1);
+            lg->info("GPU Device ID: {} (out of {})", (aindex - 1) % gpu_count, gpu_count);
+        }
+        lg->info("Threading: intra_op={}, inter_op={}, instance_pool={}", 
+                 intra_threads == 0 ? "auto" : std::to_string(intra_threads), 
+                 inter_threads == 0 ? "auto" : std::to_string(inter_threads),
+                 settings.valueInt("dnn.threads", 2));
+        lg->info("Batching: size={}, max_queue={}", settings.valueInt("dnn.batchSize", 1024), settings.valueInt("dnn.maxBatchQueue", 100));
+        lg->info("---------------------------------------");
+
+        lg->trace(fmt::runtime("Loading ONNX model..."), intra_threads, inter_threads);
 #ifdef _WIN32
         std::wstring wfile(file.begin(), file.end());
         mSession = std::make_unique<Ort::Session>(mEnv, wfile.c_str(), session_options);

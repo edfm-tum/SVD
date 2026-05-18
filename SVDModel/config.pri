@@ -3,8 +3,14 @@
 # Without ONNX, SVD is "just" a simple state&transition model.
 DEFINES += USE_ONNXRUNTIME
 
-# Uncomment the following line to enable CUDA support for ONNX Runtime
-# DEFINES += USE_CUDA
+# Uncomment the following line to enable CUDA support for ONNX Runtime.
+# CONSEQUENCES:
+# 1. Faster inference on NVIDIA GPUs.
+# 2. Requires CUDA/cuDNN libraries to be present on the target machine (even for CPU fallback).
+# 3. Requires building with the GPU-enabled version of ONNX Runtime.
+# 4. Binary is less portable than a CPU-only build.
+DEFINES += USE_CUDA
+
 
 # ONNX Runtime configuration
 unix {

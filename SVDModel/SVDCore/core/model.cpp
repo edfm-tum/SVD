@@ -245,7 +245,7 @@ void Model::setupSpecies()
     for (std::string &s : mSpeciesList)
         s = trimmed(s);
 
-    // add as constants
+    // add as constants for expressions
     Expression::setConstants(mSpeciesList);
     lg_setup->debug("Setup of species: N={}.", mSpeciesList.size());
 

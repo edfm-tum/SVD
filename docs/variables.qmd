@@ -1,24 +1,27 @@
-# Expressions and variables
+---
+title: "Expressions and variables"
+---
 
 ## Cell variables
 Every single cell on the landscape is described by a specific state and a given environment. Expressions
 (see below) that are evaluated in the context of a cell can access state- and environment-specific
-variables. Note that [modules](modules.md) also provide additional variables that are available if the 
-respective module is enabled (e.g., [fire](module_fire.md), [wind](module_wind.md), or [bark beetle](module_barkbeetle.md)).
+variables. Note that [modules](modules.qmd) also provide additional variables that are available if the 
+respective module is enabled (e.g., [fire](module_fire.qmd), [wind](module_wind.qmd), or [bark beetle](module_barkbeetle.qmd)).
 
 ### Standard variables
 Variable|Description
 -----|----
 `index` | index of the cell on the landscape (0..N cells)
-`environmentId` | Id of the environment (see [landscape setup](configuring_the_landscape.md)
-`climateId` | Id of the climate zone (see [landscape setup](configuring_the_landscape.md)
+`environmentId` | Id of the environment (see [landscape setup](configuring_the_landscape.qmd)
+`climateId` | Id of the climate zone (see [landscape setup](configuring_the_landscape.qmd)
 `stateId` | Id of the state (1..N)
 `residenceTime` | number of years a cell is already in the state `stateId`
 
 ### Additional variables
 In addition to the standard variables, further environment- and state-specific variables are available. 
-* Environment variables: additional columns in the `landscape.file` table (see [landscape setup](configuring_the_landscape.md))
-* State variables: content of the `states.extraFile` table, and module specific variables (see [states](states.md) for details)
+
+* Environment variables: additional columns in the `landscape.file` table (see [landscape setup](configuring_the_landscape.qmd))
+* State variables: content of the `states.extraFile` table, and module specific variables (see [states](states.qmd) for details)
 * Climate variables: if the config `climate.publishVariables` is `true`, climate variables are also available (names are the column names given in the climate data file `climate.file`)
 
 A list of all available variables can be found in the log file.
@@ -34,10 +37,9 @@ comparable to hard coded C++.
 
 ### Types of variables
 Variable names within an expression depends on the context. There are three main cases:
-* Expressions are bound to an "object" which provides access to (internal) values. The available variable names
-depend on the object. A typical case are variables of a `cell` (see above). 
-* unbound variables: The name of the variable is not pre-defined and the first encountered variable name 
-in the expression is used: the expressions `3*x+1` and `3*year+1` behave the same. 
+
+* Expressions are bound to an "object" which provides access to (internal) values. The available variable names depend on the object. A typical case are variables of a `cell` (see above). 
+* unbound variables: The name of the variable is not pre-defined and the first encountered variable name  in the expression is used: the expressions `3*x+1` and `3*year+1` behave the same. 
 
 ### Basic operations
 Expressions can combine basic arithmetic operators, variables, and functions. The basic 

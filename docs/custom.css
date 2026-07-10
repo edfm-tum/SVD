@@ -1,0 +1,86 @@
+/* Custom Stylesheet for SVD Documentation */
+
+/* Ensure smooth transitions on hover */
+a {
+  transition: color 0.2s ease-in-out;
+}
+
+/* Style LaTeX Math Blocks */
+.math.display {
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid var(--bs-primary);
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+html.dark .math.display, body.quarto-dark .math.display {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Style settings tables */
+.wikitable, .table {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  vertical-align: top;
+  border-color: var(--bs-border-color);
+}
+
+.table th {
+  background-color: var(--bs-light);
+  color: var(--bs-body-color);
+  font-weight: 600;
+}
+
+html.dark .table th, body.quarto-dark .table th {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Quick links styling */
+.quick-links-row {
+  margin-top: 15px;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quick-links-label {
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: var(--bs-body-color);
+  margin-right: 5px;
+}
+
+.quick-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #5c4d9a;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.15s ease-in-out, transform 0.1s ease-in-out;
+  border: none;
+}
+
+.quick-link-btn:hover {
+  background-color: #4a3e7e;
+  color: #ffffff !important;
+}
+
+.quick-link-btn:active {
+  transform: scale(0.98);
+}
+
+.navbar-logo {
+  max-height: 40px;
+  width: auto;
+  margin-right: 8px;
+  opacity: 0.95;
+}

@@ -1,4 +1,6 @@
-# Management module
+---
+title: "Management module"
+---
 
 The SVD management module simulates management actions on 100 m resolution (the SVD base resolution). Management is performed as clear cut of the grid cell. Management happens for stands above *minHeight* and whose annual height increment is below a (state-specific) threshold. The later mimics the tree growth & yield principle trees are harvested after growth has culminated (and is declining). Further, management probabilities are calculated externally and given to SVD with the `transitionFile`. In order to prevent large scale clearcuts in year 1, there is a burn-in period that can be defined via an expression.
 
@@ -20,11 +22,11 @@ Management is triggered when:
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md).
+The module is configured in the [project file](project_file.qmd).
 In addition to the `enabled` and `type` setting, the management module has the following settings:
 
 #### `transitionFile` (filepath)
-The file containing a transition matrix (see [matrix module](module_matrix.md)) for post management states (see above).
+The file containing a transition matrix (see [matrix module](module_matrix.qmd)) for post management states (see above).
 
 #### `stateFile` (filepath)
 Data file with additional state-specific variables that specify per-state damage probabilities.
@@ -52,4 +54,4 @@ The management module provides the following variables that can be used in expre
 
 ## Output
 
-The module can provide tabular and gridded [output](outputs.md#Management).
+The module can provide tabular and gridded [output](outputs.qmd#Management).

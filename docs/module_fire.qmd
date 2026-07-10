@@ -1,4 +1,6 @@
-# Fire module
+---
+title: "Fire module"
+---
 
 The SVD fire module simulates wildfire on 100 m resolution (the SVD base resolution). Fire spreads dynamically with a cellular automaton approach and considers wind conditions, terrain, and burn probabilities specified for each vegetation state. A fire keeps spreading until it stops intrinsically (e.g., when the combustible biomass is exhausted and no further spread is possible), or when a pre-defined maximum fire size is reached. Fire ignition processes are not explicitly simulated in SVD, but rely on a list of predefined ignitions. Multiple fires can start in any given year, and a fire is defined by starting location, maximum fire size, and wind conditions (direction, speed).
 
@@ -23,7 +25,7 @@ The fire module requires module-specific attributes for each state in SVD. These
 | pSeverity | probability of a high-severity burn.                                           |
 | pBurn     | probability [0..1] that a cell in the current state burns when reached by fire |
 
-The post-fire transition is defined by the transition matrix in `transitionFile`. Note that different transitions can be defined for low- and high-severity fire. High severity is encoded by `key=1` in the matrix (see [matrix module](module_matrix.md) for details).
+The post-fire transition is defined by the transition matrix in `transitionFile`. Note that different transitions can be defined for low- and high-severity fire. High severity is encoded by `key=1` in the matrix (see [matrix module](module_matrix.qmd) for details).
 
 ### Ignitions
 
@@ -43,11 +45,11 @@ Fires are not started by SVD, but are triggered externally by a time series of f
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md).
+The module is configured in the [project file](project_file.qmd).
 In addition to the `enabled` and `type` setting, the fire module has the following settings:
 
 #### `transitionFile` (filepath)
-The file containing a transition matrix (see [matrix module](module_matrix.md)) for post fire states (see above).
+The file containing a transition matrix (see [matrix module](module_matrix.qmd)) for post fire states (see above).
 
 #### `ignitionFile` (filepath)
 The data table with the list of ignition points and fire sizes.
@@ -76,4 +78,4 @@ The fire module provides the following variables that can be used in expressions
 
 ## Output
 
-The module can provide tabular and gridded [output](outputs.md#Fire).
+The module can provide tabular and gridded [output](outputs.qmd#Fire).

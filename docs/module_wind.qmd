@@ -1,4 +1,6 @@
-# Wind module
+---
+title: "Wind module"
+---
 
 The SVD wind module simulates windthrows on 100 m resolution (the SVD base resolution). Wind spreads dynamically.
 
@@ -43,13 +45,13 @@ Windstorms are not started by SVD, but are triggered externally by a time series
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md). In addition to the `enabled` and `type` setting, the wind module has the following settings:
+The module is configured in the [project file](project_file.qmd). In addition to the `enabled` and `type` setting, the wind module has the following settings:
 
 #### `regionalProbabilityGrid` (filepath)
 The file containing a the 10km probability of wind occurrence.
 
 #### `transitionFile` (filepath)
-The file containing a transition matrix (see [matrix module](module_matrix.md)) for post wind states (see above).
+The file containing a transition matrix (see [matrix module](module_matrix.qmd)) for post wind states (see above).
 
 #### `ignitionFile` (filepath)
 The data table with the list of event location points and wind sizes.
@@ -84,4 +86,4 @@ The wind module provides the following variables that can be used in expressions
 
 ## Output
 
-The module can provide tabular and gridded [outputs.](outputs.md#Wind)
+The module can provide tabular and gridded [outputs.](outputs.qmd#Wind)

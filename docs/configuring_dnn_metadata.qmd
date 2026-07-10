@@ -1,8 +1,10 @@
-# Configuring DNN meta data
+---
+title: "Configuring DNN meta data"
+---
 
 ## Introduction
-In order to define the meta data that describes the bindings to the DNN SVD uses a single [configuration file](input_files.md)
-which is set by the `dnn.metadata` setting in the main configuration file.
+In order to define the meta data that describes the bindings to the DNN SVD uses a single configuration file
+which is set by the `dnn.metadata` setting in the main [configuration file](project_file.qmd).
 
 Each binding is described by a number of settings, which follow this naming scheme:
 

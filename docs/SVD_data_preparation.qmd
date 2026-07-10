@@ -1,10 +1,14 @@
+---
+title: "Svd Data Preparation"
+---
+
 ## Setting up a project for SVD
 
 An efficient way to set up the required spatial and tabular data is to use R (or Python) as much as possible. For text files (such as the project configuration file), use a powerful editor such as Notepad++ that is capable of syntax highlighting. Using a spreadsheet program such as Excel is fine, but it is advisable to create the actual input files for SVD in R (e.g., by editing Excel, importing Excel into R, writing input files in R).
 
 ### Spatial data
 
-SVD used one spatial grid that defines the extent of the landscape (see also [configuring the landscape](configuring_the_landscape.md)). This grid set with the `landscape.grid` key in the config file and is considered as the "master" grid. The grid defines:
+SVD used one spatial grid that defines the extent of the landscape (see also [configuring the landscape](configuring_the_landscape.qmd)). This grid set with the `landscape.grid` key in the config file and is considered as the "master" grid. The grid defines:
 
 -   the extent of the landscape (i.e., the "rectangle" around the actual project area)
 
@@ -167,6 +171,6 @@ write.csv(states.tab, "stm/states.csv", row.names = F, quote=F, sep = "\t", dec=
 
 #### Logging
 
-You can control the level of details in the log file. It can be useful to increase the level of detail when hunting down problems. To do so, change the logging levels in the config file (e.g, `logging.setup.level` , see [project file](project_file.md)).
+You can control the level of details in the log file. It can be useful to increase the level of detail when hunting down problems. To do so, change the logging levels in the config file (e.g, `logging.setup.level` , see [project file](project_file.qmd)).
 
 Use a capable editor that allows to reload the file whenever the file changes on disk (e.g., RStudio, Notepad++). Pro tip: use an editor that allows custom syntax highlighting (e.g. change appearance of warning/error lines).

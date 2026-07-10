@@ -1,4 +1,6 @@
-# Bark Beetle Module
+---
+title: "Bark Beetle Module"
+---
 
 ## Purpose
 
@@ -113,4 +115,4 @@ The bark beetle module provides the following variables that can be used in expr
 
 ## Output
 
-The module can provide tabular and gridded [output](outputs.md#BarkBeetle).
+The module can provide tabular and gridded [output](outputs.qmd#BarkBeetle).

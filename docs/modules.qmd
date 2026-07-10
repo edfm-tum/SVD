@@ -1,14 +1,13 @@
-# Modules
+---
+title: "Modules"
+---
 
 The core functionality of SVD is the simulation of state transitions by the means of a Deep Neural Network.
 In addition, SVD can be extended with "modules". Modules can be used to:
-* extend the range of vegetation types covered by SVD; for instance, if the DNN only covers forest states,
-a module could handle other land cover types (e.g. grass land or agricultural land)
-* implement additional processes such as disturbances or forest management; the DNN could be used 
-for "slow" forest dynamics, while abrupt changes (e.g. wildfire) are imposed by modules
-* implement parts of the life cycle that are not covered by the DNN; for example, if a DNN is only trained 
-to estimate regeneration probabilities after a disturbance, a module can be used to establish a simplified
-model of vegetation dynamics for other development stages.
+
+* extend the range of vegetation types covered by SVD; for instance, if the DNN only covers forest states, a module could handle other land cover types (e.g. grass land or agricultural land)
+* implement additional processes such as disturbances or forest management; the DNN could be used  for "slow" forest dynamics, while abrupt changes (e.g. wildfire) are imposed by modules
+* implement parts of the life cycle that are not covered by the DNN; for example, if a DNN is only trained  to estimate regeneration probabilities after a disturbance, a module can be used to establish a simplified model of vegetation dynamics for other development stages.
 
 ## Interaction types
 SVD provides two conceptually different ways how modules can interact with the landscape. Modules can
@@ -37,27 +36,22 @@ a fire module could change a forested state that is handled by the DNN (orange) 
  
 ## Supported modules
 
-Modules are configured in the [project file](project_file.md). The specific implementation of a module is chosen
+Modules are configured in the [project file](project_file.qmd). The specific implementation of a module is chosen
 with the `type` setting. The following modules are available:
 
-* ### [`matrix`](module_matrix.md)
-State-specific transitions based on a transition probability matrix.
+* ### [`matrix`](module_matrix.qmd) State-specific transitions based on a transition probability matrix.
  
-* ### [`fire`](module_fire.md)
-Wildfire disturbance module that simulates pre-defined events.
+* ### [`fire`](module_fire.qmd) Wildfire disturbance module that simulates pre-defined events.
 
-* ### [`wind`](module_wind.md)
-Wind disturbance module that simulates pre-defined events.
+* ### [`wind`](module_wind.qmd) Wind disturbance module that simulates pre-defined events.
 
-* ### [`bark beetle`](module_barkbeetle.md)
-Bark beetle disturbance module that simulates spruce bark beetle dynamics.
+* ### [`bark beetle`](module_barkbeetle.qmd) Bark beetle disturbance module that simulates spruce bark beetle dynamics.
 
-* ### [`management`](module_management.md)
-Management module that simulates pre-defined events.
+* ### [`management`](module_management.qmd) Management module that simulates pre-defined events.
 
 ## Specifying handling modules for states
 To set the module as handler for specific states, use the module name as the `type` property in the
-[state](states.md) definition.
+[state](states.qmd) definition.
 
 For example, consider the following definition of a module `test_matrix`:
 ```

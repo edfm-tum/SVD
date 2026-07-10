@@ -1,4 +1,6 @@
-# Configuring the DNN
+---
+title: "Configuring the DNN"
+---
 
 SVD integrates [ONNX Runtime](https://onnxruntime.ai/) and allows thus to run
 any trained Deep Neural Network (in `.onnx` format) within the framework.
@@ -19,6 +21,7 @@ data type of the tensor, for example floating point or integer). The input/outpu
 definition of the tensors both during the training and inference phase.
 
 In order to integrate (an existing) DNN with SVD one needs to:
+
 * define each input tensor (name, shape, data type)
 * define which data items should be fed into the tensors during a SVD simulation
 * further define potential transformation of those data items (often data is scaled or otherwise transformed for better DNN performance)
@@ -65,13 +68,10 @@ with `availableNitrogen/100` and `pctSand/100`. `availableNitrogen` and `pctSand
 available in the model (e.g. provided as environment variables in `landscape.file`). Note that
 the data values are transformed on the fly. The name of the tensor is `site`. 
 
-A more detailed description of the available input slots is given on the [DNN metadata](configuring_dnn_metadata.md) page.
+A more detailed description of the available input slots is given on the [DNN metadata](configuring_dnn_metadata.qmd) page.
 
 ## Output tensors
 SVD expects two output tensors of the DNN:
-* a probability distribution for the next state. The distribution is typically the result of a `Softmax` layer which
-provides for each potential state a values between 0 and 1. For example, if there are 1000 possible states, the output
-tensor is expected to be a 1-dimensional vector with 1000 values (float). The output tensor is specified in the
-main configuration file with the `dnn.state.name` (name of the tensor), and `dnn.state.N` (the number of classes).
-* a probability distribution for the time of state change. Again, the tensor is the result of a `Softmax` operation
-and the tensor is specified with the `dnn.restime.name` and `dnn.restime.N` settings.
+
+* a probability distribution for the next state. The distribution is typically the result of a `Softmax` layer which provides for each potential state a values between 0 and 1. For example, if there are 1000 possible states, the output tensor is expected to be a 1-dimensional vector with 1000 values (float). The output tensor is specified in the main configuration file with the `dnn.state.name` (name of the tensor), and `dnn.state.N` (the number of classes).
+* a probability distribution for the time of state change. Again, the tensor is the result of a `Softmax` operation and the tensor is specified with the `dnn.restime.name` and `dnn.restime.N` settings.

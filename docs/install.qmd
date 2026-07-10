@@ -1,10 +1,12 @@
-# Installing and compiling SVD
+---
+title: "Installing and compiling SVD"
+---
 
 You can either use the precompiled version of SVD, or build SVD for yourself.
 
 ## Installing SVD
 
-The `executable` folder contains all the required files and libraries for Windows. There is no separate installation. To run SVD, start the `SVDUI.exe` ([instructions](svdUI.md)).
+The `executable` folder contains all the required files and libraries for Windows. There is no separate installation. To run SVD, start the `SVDUI.exe` ([instructions](svdUI.qmd)).
 
 For DNN inference, SVD now uses **ONNX Runtime**. The required library `onnxruntime.dll` (CPU version) is included in the `executable` folder.
 
@@ -87,8 +89,7 @@ To use NVIDIA GPUs for faster DNN inference:
         sudo apt-get install libcudnn9-cuda-12
         ```
     *   **Verification:** Use `ldd /opt/onnxruntime/lib/libonnxruntime_providers_cuda.so` to ensure all dependencies (like `libcudnn.so.9`) are found.
-4.  **Build Configuration:** In `SVDModel/config.pri`, uncomment the line:
-    `DEFINES += USE_CUDA`
+4.  **Build Configuration:** In `SVDModel/config.pri`, uncomment the line: `DEFINES += USE_CUDA`
 5.  **Execution:** When SVD starts, it will attempt to initialize the CUDA execution provider. Check the log output to verify if it succeeded or fell back to CPU.
 
 ## other installs
@@ -115,7 +116,7 @@ sudo dnf install mesa-libGL-devel               # Fedora
 
 ## SVD without ONNX
 
-SVD can be used *without* ONNX Runtime. This version is not able to use DNNs for estimating state transitions, but can still be useful, e.g., as a pure state-and-transition-model using the [matrix module](module_matrix.md).
+SVD can be used *without* ONNX Runtime. This version is not able to use DNNs for estimating state transitions, but can still be useful, e.g., as a pure state-and-transition-model using the [matrix module](module_matrix.qmd).
 
 To build SVD without ONNX, you need to update the file `SVDModel/config.pri`. To *disable* ONNX, comment out this line:
 

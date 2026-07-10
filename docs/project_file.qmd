@@ -1,23 +1,31 @@
-# Project file
+---
+title: "Project file"
+---
 
-The project file is the central [configuration file](SVD_data_formats.md) of a SVD project.
+The project file is the central [configuration file](SVD_data_formats.qmd) of a SVD project.
 When referring to input files, a relative path to the folder with the project file may be provided.
 
 ## General settings
 
 #### `logging.file` (filepath)
 Location of the SVD log file. The file is overwritten when the model is created. See TODO
+
 #### `logging.setup.level` (string)
 The logging level during the startup of the model 
 (possible levels with decreasing level of detail: `trace`, `debug`, `info`, `error`, `off`)
+
 #### `logging.model.level` (string)
 The logging level during a simulation for processes in the main model (see also `logging.setup.level').
+
 #### `logging.dnn.level` (string)
 The logging level during a simulation for the DNN (see also `logging.setup.level').
+
 #### `model.multithreading` (boolean)
 Multithreading is disabled if `false` (mainly for debugging) (default true)
+
 #### `model.threads` (numeric)
 number of threads used by the SVD model (without threads specifically for the DNN) (default 4)
+
 #### `filemask.<mask>` (string)
 specify one or multiple strings (mask) that can be used to adapt file paths used by SVD. For example, consider you set `filemask.run = experiment4`. Every instance of `$run$` in a file name is consequently replaced with `experiment4`. For example, `stategrid_$run$_$year$.tif` is expanded to `stategrid_experiment4_42.tif` (in year 42). 
 
@@ -25,26 +33,34 @@ specify one or multiple strings (mask) that can be used to adapt file paths used
 
 #### `dnn.threads` (numeric)
 The number of threads in the DNN thread pool. This pool manages the execution of parallel DNN instances (see `dnn.count`). (default: 2)
+
 #### `dnn.threads.intra` (numeric)
 The number of threads used by ONNX Runtime for intra-operator parallelism (i.e., parallelism within a single operator). Set to 0 to use all available cores. (default: 0)
+
 #### `dnn.threads.inter` (numeric)
 The number of threads used by ONNX Runtime for inter-operator parallelism (i.e., parallelism between independent operators). Set to 0 to use all available cores. (default: 0)
+
 #### `dnn.count` (numeric)
 Number of parallel DNN instances that are used. Each instance uses the same network (`dnn.file`). (default: 1)
+
 #### `dnn.gpuCount` (numeric)
 The number of available GPUs to use for DNN inference. When `dnn.count` > 1 and `dnn.gpuCount` > 1, SVD will automatically distribute the DNN instances across the specified number of GPUs in a round-robin fashion (e.g., DNN 0 on GPU 0, DNN 1 on GPU 1, DNN 2 on GPU 0, etc.). This setting requires SVD to be built with CUDA support. (default: 1)
+
 #### `dnn.batchSize` (numeric)
 The size of a single "batch". Multiple cells are processed simultaneously by the DNN, and the batch size
 indicates how many. Bigger batch sizes are usually processed faster, if batches are too large memory problems
 might occur. Typical values are between 512 and 4096 (powers of 2 are not required)
+
 #### `dnn.maxBatchQueue` (numeric)
 SVD maintains a queue of batches that wait for DNN processing. `maxBatchQueue` indicates the maximum number
 of batches in the queue. Larger numbers might increase parallelism, but require more memory. Typical values 
 are between 4 - 100.
+
 #### `dnn.file` (filepath)
 The path of the "frozen" Deep Neural Network. See TODO...
+
 #### `dnn.metadata` (filepath)
-Configuration file that describes the meta data of the DNN (input tensors). See the [configuration page](configuring_dnn_metadata.md) for details.
+Configuration file that describes the meta data of the DNN (input tensors). See the [configuration page](configuring_dnn_metadata.qmd) for details.
 
 #### `dnn.topKNClasses` (numeric)
 SVD select the `topKNClasses` most likely states from the probability distribution over all states (topK-algorithm). 
@@ -52,11 +68,13 @@ See also: TODO
 
 #### `dnn.state.name` (string)
 The name of the output tensor in the trained network for the future state of a cell.
+
 #### `dnn.state.N` (numeric)
 The number of classes (number of different states) in the output tensor for the future state of a cell.
 
 #### `dnn.restime.name` (string)
 The name of the output tensor in the trained network for the remaining residence time.
+
 #### `dnn.restime.N` (numeric)
 The number of classes (number of different durations) in the output tensor for the remaining residence time.
 
@@ -72,50 +90,59 @@ The optimal threading configuration depends significantly on whether you are usi
 
 #### CPU Inference
 When running on the CPU, ONNX Runtime can use multiple threads to parallelize the execution of a single model (intra-op) and independent operators (inter-op).
+
 * **Intra-op Parallelism (`dnn.threads.intra`):** This is usually the most important setting. Set this to the number of physical cores available to the DNN. If `dnn.count` is 1, you can set it to 0 (auto-detect all cores). 
 * **Parallel DNNs (`dnn.count`):** If you have many cores, you can also increase `dnn.count` to run multiple batches in parallel. However, ensure that `dnn.count * dnn.threads.intra` does not exceed the total number of cores to avoid performance degradation due to thread contention.
 * **DNN Thread Pool (`dnn.threads`):** Ensure this is at least equal to `dnn.count`.
 
 #### GPU Inference
 When running on a GPU (using CUDA), the threading strategy is different. The GPU handles its own parallelism internally.
+
 * **Intra/Inter-op Parallelism:** It is highly recommended to set `dnn.threads.intra = 1` and `dnn.threads.inter = 1`. Using more threads on the CPU side often adds unnecessary management overhead and can actually slow down the inference process.
 * **Parallel DNNs (`dnn.count`):** You can set `dnn.count` to 2 or more to keep the GPU saturated with work, especially if your GPU has a lot of memory. This allows one batch to be processed while another is being prepared (data transfer).
 * **Batch Size (`dnn.batchSize`):** For GPUs, larger batch sizes (e.g., 2048 or 4096) are typically much more efficient than smaller ones.
 
 ## Model components
+
 ### States
+
 #### `states.file` (filepath)
-The [data table](SVD_data_formats.md) containing the available states. The required columns in the
+The [data table](SVD_data_formats.qmd) containing the available states. The required columns in the
  file are: `stateId`, `composition`, `structure`, `fct`, `type`. See TODO for details on setting up states.
+
 #### `states.extraFile` (filepath)
 If provided, SVD loads additional properties for each state from a table. See also "cell variables" [TODO]
 
 ### Landscape
+
 #### `landscape.grid` (filepath)
-The [raster file](SVD_data_formats.md) that defines the spatial extent of the simulated landscape 
-(and the environemnt). See [here](configuring_the_landscape.md) for details.
+The [raster file](SVD_data_formats.qmd) that defines the spatial extent of the simulated landscape 
+(and the environemnt). See [here](configuring_the_landscape.qmd) for details.
+
 #### `landscape.file` (filepath)
-The [data table](SVD_data_formats.md) that defines the climatic and environmental properties of the landscape.
-See [here](configuring_the_landscape.md) for details.
+The [data table](SVD_data_formats.qmd) that defines the climatic and environmental properties of the landscape.
+See [here](configuring_the_landscape.qmd) for details.
 
 #### `initialState.mode` (string)
 The setting define how the initial state of the vegetation is set up.
 Possible values are:
-* `file`: initial states are extracted from the table in `landscape.file`. The expected column names are `stateId` for the initial state, 
-and `residenceTime` for the initial value of residence time.
+
+* `file`: initial states are extracted from the table in `landscape.file`. The expected column names are `stateId` for the initial state,  and `residenceTime` for the initial value of residence time.
 * `grid`: the initial state of the landscape is retrieved from raster file (settings `initialState.stateGrid`, `initialState.residenceTimeGrid`) 
 * `random`: creates a random landscape (state: 1 - max-state, residence time: 0-10)
 
 #### `initialState.stateGrid` (filepath)
-[Raster](SVD_data_formats.md) file with the initial state Id for each cell. Missing values are not allowed.
+[Raster](SVD_data_formats.qmd) file with the initial state Id for each cell. Missing values are not allowed.
 
 #### `initialState.residenceTimeGrid` (filepath)
-[Raster](SVD_data_formats.md) file with the initial value for residence time for each cell. Missing values are not allowed.
+[Raster](SVD_data_formats.qmd) file with the initial value for residence time for each cell. Missing values are not allowed.
 
 ### Climate
+
 #### `climate.file` (filepath)
-A [data table](SVD_data_formats.md) with climate data. The required columns are:
-* climateId: The climate region (see [landscape configuration](configuring_the_landscape.md) )
+A [data table](SVD_data_formats.qmd) with climate data. The required columns are:
+
+* climateId: The climate region (see [landscape configuration](configuring_the_landscape.qmd) )
 * year: the year (e.g. 2010)
 * all other columns are the "payload" and describe climatic indicators for the given year
 
@@ -130,19 +157,20 @@ the sequence starts with `1950,1967,1954,...`, the year 1950 is used for the fir
 the second, and so forth. 
 
 #### `model.species` (string)
-List of species codes that are available (comma separated). See also [Neighbors](configuring_dnn_metadata.md).
+List of species codes that are available (comma separated). See also [Neighbors](configuring_dnn_metadata.qmd).
 
 ## Outputs
 Output-specific settings start with `output.`. The general scheme is:
 `output.<outputname>.<setting>`. The `outputname` specifies the type of the output; 
-see the [output page](outputs.md) for details on available outputs.
+see the [output page](outputs.qmd) for details on available outputs.
 
 Settings that are generally available are:
+
 * `enabled` (boolean): if `true` the output is active
 * `file` or `path`: path to the output-file (`file`) or path that defines the path for output file*s* (`path`).
 * additional settings are available for specific outputs
 
-Outputs are data tables (`,` separated text files), see the [output page](outputs.md) for details.
+Outputs are data tables (`,` separated text files), see the [output page](outputs.qmd) for details.
 Example:
 ```
 output.StateGrid.enabled = true
@@ -155,11 +183,12 @@ output.StateGrid.interval = 20
 Settings that are specific to a module start with `modules.`. The general scheme is:
 `modules.<module-name>.<setting> = <value>`, where the `module-name` can be freely chosen.
 
-See the [module page](modules.md) for details.
+See the [module page](modules.qmd) for details.
 
 Settings that are generally available are:
+
 * `enabled` (boolean): if `true` the module is active
-* `type` (string): specifies the module `type` (See [module page](modules.md) for available types)
+* `type` (string): specifies the module `type` (See [module page](modules.qmd) for available types)
 
 Additional module settings are `type` specific, and are described on the respective module pages. Note
 that multiple modules of the same type (but with different a `module-name`) can be used.

@@ -1,6 +1,9 @@
-# Configuring the landscape
+---
+title: "Configuring the landscape"
+---
+
 The simulated landscape is a (large) grid of `cells` with a cell size of 100m. Additional spatial layers
-specify properties of the environment (site and climate conditions). A cell has also a [state](states.md) and a
+specify properties of the environment (site and climate conditions). A cell has also a [state](states.qmd) and a
 residence time. The figure below provides a conceptual view:
 
 ![Landscape](img/landscape_schema.png)
@@ -25,6 +28,7 @@ id     | The unique environment Id
 climateId | an Id that defines the climate region; the Id is linked to climate data 
 
 The hierarchical structure helps to reduce the amount of data that SVD needs to process: 
+
 * multiple cells (100m resolution) can share environmental conditions (e.g., site variables)
 * multiple environmental zones can share the same climatic data
 
@@ -35,7 +39,7 @@ one row in the environment file one climate region (and consequently climate tim
 
 ### Additional variables
 In addition to the fixed variables `id` and `climateId` further (numeric) variables can be defined and 
-subsequently used in [expressions](variables.md). The column name in the `landscape.file` is used as the variable name.
+subsequently used in [expressions](variables.qmd). The column name in the `landscape.file` is used as the variable name.
 Typically, such variables refer to site conditions (e.g., soil depth, available nitrogen, ..).
 
 ### Initial vegetation conditions

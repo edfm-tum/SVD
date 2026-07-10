@@ -29,6 +29,8 @@
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QDesktopServices>
+#include <QFile>
+#include <QTextStream>
 
 
 #include "testdnn.h"
@@ -372,9 +374,42 @@ void MainWindow::on_actioncreate_output_docs_triggered()
     std::string output_doc = Model::instance()->outputManager()->createDocumentation();
 
     QApplication::clipboard()->setText(QString::fromStdString(output_doc));
-
     spdlog::get("main")->info("Output documentation copied to the clipboard!");
 
+    QString appPath = QCoreApplication::applicationDirPath();
+    if (appPath.contains("SVD") && appPath.contains("build")) {
+        int idx = appPath.indexOf("SVD");
+        if (idx != -1) {
+            QString projectRoot = appPath.left(idx + QString("SVD").length());
+            QString qmdPath = projectRoot + "/docs/outputs.qmd";
+            QFile file(qmdPath);
+            if (file.exists()) {
+                if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                    QTextStream in(&file);
+                    QString qmdContent = in.readAll();
+                    file.close();
+                    if (!qmdContent.isEmpty()) {
+                        QString startTag = "<!-- GENERATED-CODE-START -->";
+                        QString endTag = "<!-- GENERATED-CODE-END -->";
+                        int startIdx = qmdContent.indexOf(startTag);
+                        int endIdx = qmdContent.indexOf(endTag);
+                        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+                            QString newContent = qmdContent.left(startIdx + startTag.length()) + "\n" + QString::fromStdString(output_doc) + "\n" + qmdContent.mid(endIdx);
+                            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                                QTextStream out(&file);
+                                out << newContent;
+                                file.close();
+                                spdlog::get("main")->info("Output table description successfully written to {}", qmdPath.toStdString());
+                                QMessageBox::information(this, "SVD Outputs", QString("Output table description successfully written to %1\nand copied to clipboard.").arg(qmdPath));
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    QMessageBox::information(this, "SVD Outputs", "Output table description copied to clipboard.");
 }
 
 

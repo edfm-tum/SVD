@@ -1,4 +1,6 @@
-# Data formats
+---
+title: "Data formats"
+---
 
 -   [Configuration files](#config_file)
 -   [Data tables](#table)
@@ -50,4 +52,4 @@ The coordinates system has to be metric, and the requirements for the cell size 
 
 SVD uses the [FreeImage](https://freeimage.sourceforge.io/) library for handling GeoTIFF files. Currently, the selection of data types is limited to INT16 (16-bit signed integers) and INT32 (32-bit signed integer) for integer grids, and 32 bit / 64 bit floating point data. In R you can use the `datatype` parameter of `writeGrid()` to force a specific format (use 'INT2S' or 'INT4S' for 16 and 32 bit integers, and 'FLT4S' for 32 bit float or 'FLT8S' for 64 bit double precision floating point numbers).
 
-The origin (i.e. the 0/0 point of the internal coordinate system) is derived from the [`landscape.grid`](configuring_the_landscape.md).
+The origin (i.e. the 0/0 point of the internal coordinate system) is derived from the [`landscape.grid`](configuring_the_landscape.qmd).

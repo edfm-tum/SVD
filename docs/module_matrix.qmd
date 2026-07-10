@@ -1,4 +1,6 @@
-# Matrix module
+---
+title: "Matrix module"
+---
 
 ## Transition matrix
 
@@ -6,9 +8,9 @@ The transition matrix used by the module is loaded from `transitionFile` and has
 
 | Column     | Desription                                                          |
 |------------|---------------------------------------------------------------------|
-| stateId    | The [Id](states.md) of the current state                            |
+| stateId    | The [Id](states.qmd) of the current state                            |
 | key        | an additional qualifier (see text)                                  |
-| targetId   | The [Id](states.md) of the target state                             |
+| targetId   | The [Id](states.qmd) of the target state                             |
 | p          | The probability (0..1) of a transition from `stateId` to `targetId` |
 | pmin       | Minimum probability (0..1), (not mandatory)                         |
 | pmax       | Maximum probability (0..1), (not mandatory)                         |
@@ -40,7 +42,7 @@ Converted to the "long" format used by the module, the table looks like:
 | 2       | 1   | 3        | 0.1 |
 | ...     | ... | ...      | ... |
 
-The information whether a cell has shallow or deep soil, can be derived from the environment (assuming there is a variable `soilDepth`) and can be expressed as an [expression](variables.md) (`keyFormula`):
+The information whether a cell has shallow or deep soil, can be derived from the environment (assuming there is a variable `soilDepth`) and can be expressed as an [expression](variables.qmd) (`keyFormula`):
 
 `if(soilDepth<30, 0, 1)`
 
@@ -56,7 +58,7 @@ If for a given state several `targetIds` are provided, then the target state is 
 
 ### Conditional transitions
 
-The probability of a transition from one state to another need not to be constant, but can depend on environmental data, or on the local neighborhood. For example, a transition could be more probable, if local site conditions allow faster growth (e.g., difference in soil depth), or if specific species are available in the neighborhood (e.g. seed input). Such dependencies can be expressed by using [expressions](variables.md).
+The probability of a transition from one state to another need not to be constant, but can depend on environmental data, or on the local neighborhood. For example, a transition could be more probable, if local site conditions allow faster growth (e.g., difference in soil depth), or if specific species are available in the neighborhood (e.g. seed input). Such dependencies can be expressed by using [expressions](variables.qmd).
 
 Expressions can be provided in the `expression` column in the `transitionFile`. Expressions can make use of all available variables, and functions (e.g., for querying the state of neighboring cells). The result of the expression modifies the transition probability provided in the file.
 
@@ -106,11 +108,11 @@ The following tables illustrate the difference numerically. If the values of the
 
 ## Handled states
 
-To set the module as handler for specific states, use the module name as the `type` property in the [state](states.md) definition (see [modules](modules.md)).
+To set the module as handler for specific states, use the module name as the `type` property in the [state](states.qmd) definition (see [modules](modules.qmd)).
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md).
+The module is configured in the [project file](project_file.qmd).
 In addition to the `enabled` and `type` setting, the matrix module has the following settings:
 
 #### `transitionFile` (filepath)

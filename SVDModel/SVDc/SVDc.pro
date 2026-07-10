@@ -47,7 +47,6 @@ win32 {
         LIBS += -L../SVDCore/debug -lSVDCore
         PRE_TARGETDEPS += ../SVDCore/debug/SVDCore.lib
     }
-    contains(DEFINES, USE_TENSORFLOW): LIBS += -L../../tensorflow/lib14cpu -ltensorflow
     LIBS += -L../../../SVDCore/third_party/FreeImage -lFreeImage
 
 
@@ -64,17 +63,9 @@ win32 {
         LIBS += -L../SVDCore/debug -lSVDCore
         PRE_TARGETDEPS += ../SVDCore/debug/libSVDCore.a
     }
-    contains(DEFINES, USE_TENSORFLOW): LIBS += -L"..\..\..\..\tensorflow\lib14cpu" -ltensorflow
     LIBS += -L"..\..\..\SVDCore\third_party\FreeImage" -lFreeImage
 
 }
-
-
-
-LIBS += -L../../../../../tensorflow\tensorflow\contrib\cmake\build\protobuf\src\protobuf\RelWithDebInfo -llibprotobuf
-
-# for profiling only:
-# LIBS += -L"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0/lib/x64" -lcudart
 }
 
 
@@ -82,18 +73,13 @@ linux-g++ {
 PRE_TARGETDEPS += ../SVDCore/libSVDCore.a
 PRE_TARGETDEPS += ../Predictor/libPredictor.a
 
-# pre-compiled (local)
-# PRE_TARGETDEPS += /usr/lib/tensorflow-cpp/libtensorflow_cc.so
-# PRE_TARGETDEPS += /usr/local/lib/libtensorflow_cc.so
-# PRE_TARGETDEPS += /home/werner/dev/tensorflow/libtensorflow_cc2.11/usr/local/lib/libtensorflow_cc.so
-#PRE_TARGETDEPS += /usr/local/lib/libtensorflow_framework.so
-
-LIBS += -L../SVDCore -lSVDCore
+# Library order is critical: Predictor depends on SVDCore and onnxruntime
 LIBS += -L../Predictor -lPredictor
-#LIBS += -L/usr/lib/tensorflow-cpp/ -libtensorflow_cc.so
+LIBS += -L../SVDCore -lSVDCore
+LIBS += $$LIBONNXRUNTIME
+
 LIBS += -L/usr/lib/x86_64-linux-gnu -lfreeimage
 LIBS += -L/usr/local/lib
-contains(DEFINES, USE_TENSORFLOW): LIBS += -ltensorflow_cc -ltensorflow_framework -lprotobuf
 
 }
 

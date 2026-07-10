@@ -41,6 +41,8 @@
 #include "../Predictor/predtest.h"
 
 #include "spdlog/spdlog.h"
+#include "spdlog/async.h"
+#include "spdlog/sinks/basic_file_sink.h"
 #include "strtools.h"
 
 #include "aboutdialog.h"
@@ -221,12 +223,12 @@ void MainWindow::pointClickedOnVisualization(QVector3D world_pos)
 
 void MainWindow::on_actionTest_DNN_triggered()
 {
-#ifdef USE_TENSORFLOW
+#ifdef USE_ONNXRUNTIME
     // open test DNN form and show model
     TestDNN *testdnn = new TestDNN();
     testdnn->show();
 #else
-    QMessageBox::information(this, "SVD", "Only availabe in SVD with Tensorflow");
+    QMessageBox::information(this, "SVD", "Only availabe in SVD with ONNX Runtime");
 #endif
 }
 
@@ -250,24 +252,16 @@ class my_threaded_sink : public spdlog::sinks::base_sink < std::mutex >
 public:
     my_threaded_sink(QPlainTextEdit *output) { mOut = output; }
 protected:
-    void _sink_it(const spdlog::details::log_msg& msg) override
+    void sink_it_(const spdlog::details::log_msg& msg) override
     {
-        //Your code here
-        char *buf = const_cast<char *>(msg.formatted.c_str());
-        // search for \r
-        for (char *p=buf; *p!=0; p++)
-            if (*p == '\r') {
-                *p = '\0';
-                break;
-            }
+        spdlog::memory_buf_t formatted;
+        formatter_->format(msg, formatted);
+        QString qmsg = QString::fromStdString(std::string(formatted.data(), formatted.size())).trimmed();
 
-        // QMetaObject::invokeMethod(mOut, "appendPlainText", Qt::QueuedConnection, Q_ARG(QString, QString(buf)));
-        //mOut->appendPlainText( QString(buf));
+        QMetaObject::invokeMethod(mOut, "appendPlainText", Qt::QueuedConnection, Q_ARG(QString, qmsg));
     }
-    void _flush() override
+    void flush_() override
     {
-        // do nothing
-        //mOut->appendPlainText(".... flushing .....");
     }
 
 private:
@@ -291,21 +285,22 @@ void MainWindow::initiateLogging()
 {
     if (spdlog::get("main"))
         return;
-    // asynchronous logging, 2 seconds auto-flush
-    spdlog::set_async_mode(8192, spdlog::async_overflow_policy::block_retry,
-                           nullptr,
-                           std::chrono::seconds(2));
+    // asynchronous logging, 1 thread
+    spdlog::init_thread_pool(8192, 1);
 
     std::vector<spdlog::sink_ptr> sinks;
-    sinks.push_back(std::make_shared<spdlog::sinks::simple_file_sink_mt>("log.txt"));
+    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("log.txt"));
     sinks.push_back(std::make_shared<my_threaded_sink>(ui->lLog));
-    auto combined_logger = spdlog::create("main", sinks.begin(), sinks.end());
+    auto combined_logger = std::make_shared<spdlog::async_logger>("main", sinks.begin(), sinks.end(), spdlog::thread_pool());
+    spdlog::register_logger(combined_logger);
     combined_logger->set_level(spdlog::level::debug);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
+    spdlog::flush_every(std::chrono::seconds(2));
 
-    combined_logger=spdlog::create("dnn", sinks.begin(), sinks.end());
+    combined_logger = std::make_shared<spdlog::async_logger>("dnn", sinks.begin(), sinks.end(), spdlog::thread_pool());
+    spdlog::register_logger(combined_logger);
     combined_logger->set_level(spdlog::level::debug);
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger->flush_on(spdlog::level::info);
 
     //auto combined_logger = std::make_shared<spdlog::logger>("console", begin(sinks), end(sinks));
 
@@ -342,12 +337,12 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::on_pushButton_5_clicked()
 {
-#ifdef USE_TENSORFLOW
+#ifdef USE_ONNXRUNTIME
     initiateLogging();
     PredTest it;
     it.testTensor();
 #else
-    QMessageBox::information(this, "SVD", "Only availabe in SVD with Tensorflow");
+    QMessageBox::information(this, "SVD", "Only availabe in SVD with ONNX Runtime");
 #endif
 }
 
@@ -355,12 +350,12 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pbTestTF_clicked()
 {
-#ifdef USE_TENSORFLOW
+#ifdef USE_ONNXRUNTIME
     initiateLogging();
     PredTest it;
     it.testDevicePlacement();
 #else
-    QMessageBox::information(this, "SVD", "Only availabe in SVD with Tensorflow");
+    QMessageBox::information(this, "SVD", "Only availabe in SVD with ONNX Runtime");
 #endif
 
 }
@@ -789,7 +784,7 @@ void MainWindow::on_visVariables_currentItemChanged(QTreeWidgetItem *current, QT
     if (key<0)
         return;
     size_t ukey = static_cast<size_t>(key);
-    spdlog::get("main")->debug("Clicked on {}", key);
+    spdlog::get("main")->debug(fmt::runtime("Clicked on {}"), static_cast<int>(key));
     CellWrapper cw(nullptr);
     ui->visVariable->setChecked(true);
     QString err_msg = mLandscapeVis->renderVariable(QString::fromStdString( cw.getVariablesList()[ukey] ),

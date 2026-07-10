@@ -110,17 +110,11 @@ To set the module as handler for specific states, use the module name as the `ty
 
 ## Configuration
 
-The module is configured in the [project file](project_file.md).\
+The module is configured in the [project file](project_file.md).
 In addition to the `enabled` and `type` setting, the matrix module has the following settings:
 
--   
+#### `transitionFile` (filepath)
+The file containing the data for the transition matrix (see above).
 
-    ### `transitionFile` (filepath)
-
-    The file containing the data for the transition matrix (see above).
-
--   
-
-    ### `keyFormula` (expression)
-
-    The `keyFormula` is an expression that can access all cell variables. The result of the expression is used as the `key` in the transition matrix (see above). The value of the expression is converted to an integer (the floating point fraction is truncated, i.e. 1.9 -\> 1). To disable, set to "" or to a constant ("0").
+#### `keyFormula` (expression)
+The `keyFormula` is an expression that can access all cell variables. The result of the expression is used as the `key` in the transition matrix (see above). The value of the expression is converted to an integer (the floating point fraction is truncated, i.e. 1.9 -> 1). To disable, set to "" or to a constant ("0").

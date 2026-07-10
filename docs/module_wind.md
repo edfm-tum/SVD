@@ -45,63 +45,42 @@ Windstorms are not started by SVD, but are triggered externally by a time series
 
 The module is configured in the [project file](project_file.md). In addition to the `enabled` and `type` setting, the wind module has the following settings:
 
--   
+#### `regionalProbabilityGrid` (filepath)
+The file containing a the 10km probability of wind occurrence.
 
-    ### `regionalProbabilityGrid` (filepath)
+#### `transitionFile` (filepath)
+The file containing a transition matrix (see [matrix module](module_matrix.md)) for post wind states (see above).
 
-    The file containing a the 10km probability of wind occurrence.
+#### `ignitionFile` (filepath)
+The data table with the list of event location points and wind sizes.
 
--   
+#### `stateFile` (filepath)
+Data file with additional state-specific variables that specify per-state damage probabilities.
 
-    ### `transitionFile` (filepath)
+#### `stopAfterImpact` (numeric)
+Probability that the wind does not spread after affecting a cell (0..1)
 
-    The file containing a transition matrix (see [matrix module](module_matrix.md)) for post wind states (see above).
+#### `spreadUndisturbed` (numeric)
+The parameter defines if windthrows can continue after a cell is not affected (0..1)
 
--   
+#### `fetchFactor` (numeric)
+The parameter defines how much the probability increases for neighboring cells.
 
-    ### `ignitionFile` (filepath)
+#### `spreadStartParallel` (numeric)
+The parameter defines whether wind throws start in parallel in different areas of the 10km grid. Can be used to change the number of small scale windthrows.
 
-    The data table with the list of event location points and wind sizes.
+#### `windSizeMultiplier` (expression)
+If not empty, the expression is used to scale the maximum wind size provided from the storm event file. Many storms do not reach the maximum size because of topography and lack of continuously forested patches. This can be countered by scaling storm sizes, so that on average the realized storm event sizes match the input. The expression takes one parameter, the `proportion_of_cell` from the storm event file.
 
--   
+## Variables
+The wind module provides the following variables that can be used in expressions:
 
-    ### `stateFile` (filepath)
-
-    Data file with additional state-specific variables that specify per-state damage probabilities.
-
--   
-
-    ### `stopAfterImpact` (numeric)
-
-    Probability that the wind does not spread after affecting a cell (0..1)
-
--   
-
-    ### `spreadUndisturbed` (numeric)
-
-    The parameter defines if windthrows can continue after a cell is not affected (0..1)
-
--   
-
-    ### `fetchFactor` (numeric)
-
-    The parameter defines how much the probability increases for neighboring cells.
-
--   
-
-    ### `spreadStartParallel` (numeric)
-
-    The parameter defines whether wind throws start in parallel in different areas of the 10km grid.
-
-    Can be used to change the number of small scale windthrows.
-
--   
-
-    ### `windSizeMultiplier` (expression)
-
-    If not empty, the expression is used to scale the maximum wind size provided from the storm event file.
-
-    Many storms do not reach the maximum size because of topography and lack of continuously forested patches. This can be countered by scaling storm sizes, so that on average the realized storm event sizes match the input. The expression takes one parameter, the `proportion_of_cell` from the storm event file.
+| Variable | Description |
+|----------|-------------|
+| regionalProb | wind event probability at regional scale (10km) |
+| susceptibility | state-dependent probability of wind damage |
+| windNEvents | cumulative number of wind events on cell |
+| windLastEvent | the year of the last storm event on cell (or 0 if never affected) |
 
 ## Output
 

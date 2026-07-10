@@ -71,6 +71,7 @@ struct InputTensorItem {
     static DataType datatypeFromString(std::string name);
     static std::string contentString(DataContent content);
     static std::string datatypeString(DataType dtype);
+    static size_t sizeOf(DataType dtype);
     static std::string allDataTypeStrings();
     static std::string allContentStrings();
 };

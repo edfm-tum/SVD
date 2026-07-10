@@ -24,9 +24,15 @@ specify one or multiple strings (mask) that can be used to adapt file paths used
 ## DNN specific settings
 
 #### `dnn.threads` (numeric)
-The number of threads used for DNN processing (default 2)
+The number of threads in the DNN thread pool. This pool manages the execution of parallel DNN instances (see `dnn.count`). (default: 2)
+#### `dnn.threads.intra` (numeric)
+The number of threads used by ONNX Runtime for intra-operator parallelism (i.e., parallelism within a single operator). Set to 0 to use all available cores. (default: 0)
+#### `dnn.threads.inter` (numeric)
+The number of threads used by ONNX Runtime for inter-operator parallelism (i.e., parallelism between independent operators). Set to 0 to use all available cores. (default: 0)
 #### `dnn.count` (numeric)
-Number of (parallel) DNNs that are used. Each instance uses the same network (`dnn.file`) (default: 1)
+Number of parallel DNN instances that are used. Each instance uses the same network (`dnn.file`). (default: 1)
+#### `dnn.gpuCount` (numeric)
+The number of available GPUs to use for DNN inference. When `dnn.count` > 1 and `dnn.gpuCount` > 1, SVD will automatically distribute the DNN instances across the specified number of GPUs in a round-robin fashion (e.g., DNN 0 on GPU 0, DNN 1 on GPU 1, DNN 2 on GPU 0, etc.). This setting requires SVD to be built with CUDA support. (default: 1)
 #### `dnn.batchSize` (numeric)
 The size of a single "batch". Multiple cells are processed simultaneously by the DNN, and the batch size
 indicates how many. Bigger batch sizes are usually processed faster, if batches are too large memory problems
@@ -43,9 +49,6 @@ Configuration file that describes the meta data of the DNN (input tensors). See 
 #### `dnn.topKNClasses` (numeric)
 SVD select the `topKNClasses` most likely states from the probability distribution over all states (topK-algorithm). 
 See also: TODO
-#### `dnn.topKGPU` (boolean)
-The topK-Algorithm for selecting candidate states from all states can either run on GPU (`true`) or on CPU (`false`).
-Default: true
 
 #### `dnn.state.name` (string)
 The name of the output tensor in the trained network for the future state of a cell.
@@ -62,6 +65,22 @@ The setting controls whether the selected residence time controls the subsequent
 value is `false`, then both are linked: a maximal time means no state change, and a lower residence time
 forces a state change (i.e. disallows the current state as future state). If the value is `true`, then 
 no interaction between residence time and state is simulated (default: `false`).
+
+### Threading Recommendations for DNN Inference
+
+The optimal threading configuration depends significantly on whether you are using the CPU or a GPU for inference.
+
+#### CPU Inference
+When running on the CPU, ONNX Runtime can use multiple threads to parallelize the execution of a single model (intra-op) and independent operators (inter-op).
+* **Intra-op Parallelism (`dnn.threads.intra`):** This is usually the most important setting. Set this to the number of physical cores available to the DNN. If `dnn.count` is 1, you can set it to 0 (auto-detect all cores). 
+* **Parallel DNNs (`dnn.count`):** If you have many cores, you can also increase `dnn.count` to run multiple batches in parallel. However, ensure that `dnn.count * dnn.threads.intra` does not exceed the total number of cores to avoid performance degradation due to thread contention.
+* **DNN Thread Pool (`dnn.threads`):** Ensure this is at least equal to `dnn.count`.
+
+#### GPU Inference
+When running on a GPU (using CUDA), the threading strategy is different. The GPU handles its own parallelism internally.
+* **Intra/Inter-op Parallelism:** It is highly recommended to set `dnn.threads.intra = 1` and `dnn.threads.inter = 1`. Using more threads on the CPU side often adds unnecessary management overhead and can actually slow down the inference process.
+* **Parallel DNNs (`dnn.count`):** You can set `dnn.count` to 2 or more to keep the GPU saturated with work, especially if your GPU has a lot of memory. This allows one batch to be processed while another is being prepared (data transfer).
+* **Batch Size (`dnn.batchSize`):** For GPUs, larger batch sizes (e.g., 2048 or 4096) are typically much more efficient than smaller ones.
 
 ## Model components
 ### States

@@ -22,7 +22,7 @@
      <item row="0" column="0">
       <widget class="QLineEdit" name="modelPath">
        <property name="text">
-        <string>E:\Daten\SVD\SVD_DNN\DNN\npka\training\SaveFiles\frozen_graph.pb</string>
+        <string>path/to/model.onnx</string>
        </property>
       </widget>
      </item>

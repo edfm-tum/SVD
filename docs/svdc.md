@@ -1,6 +1,6 @@
 # SVDc
 
-The SVD console application ("*SVDc*") is a command-line version of SVD. It contains the same core functionality as the version with a user interface ([SVD UI](svdUI.md)) (actually, both applications use the same code base), but does not use a graphical user interface. The main purpose of SVDc is for automating simulation jobs and/or for running in environments where no graphical user interface is available. The name of the executable of the console version is `SVDc` (whereas the name of the GUI version is `SVD`).
+The SVD console application ("*SVDc*") is a command-line version of SVD. It contains the same core functionality as the version with a user interface ([SVD UI](svdUI.md)) (actually, both applications use the same code base), but does not use a graphical user interface. The main purpose of SVDc is for automating simulation jobs and/or for running in environments where no graphical user interface is available. The name of the executable of the console version is `SVDc` (whereas the name of the GUI version is `SVDUI`).
 
 ## Instructions
 

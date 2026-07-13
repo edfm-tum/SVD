@@ -1,7 +1,0 @@
-# directories
-/build-*
-*.pro.user*
-.Rproj.user
-SVDModel/build
-docs/html
-deploy

@@ -1,0 +1,1167 @@
+[
+  {
+    "objectID": "variables.html",
+    "href": "variables.html",
+    "title": "Expressions and variables",
+    "section": "",
+    "text": "Every single cell on the landscape is described by a specific state and a given environment. Expressions (see below) that are evaluated in the context of a cell can access state- and environment-specific variables. Note that modules also provide additional variables that are available if the respective module is enabled (e.g., fire, wind, or bark beetle).\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nindex\nindex of the cell on the landscape (0..N cells)\n\n\nenvironmentId\nId of the environment (see landscape setup\n\n\nclimateId\nId of the climate zone (see landscape setup\n\n\nstateId\nId of the state (1..N)\n\n\nresidenceTime\nnumber of years a cell is already in the state stateId\n\n\n\n\n\n\nIn addition to the standard variables, further environment- and state-specific variables are available.\n\nEnvironment variables: additional columns in the landscape.file table (see landscape setup)\nState variables: content of the states.extraFile table, and module specific variables (see states for details)\nClimate variables: if the config climate.publishVariables is true, climate variables are also available (names are the column names given in the climate data file climate.file)\n\nA list of all available variables can be found in the log file.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Expressions and variables"
+    ]
+  },
+  {
+    "objectID": "variables.html#cell-variables",
+    "href": "variables.html#cell-variables",
+    "title": "Expressions and variables",
+    "section": "",
+    "text": "Every single cell on the landscape is described by a specific state and a given environment. Expressions (see below) that are evaluated in the context of a cell can access state- and environment-specific variables. Note that modules also provide additional variables that are available if the respective module is enabled (e.g., fire, wind, or bark beetle).\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nindex\nindex of the cell on the landscape (0..N cells)\n\n\nenvironmentId\nId of the environment (see landscape setup\n\n\nclimateId\nId of the climate zone (see landscape setup\n\n\nstateId\nId of the state (1..N)\n\n\nresidenceTime\nnumber of years a cell is already in the state stateId\n\n\n\n\n\n\nIn addition to the standard variables, further environment- and state-specific variables are available.\n\nEnvironment variables: additional columns in the landscape.file table (see landscape setup)\nState variables: content of the states.extraFile table, and module specific variables (see states for details)\nClimate variables: if the config climate.publishVariables is true, climate variables are also available (names are the column names given in the climate data file climate.file)\n\nA list of all available variables can be found in the log file.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Expressions and variables"
+    ]
+  },
+  {
+    "objectID": "variables.html#expression",
+    "href": "variables.html#expression",
+    "title": "Expressions and variables",
+    "section": "Expression",
+    "text": "Expression\nAn “expression” is a mathematical formula (usually a function) which is provided in text form (e.g. 3*x+2).\nThe expression engine in SVD is also used in iLand and was originally developed for the Picus model. Expressions are parsed only once and converted to an internal “representation” which can be executed with very little overhead. When using more complex mathematical functions (e.g. exp()), the overall performance is comparable to hard coded C++.\n\nTypes of variables\nVariable names within an expression depends on the context. There are three main cases:\n\nExpressions are bound to an “object” which provides access to (internal) values. The available variable names depend on the object. A typical case are variables of a cell (see above).\nunbound variables: The name of the variable is not pre-defined and the first encountered variable name in the expression is used: the expressions 3*x+1 and 3*year+1 behave the same.\n\n\n\nBasic operations\nExpressions can combine basic arithmetic operators, variables, and functions. The basic operators are +,-,* and /. Additionally, the caret ^ can be used for power functions (e.g. x*x can be written as x^2). Floating point numbers must use the dot (.) for constants (e.g. 0.001). The comma (,) is used to separate arguments in function calls.\n\n\nBoolean expressions\nExpressions can be used to evaluate boolean expressions, i.e. expressions with a result value of either “true” or “false”. Logic operators are and and or, =, and &lt;&gt;. Boolean expressions are typically used to filter or select from a set of objects based on a criterion. E.g.: using the expression soilDepth&gt;100 and pctSand&gt;50 as a filter, would result in a list of deep and sandy soils.\nLogic and “mathematical” operators can be used jointly: every non-zero value is evaluated as true, zero (0) as false. The literals true and false can be used and are internally converted to 1 and 0, respectively. Hence, a logical not can be expressed as expression &lt;&gt; true.\n\n\nFunctions\nThe general form of function is:\nfunctionname(list of arguments)\n\nMathematical functions\nMathematical functions are executed without checking for the validity of the arguments (e.g. division by 0, or tan(pi/2)).\n\n\n\n\n\n\n\n\nName, Arguments\nDescription\nExample\n\n\n\n\nsin(x)\nthe sin of x, x as radians.\nsin(x)\n\n\ncos(x)\nthe cosine of x, x as radians\ncos(x)\n\n\ntan(x)\nthe tangens of x, x as radians\ntan(x)\n\n\nexp(x)\nexponential function, exp(1)=2.7182...\nexp(-k*LAI)\n\n\nln(x)\nthe logarithm of base e, ln(2.7182...)=1\nln(x)\n\n\nsqrt(x)\nthe square root of x (equivalent to x^0.5)\nsqrt(x)\n\n\nmod(x,y)\nreturn the modulo (remainder) of x/y. e.g. mod(13,10)=3\nif(mod(id,2)=0, 1, 0)\n\n\nround(x)\nReturns the integral value that is nearest to x, with halfway cases rounded away from zero.\nround(x)\n\n\n\n\n\nLogical functions\n\n\n\n\n\n\n\n\nName, Arguments\nDescription\nExample\n\n\n\n\nmin(x1,x2,…,xn)\nreturns the minimum value of the arguments. Argument count must be &gt;1 and &lt;10\nmin(x,0)\n\n\nmax(x1,x2,…,xn)\nreturns the maximum value of the arguments. Argument count must be &gt;1 and &lt;10\nmax(min(x,1),0)\n\n\nif(condition, true, false)\nlogical if-then-else construct. if “condition” is true, then “true” is returned, “false” otherwise. E.g.: a abs()-function: if(x&lt;0;-x;x). Note that both clauses are calculated in every case!\nif(x&lt;0;-x;x)\n\n\nin(value, arg1, arg2, … , argn)\nreturns true if value is in the list or arguments, false otherwise.\nin(year,100,200,300)\n\n\n\n\n\nMore functions\n\n\n\nName, Arguments\nDescription\nExample\n\n\n\n\npolygon(value, x1,y1, x2,y2, x3,y3, …, xn,yn)\nreturn is: y1 if value&lt;x1, yn if value&gt;xn, or the lineraly interpolated numeric y-value.\npolygon(x, 0,0, 1,0.5)\n\n\nsigmoid(x, type, param1, param2)\nThe value of “sigmoid” curve at x. The type of curve is designated by type with the two parameters param1 and param2. Type is one of: 0: logistic, 1: Hill function, 2: 1-logistic, 3: 1-hill\nsigmoid(x, 0, 10, 100)\n\n\nrnd(from, to)\nreturns a uniformly distributed random function between from and to.\nrnd(0,1)\n\n\nrndg(mean, stddev)\nreturns a random number drawn from a Gaussian normal distribution with mean as the mean value stddev as the standard deviation.\nrndg(0,1)\n\n\nlimit(value, min, max)\nlimits value to the range [min, max].\nlimit(x, 0, 1)\n\n\n\n\n\n\nSVD specific functions\nThese functions are only available in the context of a cell (e.g. for DNN input transformations or in transition matrices).\n\n\n\n\n\n\n\n\nName, Arguments\nDescription\nExample\n\n\n\n\nlocalNB(state1, …)\ncalculates the sum of the proportion [0..1] of the given states in the local neighborhood (3x3 cells).\nlocalNB(1, 2)\n\n\nintermediateNB(state1, …)\ncalculates the sum of the proportion [0..1] of the given states in the intermediate neighborhood (a circle within a 7x7 grid, see below).\nintermediateNB(5)\n\n\nglobalNB(state1, …)\ncalculates the sum of the proportion [0..1] of the given states in the global neighborhood (size depends on configuration).\nglobalNB(10)\n\n\ndistance(state1, …)\ncalculates the minimum distance (in meters) to any of the provided states.\ndistance(1, 5)\n\n\nspeciesProportion(specIndex1, …)\ncalculates the sum of the proportions [0..1] of the given species (by index) in the current cell.\nspeciesProportion(0, 1)\n\n\n\n\nNeighborhood Layouts\nThe neighborhood functions localNB and intermediateNB scan the following cells around the focal cell (O):\nlocalNB (3x3 grid, 8 cells):\nX X X\nX O X\nX X X\nintermediateNB (7x7 circular, 36 cells):\n. . X X X . .\n. X X X X X .\nX X X X X X X\nX X X O X X X\nX X X X X X X\n. X X X X X .\n. . X X X . .",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Expressions and variables"
+    ]
+  },
+  {
+    "objectID": "svd_team.html",
+    "href": "svd_team.html",
+    "title": "SVD team",
+    "section": "",
+    "text": "Werner Rammer and Rupert Seidl, both from the Ecosystem Dynamics group at the Technical University of Munich are the principal investigators of SVD. SVD development started at BOKU Vienna.",
+    "crumbs": [
+      "Home",
+      "About",
+      "SVD team"
+    ]
+  },
+  {
+    "objectID": "svd_team.html#svd-collaborators",
+    "href": "svd_team.html#svd-collaborators",
+    "title": "SVD team",
+    "section": "SVD collaborators",
+    "text": "SVD collaborators\nIn addition to the SVD core group at the Ecosystem Dynamics group at TUM, a growing number of collaborators plan to or actively work already with SVD.\n\nEcosystem and Landscape ecology lab (Monica Turner, University of Wisconsin-Madison, USA). Goal of the collaboration is an upscaling of local modeling results to a larger scale (Greater Yellowstone National Park).\nForest Futures lab (Winslow Hansen, Cary Institute, USA). Goal is to apply the model for large scale simulations in Alaska.",
+    "crumbs": [
+      "Home",
+      "About",
+      "SVD team"
+    ]
+  },
+  {
+    "objectID": "svd_team.html#svd-related-projects",
+    "href": "svd_team.html#svd-related-projects",
+    "title": "SVD team",
+    "section": "SVD related projects",
+    "text": "SVD related projects\n\niLand: iLand is a model of forest landscape dynamics, simulating individual tree competition, growth, mortality, and regeneration. It addresses interactions between climate (change), disturbance regimes, vegetation dynamics, and forest management. iLand was developed by the same core team as SVD, and data from iLand simulations can be used within the SVD framework.",
+    "crumbs": [
+      "Home",
+      "About",
+      "SVD team"
+    ]
+  },
+  {
+    "objectID": "svd_team.html#research-projects",
+    "href": "svd_team.html#research-projects",
+    "title": "SVD team",
+    "section": "Research projects",
+    "text": "Research projects\n\nResonate is a EU Horizon 2020 project. SVD is used for continental scale simulations with a particular focus on disturbance dynamics.\nFuture Forest is a research project funded by the German Federal Ministery for the Environment. SVD is used for country scale (Germany) simulations of various forest management scenarios for climate change adaptation.",
+    "crumbs": [
+      "Home",
+      "About",
+      "SVD team"
+    ]
+  },
+  {
+    "objectID": "svd_papers.html",
+    "href": "svd_papers.html",
+    "title": "Scientific publications related to SVD",
+    "section": "",
+    "text": "Model development and applications are reported in top-level journals such as Science, Nature communications Earth & Environment, Global Change Biology, Methods in Ecology and Evolution:",
+    "crumbs": [
+      "Home",
+      "About",
+      "Scientific publications related to SVD"
+    ]
+  },
+  {
+    "objectID": "svd_papers.html#modeling-papers",
+    "href": "svd_papers.html#modeling-papers",
+    "title": "Scientific publications related to SVD",
+    "section": "Modeling papers",
+    "text": "Modeling papers\n\nRammer W, Seidl R, 2019. A scalable model of vegetation transitions using deep neural networks. Methods Ecol. Evol., DOI: 10.1111/2041-210X.13171, download Supplementary information",
+    "crumbs": [
+      "Home",
+      "About",
+      "Scientific publications related to SVD"
+    ]
+  },
+  {
+    "objectID": "svd_papers.html#application-papers",
+    "href": "svd_papers.html#application-papers",
+    "title": "Scientific publications related to SVD",
+    "section": "Application papers",
+    "text": "Application papers\n\nGrünig, M., Rammer, W., Senf, C., Albrich, K., André, F., Augustynczik, A. L. D., Baumann, M., Bohn, F. J., Bouwman, M., Bugmann, H., Collalti, A., Cristal, I., Dalmonech, D., De Coligny, F., Dobor, L., Dollinger, C., Espelta, J. M., Forrester, D. I., Garcia-Gonzalo, J., … Seidl, R. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789), eadx6329. https://doi.org/10.1126/science.adx6329, data repository: https://datadryad.org/dataset/doi:10.5061/dryad.tb2rbp0dv\nRammer, W., Braziunas, K. H., Hansen, W. D., Ratajczak, Z., Westerling, A. L., Turner, M. G., & Seidl, R. (2021). Widespread regeneration failure in forests of Greater Yellowstone under scenarios of future climate and fire. Global Change Biology, 27(18), 4339–4351. https://doi.org/10.1111/gcb.15726",
+    "crumbs": [
+      "Home",
+      "About",
+      "Scientific publications related to SVD"
+    ]
+  },
+  {
+    "objectID": "svd_papers.html#related-papers",
+    "href": "svd_papers.html#related-papers",
+    "title": "Scientific publications related to SVD",
+    "section": "Related papers",
+    "text": "Related papers\n\nGrünig, M., Rammer, W., Baumann, M., Albrich, K., André, F., Augustynczik, A. L. D., Bohn, F. J., Bouwman, M., Bugmann, H., Collalti, A., Cristal, I., Dalmonech, D., De Caceres, M., De Coligny, F., Dobor, L., Dollinger, C., Forrester, D. I., Garcia-Gonzalo, J., González-Olabarria, J. R., … Seidl, R. (2026). Loss of competitive strength in European conifer species under climate change. Communications Earth & Environment, 7(1), 401. https://doi.org/10.1038/s43247-026-03582-0\nPerry, G. L. W., Seidl, R., Bellvé, A. M., & Rammer, W. (2022). An Outlook for Deep Learning in Ecosystem Science. Ecosystems. https://doi.org/10.1007/s10021-022-00789-y",
+    "crumbs": [
+      "Home",
+      "About",
+      "Scientific publications related to SVD"
+    ]
+  },
+  {
+    "objectID": "states.html",
+    "href": "states.html",
+    "title": "Vegetation states",
+    "section": "",
+    "text": "Vegetation states are a central concept in SVD. Every simulated cell is - at every timestep - in one of the possible states, and transitions between states are the mechanism how vegetation dynamics are expressed.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Vegetation states"
+    ]
+  },
+  {
+    "objectID": "states.html#definition-of-states",
+    "href": "states.html#definition-of-states",
+    "title": "Vegetation states",
+    "section": "Definition of states",
+    "text": "Definition of states\nThe potential states are defined by the setting states.file in the project file.\nThe table has the following columns:\n\n\n\n\n\n\n\nColumn\nDescription\n\n\n\n\nstateId\na unique numeric (integer) Id of the state. Ids should start with 1 (0 is reserved as an invalid state)\n\n\ncomposition\na string describing the main species (see below)\n\n\nstructure\nan integer class describing the structure (top canopy height class) (0..N)\n\n\nfct\nfunctioning, an integer class describing the vegetation density class (0..N)\n\n\nname\na string with a label for the state (if omitted a label is constructed from composition, structure, and function)\n\n\ntype\na string describing the handling module (see below)\n\n\n\n\nComposition, structure, and functioning\nFrom those three properties of a vegetation state, SVD currently only uses the composition internally and requires thus a specific format (the composition is used for calculating species shares in the neighborhood of a cell):\n\nA list of all allowed species is defined in model.species. The preferred species coding scheme is a four character combination of genus and species (e.g., “Picea abies” -&gt; “piab”)\nthe composition is a space-delimited string of up to four species (e.g. “PIAB fasy pisy”)\nuppercase species codes (e.g. “PIAB”) indicate the dominate species, lowercase species codes (“piab”) specify admixed species\n“unforested” is a special composition reserved for, well, a state without forest cover\n\nPlease note, that “species” could be defined more broadly, e.g. as mixture types or vegetation types.\n\n\nExtra variables\nAdditional state specific variables can be added by using the states.extraFile table. Also modules can add state-specific variables (e.g. the fire module).\n\n\nThe type of a state\nThe type defines for each state the responsible “party”, i.e. the process / module that is the default “handler” for a particular state. The task of a handler is to determine future states of all cells that are currently in one of the handled states. See the modules page for more details.\nPossible values for type are:\n\nblank: the handling process is the main DNN\nthe name of a module: cells in this state are handled by the given module",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Vegetation states"
+    ]
+  },
+  {
+    "objectID": "outputs.html",
+    "href": "outputs.html",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "StateGrid\nResTimeGrid\nStateChange\nStateHist\nStateMatrix\nFire\nWind\nAutoManagement\nBarkBeetle\n\n\n\n\nwrites ASCII grids with the stateId for each cell.\nGrids are save to the location specified with the pathproperty ($year$ is replaced with the actual year).\n\n\n\ninterval: output is written only every interval years (or every year if interval=0). For example, a value of 10 limits output to the simulation years 1, 11, 21, …\n\n\n\n\n\noutput of ASCII grids with the residence time (years) for each cell. Grids are save to the location specified with the pathproperty ($year$ is replaced with the actual year).\n\n\n\ninterval: output is written only every interval years (or every year if interval=0). For example, a value of 10 limits output to the simulation years 1, 11, 21, …\n\n\n\n\n\nDetails for individual state changes from DNN (potentially a lot of output data!)\nThe output contains for each cell the predicted states/probabilities (for dnn.topKNClasses classes), and the probabilities for the year of state change.\n\n\n\nfilter: a filter expression; output is written if the expression is true; available variables are: state, restime, x, y, year\ninterval: output is written only every interval years (or every year if interval=0). For example, a value of 10 limits output to the simulation years 1, 11, 21, …\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year of the state change\nInt\n\n\ncellIndex\nindex of the affected cell (0-based)\nInt\n\n\nstate\noriginal stateId (before change)\nInt\n\n\nrestime\nresidence time (yrs) (before change)\nInt\n\n\nnextState\nnew stateId (selected from s[i])\nInt\n\n\nnextTime\nyear the state change (selected from t[i])\nInt\n\n\ns[i]\ncandidate state Id i (with i 1..number of top-K classes)\nInt\n\n\np[i]\nprobability for state i (0..1)\nDouble\n\n\nt[i]\nprobability for a change in year i (with i 1..number of residence time classes)\nDouble\n\n\n\n\n\n\n\nOutputs a frequency distribution of states over the landscape.\n\n\n\nlastFireGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nstateId\nstate Id\nInt\n\n\nn\nnumber of cells that are currently in the state stateId\nInt\n\n\n\n\n\n\n\nOutputs the number of cumulative state transition between any two states.\n\n\n\ninterval: output is only generated every interval years.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nstateId\nstate Id of the originating state\nInt\n\n\nstateToId\nstate Id of the target state\nInt\n\n\nn\ncumulated number of cells that transitioned from stateId to stateToId\nInt\n\n\n\n\n\n\n\nOutput on fire events (one event per line) and grids for the year of the last burn.\nGrids are saved as ASCII/GeoTIFF grids to the location specified by thelastFireGrid.path property ($year$ is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.\n\n\n\nlastFireGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year of the fire event\nInt\n\n\nid\nunique identifier of a single fire\nInt\n\n\nx\nx coordinate (m) of the ignition point\nDouble\n\n\ny\ny coordinate (m) of the ignition point\nDouble\n\n\nplanned_size\nplanned fire size (ha)\nDouble\n\n\nrealized_size\nrealized fire size (ha)\nDouble\n\n\nshare_high_severity\nshare of pixels burning with high severity (0..1)\nDouble\n\n\n\n\n\n\n\nOutput on wind events (one storm per line) and grids for the year of the last burn.\nGrids are saved as ASCII/TIF grids to the location specified by thelastFireGrid.path property ($year$ is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.\n\n\n\nlastFireGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year of the storm event\nInt\n\n\nid\nunique identifier of a single storm event\nInt\n\n\nx\nx coordinate (m) of the centerpoint of the initial regional grid cell\nDouble\n\n\ny\ny coordinate (m) of the centerpoint of the initial regional grid cell\nDouble\n\n\nproportion\n(predefined) proportion of affected cells (per event)\nDouble\n\n\nregions_planned\n# of regions planned to be affected\nInt\n\n\nregions_affected\nrealized number of regions (10x10km) by the storm event\nInt\n\n\ncells_forested\ntotal number of forested cells (ha) in all regions\nInt\n\n\nmean_susceptibility\nmean wind susceptibility of forested cells (ha) in all regions\nDouble\n\n\ncells_planned\nnumber of ha planned to be affected (over all regions)\nDouble\n\n\ncells_affected\nnumber of ha affected by the storm (over all regions)\nDouble\n\n\n\n\n\n\n\nOutput of the AutoManagement module. The output contains a histogram of how many cells were managed per state.\nEach line is holds a single state; note: only states with at least one affected cell are saved.\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nstateId\nunique identifier of a\nInt\n\n\nn\nnumber of cells affected by management of this state in this year\nInt\n\n\n\n\n\n\n\nOutput on bark beetle activity and grids with the year of the last bark beetle attack on a cell.\nGrids are saved as ASCII/TIF grids to the location specified by thelastBarkBeetleGrid.path property ($year$ is replaced with the actual year). The value of the grid cells is the year of the last impact on a cell or 0 for cells never affected by beetles.\n\n\n\nlastBarkBeetleGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nn_background_infestation\nnumber of cells that have a bark beetle infestatation due to random background infesetations (wind-triggered cells are not included)\nInt\n\n\nn_wind_infestation\nnumber of cells that have a bark beetle infestatation due to wind\nInt\n\n\nn_impact\nnumber of cells, that are affected by bark beetles (and thus change its state)\nInt\n\n\nn_active_yearend\nnumber of cells with living bark beetles at the end of the year (i.e., which will be actively spreading next year)\nInt",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#list-of-outputs",
+    "href": "outputs.html#list-of-outputs",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "StateGrid\nResTimeGrid\nStateChange\nStateHist\nStateMatrix\nFire\nWind\nAutoManagement\nBarkBeetle",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#StateGrid",
+    "href": "outputs.html#StateGrid",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "writes ASCII grids with the stateId for each cell.\nGrids are save to the location specified with the pathproperty ($year$ is replaced with the actual year).\n\n\n\ninterval: output is written only every interval years (or every year if interval=0). For example, a value of 10 limits output to the simulation years 1, 11, 21, …",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#ResTimeGrid",
+    "href": "outputs.html#ResTimeGrid",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "output of ASCII grids with the residence time (years) for each cell. Grids are save to the location specified with the pathproperty ($year$ is replaced with the actual year).\n\n\n\ninterval: output is written only every interval years (or every year if interval=0). For example, a value of 10 limits output to the simulation years 1, 11, 21, …",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#StateChange",
+    "href": "outputs.html#StateChange",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Details for individual state changes from DNN (potentially a lot of output data!)\nThe output contains for each cell the predicted states/probabilities (for dnn.topKNClasses classes), and the probabilities for the year of state change.\n\n\n\nfilter: a filter expression; output is written if the expression is true; available variables are: state, restime, x, y, year\ninterval: output is written only every interval years (or every year if interval=0). For example, a value of 10 limits output to the simulation years 1, 11, 21, …\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year of the state change\nInt\n\n\ncellIndex\nindex of the affected cell (0-based)\nInt\n\n\nstate\noriginal stateId (before change)\nInt\n\n\nrestime\nresidence time (yrs) (before change)\nInt\n\n\nnextState\nnew stateId (selected from s[i])\nInt\n\n\nnextTime\nyear the state change (selected from t[i])\nInt\n\n\ns[i]\ncandidate state Id i (with i 1..number of top-K classes)\nInt\n\n\np[i]\nprobability for state i (0..1)\nDouble\n\n\nt[i]\nprobability for a change in year i (with i 1..number of residence time classes)\nDouble",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#StateHist",
+    "href": "outputs.html#StateHist",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Outputs a frequency distribution of states over the landscape.\n\n\n\nlastFireGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nstateId\nstate Id\nInt\n\n\nn\nnumber of cells that are currently in the state stateId\nInt",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#StateMatrix",
+    "href": "outputs.html#StateMatrix",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Outputs the number of cumulative state transition between any two states.\n\n\n\ninterval: output is only generated every interval years.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nstateId\nstate Id of the originating state\nInt\n\n\nstateToId\nstate Id of the target state\nInt\n\n\nn\ncumulated number of cells that transitioned from stateId to stateToId\nInt",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#Fire",
+    "href": "outputs.html#Fire",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Output on fire events (one event per line) and grids for the year of the last burn.\nGrids are saved as ASCII/GeoTIFF grids to the location specified by thelastFireGrid.path property ($year$ is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.\n\n\n\nlastFireGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year of the fire event\nInt\n\n\nid\nunique identifier of a single fire\nInt\n\n\nx\nx coordinate (m) of the ignition point\nDouble\n\n\ny\ny coordinate (m) of the ignition point\nDouble\n\n\nplanned_size\nplanned fire size (ha)\nDouble\n\n\nrealized_size\nrealized fire size (ha)\nDouble\n\n\nshare_high_severity\nshare of pixels burning with high severity (0..1)\nDouble",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#Wind",
+    "href": "outputs.html#Wind",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Output on wind events (one storm per line) and grids for the year of the last burn.\nGrids are saved as ASCII/TIF grids to the location specified by thelastFireGrid.path property ($year$ is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.\n\n\n\nlastFireGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year of the storm event\nInt\n\n\nid\nunique identifier of a single storm event\nInt\n\n\nx\nx coordinate (m) of the centerpoint of the initial regional grid cell\nDouble\n\n\ny\ny coordinate (m) of the centerpoint of the initial regional grid cell\nDouble\n\n\nproportion\n(predefined) proportion of affected cells (per event)\nDouble\n\n\nregions_planned\n# of regions planned to be affected\nInt\n\n\nregions_affected\nrealized number of regions (10x10km) by the storm event\nInt\n\n\ncells_forested\ntotal number of forested cells (ha) in all regions\nInt\n\n\nmean_susceptibility\nmean wind susceptibility of forested cells (ha) in all regions\nDouble\n\n\ncells_planned\nnumber of ha planned to be affected (over all regions)\nDouble\n\n\ncells_affected\nnumber of ha affected by the storm (over all regions)\nDouble",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#AutoManagement",
+    "href": "outputs.html#AutoManagement",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Output of the AutoManagement module. The output contains a histogram of how many cells were managed per state.\nEach line is holds a single state; note: only states with at least one affected cell are saved.\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nstateId\nunique identifier of a\nInt\n\n\nn\nnumber of cells affected by management of this state in this year\nInt",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "outputs.html#BarkBeetle",
+    "href": "outputs.html#BarkBeetle",
+    "title": "SVD outputs",
+    "section": "",
+    "text": "Output on bark beetle activity and grids with the year of the last bark beetle attack on a cell.\nGrids are saved as ASCII/TIF grids to the location specified by thelastBarkBeetleGrid.path property ($year$ is replaced with the actual year). The value of the grid cells is the year of the last impact on a cell or 0 for cells never affected by beetles.\n\n\n\nlastBarkBeetleGrid.filter: a grid is written only if the expression evaluates to true (with year as variable). A value of 0 deactivates the grid output.\n\n\n\n\n\n\n\n\n\n\n\n\nColumn\nDescription\nData type\n\n\n\n\nyear\nsimulation year\nInt\n\n\nn_background_infestation\nnumber of cells that have a bark beetle infestatation due to random background infesetations (wind-triggered cells are not included)\nInt\n\n\nn_wind_infestation\nnumber of cells that have a bark beetle infestatation due to wind\nInt\n\n\nn_impact\nnumber of cells, that are affected by bark beetles (and thus change its state)\nInt\n\n\nn_active_yearend\nnumber of cells with living bark beetles at the end of the year (i.e., which will be actively spreading next year)\nInt",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "SVD outputs"
+    ]
+  },
+  {
+    "objectID": "module_wind.html",
+    "href": "module_wind.html",
+    "title": "Wind module",
+    "section": "",
+    "text": "The SVD wind module simulates windthrows on 100 m resolution (the SVD base resolution). Wind spreads dynamically.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_wind.html#module-implementation",
+    "href": "module_wind.html#module-implementation",
+    "title": "Wind module",
+    "section": "Module implementation",
+    "text": "Module implementation\nThe SVD wind module simulates the effects of storm events on the landscape, incorporating statistically derived event characteristics and a detailed representation of forest susceptibility. For each storm event, SVD first determines the affected 10 km grid cell based on the location of the storm, and dynamically grows the storms’ footprint for larger storm events by sampling adjacent 10km cells based on their spatial occurrence probability.\nIt then simulates the detailed spread of the storm within this region at 100 m resolution. Within a 10 km region, the most susceptible 100 m cells are selected as starting points for the spread simulation. Susceptibility is hereby dynamically updated between iterations based on the present forest state. Starting from the most susceptible cells, the simulated disturbance spreads using a neighborhood-based approach.\nThe probability of a neighboring cell being affected is influenced by:\n\nCell susceptibility, with highly susceptible cells more likely to be impacted.\nProximity to impacted cells, as cells adjacent to previously affected cells have an increased risk.\nParameters that control the degree to which the disturbance can spread into less susceptible cells and across undisturbed areas.\n\nThe simulated storm event continues to spread until it reaches its statistically determined size or if suitable areas for further spread are exhausted within the 10 km region. When a cell is impacted by the simulated storm, its forest state changes according to a transition matrix. The module assumes high-severity disturbance on 100m cells and a post-event species composition that resembles the pre-storm state.\nAt the cell level, the windthrow probability is defined by the state and and modified by the neighborhood. There are a number of parameters whose interplay affect the resulting spatial patterns. The parameter fetchFactor defines how much the impact probability of a cell increases if an adjacent cell is already affected, representing increased susceptibility due to gaps created during the wind even. The windthrow impact may stop spreading after impacting a cell (stopAfterImpact). The parameter spreadUndisturbed defines the probability that spread continues even if a cell is not affected (i.e., “hopping” over undisturbed cells). By default, the spread starts at the most susceptible cells. The parameter spreadStartParallel can be used to increase the number of starting points, which leads to a more homogenous and less clustered windthrow disturbance.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_wind.html#wind-specific-state-attributes",
+    "href": "module_wind.html#wind-specific-state-attributes",
+    "title": "Wind module",
+    "section": "Wind specific state attributes",
+    "text": "Wind specific state attributes\nThe wind module requires module-specific attributes for each state in SVD. These attributes are defined by a table defined with the stateFile setting. The table must have the following columns:\n\n\n\n\n\n\n\nAttribute\nDescription\n\n\n\n\nstateId\nId of SVD state\n\n\npWindDamage\nProbability [0..1] that a cell in the current state is affected when reached by storm\n\n\n\nThe post-wind transition is defined by the transition matrix in transitionFile.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_wind.html#storm-events",
+    "href": "module_wind.html#storm-events",
+    "title": "Wind module",
+    "section": "Storm events",
+    "text": "Storm events\nWindstorms are not started by SVD, but are triggered externally by a time series of storms (stormEventFile). The file has the following columns:\n\n\n\n\n\n\n\nColumn\nDescription\n\n\n\n\nyear\nYear of storm occurrence\n\n\nx\nX-coordinate of the storm event in local metric coordinates (projection used by the project)\n\n\ny\nY-coordinate of the storm event\n\n\nnumber_of_cells\nNumber of 10km cells affected\n\n\nproportion_of_cell\nProportion of affected 100m cells affected within 10km",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_wind.html#configuration",
+    "href": "module_wind.html#configuration",
+    "title": "Wind module",
+    "section": "Configuration",
+    "text": "Configuration\nThe module is configured in the project file. In addition to the enabled and type setting, the wind module has the following settings:\n\nregionalProbabilityGrid (filepath)\nThe file containing a the 10km probability of wind occurrence.\n\n\ntransitionFile (filepath)\nThe file containing a transition matrix (see matrix module) for post wind states (see above).\n\n\nignitionFile (filepath)\nThe data table with the list of event location points and wind sizes.\n\n\nstateFile (filepath)\nData file with additional state-specific variables that specify per-state damage probabilities.\n\n\nstopAfterImpact (numeric)\nProbability that the wind does not spread after affecting a cell (0..1)\n\n\nspreadUndisturbed (numeric)\nThe parameter defines if windthrows can continue after a cell is not affected (0..1)\n\n\nfetchFactor (numeric)\nThe parameter defines how much the probability increases for neighboring cells.\n\n\nspreadStartParallel (numeric)\nThe parameter defines whether wind throws start in parallel in different areas of the 10km grid. Can be used to change the number of small scale windthrows.\n\n\nwindSizeMultiplier (expression)\nIf not empty, the expression is used to scale the maximum wind size provided from the storm event file. Many storms do not reach the maximum size because of topography and lack of continuously forested patches. This can be countered by scaling storm sizes, so that on average the realized storm event sizes match the input. The expression takes one parameter, the proportion_of_cell from the storm event file.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_wind.html#variables",
+    "href": "module_wind.html#variables",
+    "title": "Wind module",
+    "section": "Variables",
+    "text": "Variables\nThe wind module provides the following variables that can be used in expressions:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nregionalProb\nwind event probability at regional scale (10km)\n\n\nsusceptibility\nstate-dependent probability of wind damage\n\n\nwindNEvents\ncumulative number of wind events on cell\n\n\nwindLastEvent\nthe year of the last storm event on cell (or 0 if never affected)",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_wind.html#output",
+    "href": "module_wind.html#output",
+    "title": "Wind module",
+    "section": "Output",
+    "text": "Output\nThe module can provide tabular and gridded outputs.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Wind module"
+    ]
+  },
+  {
+    "objectID": "module_management.html",
+    "href": "module_management.html",
+    "title": "Management module",
+    "section": "",
+    "text": "The SVD management module simulates management actions on 100 m resolution (the SVD base resolution). Management is performed as clear cut of the grid cell. Management happens for stands above minHeight and whose annual height increment is below a (state-specific) threshold. The later mimics the tree growth & yield principle trees are harvested after growth has culminated (and is declining). Further, management probabilities are calculated externally and given to SVD with the transitionFile. In order to prevent large scale clearcuts in year 1, there is a burn-in period that can be defined via an expression.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Management module"
+    ]
+  },
+  {
+    "objectID": "module_management.html#configuration",
+    "href": "module_management.html#configuration",
+    "title": "Management module",
+    "section": "Configuration",
+    "text": "Configuration\nThe module is configured in the project file. In addition to the enabled and type setting, the management module has the following settings:\n\ntransitionFile (filepath)\nThe file containing a transition matrix (see matrix module) for post management states (see above).\n\n\nstateFile (filepath)\nData file with additional state-specific variables that specify per-state damage probabilities.\n\n\nminHeight (numeric)\nHeight after which management becomes possible (meters)\n\n\nburnInProbability (expression)\nIf not empty, the expression is used to scale the management actions that would happen in the first year to several years afterwards. Example: polygon(yr, 0, 0, 1, 0, 1, 0.5, 10, 1); from year 0 to 1 the probability of management is 0. From year 1 to year 10 the management probability increases from 0.5 to 1.\n\n\nmanagementCapGrid (filepath)\nSpatial grid (with user-defined resolution, e.g. 100x100km) that provides an upper limit to area managed (in hectares) per year and grid cell.\n\n\nmanagementCapModifier (numeric)\nMultiplicative factor that modifies the value provided in managementCapGrid. For example, consider a 10x10km grid and a value in the grid of 1000, and managementCapModifier of 1.2. This would result in a maximum of forest management per year on the cell (100km2) of 1200 ha / year.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Management module"
+    ]
+  },
+  {
+    "objectID": "module_management.html#variables",
+    "href": "module_management.html#variables",
+    "title": "Management module",
+    "section": "Variables",
+    "text": "Variables\nThe management module provides the following variables that can be used in expressions:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nheight\nstand topheight (m)\n\n\nheightIncrement\nlower bound of height increment (based on current state & history) in m/yr\n\n\nlastYear\nsimulation year of last management on cell (0 if never managed)",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Management module"
+    ]
+  },
+  {
+    "objectID": "module_management.html#output",
+    "href": "module_management.html#output",
+    "title": "Management module",
+    "section": "Output",
+    "text": "Output\nThe module can provide tabular and gridded output.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Management module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html",
+    "href": "module_barkbeetle.html",
+    "title": "Bark Beetle Module",
+    "section": "",
+    "text": "This module simulates the spread of bark beetle infestations within the landscape. It incorporates the effects of regional wind events, beetle susceptibility, climate, and probabilistic spread mechanics to realistically model bark beetle dynamics.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#purpose",
+    "href": "module_barkbeetle.html#purpose",
+    "title": "Bark Beetle Module",
+    "section": "",
+    "text": "This module simulates the spread of bark beetle infestations within the landscape. It incorporates the effects of regional wind events, beetle susceptibility, climate, and probabilistic spread mechanics to realistically model bark beetle dynamics.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#sequence-of-steps",
+    "href": "module_barkbeetle.html#sequence-of-steps",
+    "title": "Bark Beetle Module",
+    "section": "Sequence of Steps",
+    "text": "Sequence of Steps\n\nBackground infestation: Starts background infestations based on a probability function that may incorporate a regional background infestation probability grid. Susceptibility and climate data influence the chance of an infestation starting in a cell.\nWind-Beetle Interaction: Identifies cells that were affected by wind events in the previous year, and ncreases the susceptibility of these wind-disturbed cells, making them more likely to be infested by beetles.\nProbabilistic Infestation Spread:\n\nIteration: Processes active cells iteratively, representing one year of simulation per iteration.\nImpact: Infested cells undergo a state change (e.g., from live to dead) based on transition matrix provided in transitionFile.\nDispersal: Beetles spread probabilistically from infested cells with their range determined by a climate-dependent kernel. Spread success in a target cell is influenced by its susceptibility and the probability value from the kernel.\nMortality: Infested cells may experience mortality based on factors such as base mortality rate, frost events, and outbreak age.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#details",
+    "href": "module_barkbeetle.html#details",
+    "title": "Bark Beetle Module",
+    "section": "Details",
+    "text": "Details\n\nInitial infestation: for large landscapes, the model subsamples a different set of points to test in each year (for landscapes &gt; 10 Mio px the factor is 100). If regionalBackgroundProb is provided, the expression is used to calculate the probability for the cell. If also regionalBackgroundProb grid is provided, then the value of of the probability grid can be used in the expression as the variable regionalProb. A value of 0.000685 is used when no expression is given. The resulting probability is linearly scaled with the subsampling-factor.\nClimate Influences: Climate data, particularly minimum temperatures and the number of frost days, affect beetle population growth and survival. This data is used to select the appropriate dispersal kernel and calculate mortality risk. Technically, the number of genereations for a given year, and the number of days with intense frost are input parameter and need to be provided with the climate data to SVD. The respective columns are configured with climateVarGenerations and climateVarFrost. See also climate.firstAuxiliaryColumn.\nWind Interactions: Wind events increase the likelihood of beetle infestations by creating more susceptible areas (e.g., through the creation of deadwood). The probability of starting a bark beetle outbreak on cells affected by wind in the previous simulation year is based on spruce proportion on the cell and a parameter, calculated as:\n\\(p_{outbreak} = prop_{spruce} \\cdot windInteractionStrength\\)\nProbabilistic Spread: The spread of beetles from infested cells is not deterministic. The probability of a successful spread depends on the susceptibility of the target cell as well as the dispersal probabilities encoded in the kernel. The kernel is pre-processed and loaded into SVD via kernelFile.\nBark beetle kernels: Are created in R using a simple “simulation” approach:\n\nWe simulate n beetles (or beetle units). Each beetle starts from a random position on a 100x100 cell (here n = 10000)\nEach beetle travels a distance sampled from beetle distribution kernel from Kautz (as in iLand) and in random direction\nIf there are more than 1 generations, then for every landed beetle (unit), k offspring beetles are created that again travel in random direction (and with distance sampled from the kernel).\nRepeat for number of generations\n\nThis process yields “kernels”, i.e. what density of beetles travel to neighboring (100m) cells for different generation counts. Kernels have a size of 121x121, with the beetle source in the center, thus spanning 1km in each direction, see below for definition of the file format.\nBark beetle generations: The number of bark beetle generations in a single year is driven by beetle phenology, and thus strongly by climate. We use the “PhenIPS” approach (also used in iLand) and calculate the potential number of beetle generations based on daily climate (t_min, t_max, radiation), an assumption on LAI, and latitude. We use a C++ implementation (based on iLand’s) embedded in R to pre-process climate data.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#configuration",
+    "href": "module_barkbeetle.html#configuration",
+    "title": "Bark Beetle Module",
+    "section": "Configuration",
+    "text": "Configuration\nThe module is configured in the project file. In addition to the enabled and type setting, the bark beetle module offers these options:\n\nclimateVarGenerations (string)\nName of the climate variable with the number of potential bark beetle generations (Pheinps).\n\n\nclimateVarFrost (string)\nName of the climate variable with the number of days where the minimum temperature falls below -15 °C.\n\n\nbeetleOffspringFactor (integer)\nFactor impacting the size of the dispersal kernel. Use a value defined in the kernel file kernelFile(e.g., 1, 1.5, 2, 2.5, 3).\n\n\nkernelFile (filepath)\nFilepath to a CSV file containing the dispersal kernel data (see table below for format).\n\n\nsuccessOfColonization (double)\nGlobal scaling factor for colonization success, influencing the overall spread rate.\n\n\nbackgroundProbFormula (string)\n(Optional) Formula to calculate background infestation probability (see expression syntax). Note that you can include the value of regionalBackgroundProb as well as climate variables in the expression. Uses a variable regionalProb.\n\n\nregionalBackgroundProb (filepath)\n(Optional) Filepath to a grid with regional background infestation probabilities.\n\n\nwindInteractionStrength (double)\nFactor determining the increase in susceptibility of wind-disturbed cells to beetle infestations.\n\n\ntransitionFile (filepath)\nFilepath to the transition matrix file defining the allowed state changes after beetle infestation.\n\n\nstateFile (filepath)\nFilepath to the file defining state-specific properties (like bark beetle susceptibility)\n\n\nsaveDebugGrids (boolean)\nEnables saving of intermediate debugging grids.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#input-data",
+    "href": "module_barkbeetle.html#input-data",
+    "title": "Bark Beetle Module",
+    "section": "Input Data",
+    "text": "Input Data\n\nkernelFile\nThis file defines the bark beetle dispersal kernel. It has a CSV format with the following columns:\n\n\n\n\n\n\n\n\nColumn\nDescription\nData Type\n\n\n\n\nvgen\nNumber of potential bark beetle generations per year (should match values used for beetleOffspringFactor)\ndouble\n\n\nvk\nOffspring factor (should match the configured value in beetleOffspringFactor)\ninteger\n\n\n…\n121 further columns, representing dispersal probabilities to cells in a grid of 11x11 cells around the source cell.\ndouble\n\n\n\n\n\nState-Specific Variables\nThe bark beetle module requires the following state-specific variables. These are defined in the file specified by the stateFile option.\n\n\n\n\n\n\n\n\nVariable Name\nDescription\nData Type\n\n\n\n\npBarkBeetleDamage\nSusceptibility of the state to bark beetle infestation (value between 0 and 1).\ndouble",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#variables",
+    "href": "module_barkbeetle.html#variables",
+    "title": "Bark Beetle Module",
+    "section": "Variables",
+    "text": "Variables\nThe bark beetle module provides the following variables that can be used in expressions:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nbbgen\nnumber of pot. bark beetle generations (Pheinps)\n\n\nfrost_days\nnumber of days with minimum temperture below -15° (from climate data)\n\n\nsusceptibility\nstand susceptibility for bark beetle infestations\n\n\nbbNEvents\ncumulative number of times the cell was affected by bark beetle\n\n\nbbLastEvent\nthe year the cell was impacted last by bark beetle\n\n\noutbreakAge\nage (years) of the outbreak (the last time the cell was affected)\n\n\nregionalProb\nprobability of background infestation",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "module_barkbeetle.html#output",
+    "href": "module_barkbeetle.html#output",
+    "title": "Bark Beetle Module",
+    "section": "Output",
+    "text": "Output\nThe module can provide tabular and gridded output.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Bark Beetle Module"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "SVD Documentation",
+    "section": "",
+    "text": "Scaling vegetation transitions\nSVD is a modeling framework for the simulation of vegetation transitions on larger spatial scales. It is a research tool and released under a GPL open source license.",
+    "crumbs": [
+      "Home",
+      "SVD Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "SVD Documentation",
+    "section": "Installation",
+    "text": "Installation\n\nInstallation guide",
+    "crumbs": [
+      "Home",
+      "SVD Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#using-svd",
+    "href": "index.html#using-svd",
+    "title": "SVD Documentation",
+    "section": "Using SVD",
+    "text": "Using SVD\n\nSVD user interface\nSVDc console version\nGuide to input data preparation",
+    "crumbs": [
+      "Home",
+      "SVD Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#setup-of-a-project",
+    "href": "index.html#setup-of-a-project",
+    "title": "SVD Documentation",
+    "section": "Setup of a project",
+    "text": "Setup of a project\n\nSVD setup\nConfiguring the landscape\nDNN setup\nConfiguring DNN meta data",
+    "crumbs": [
+      "Home",
+      "SVD Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#svd-concepts",
+    "href": "index.html#svd-concepts",
+    "title": "SVD Documentation",
+    "section": "SVD concepts",
+    "text": "SVD concepts\n\nStates\nModules\n\nFire module\nMatrix module\nWind module\nManagement module",
+    "crumbs": [
+      "Home",
+      "SVD Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#reference-documentation",
+    "href": "index.html#reference-documentation",
+    "title": "SVD Documentation",
+    "section": "Reference documentation",
+    "text": "Reference documentation\n\nconfiguration file\nSVD Outputs\nvariables and expressions\ndata formats in SVD\n\n\n\n\nSVD overview figure",
+    "crumbs": [
+      "Home",
+      "SVD Documentation"
+    ]
+  },
+  {
+    "objectID": "configuring_the_landscape.html",
+    "href": "configuring_the_landscape.html",
+    "title": "Configuring the landscape",
+    "section": "",
+    "text": "The simulated landscape is a (large) grid of cells with a cell size of 100m. Additional spatial layers specify properties of the environment (site and climate conditions). A cell has also a state and a residence time. The figure below provides a conceptual view:\n\n\n\nLandscape\n\n\nA landscape in SVD. Each cell of the landscape is situated within an environmental region, which is linked to a climate region. In addition, each cell is in a specific state.\nThe simulated landscape is defined by a grid (landscape.grid) and an accompanying data table (landscape.file). The metric coordinates of the landscape grid define the extent of the simulated area.\nThe value of each grid cell is an integer Id (“environmentId”) and values &gt;0 indicate environment regions. All pixels with the same numeric grid value share the same environmental conditions. A value of 0 indicates that a cell is not simulated by SVD. The grid format is a standard ASCII grid file, and the expected resolution is 100m.\nThe data table is a text file with a row for each environmentId (i.e. multiple grid cells can refer to the same row in the table). The required columns of the table are:\n\n\n\n\n\n\n\nColumn\nDescription\n\n\n\n\nid\nThe unique environment Id\n\n\nclimateId\nan Id that defines the climate region; the Id is linked to climate data\n\n\n\nThe hierarchical structure helps to reduce the amount of data that SVD needs to process:\n\nmultiple cells (100m resolution) can share environmental conditions (e.g., site variables)\nmultiple environmental zones can share the same climatic data\n\nFor example, say we have climate information at 4km, and soil information at 1km resolution. In this case (and assuming aligned grids) 100 SVD cells share the environment vector, and 16 environment zones (1600 cells) share the climate data. Note that it is of course possible to establish 1:1 relations (i.e. for each cell one row in the environment file one climate region (and consequently climate time series)).\n\nAdditional variables\nIn addition to the fixed variables id and climateId further (numeric) variables can be defined and subsequently used in expressions. The column name in the landscape.file is used as the variable name. Typically, such variables refer to site conditions (e.g., soil depth, available nitrogen, ..).\n\n\nInitial vegetation conditions\nAt the start of the simulation each cell is assigned a initial state and residence time. See the project file for details.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring the landscape"
+    ]
+  },
+  {
+    "objectID": "SVD_data_preparation.html",
+    "href": "SVD_data_preparation.html",
+    "title": "Svd Data Preparation",
+    "section": "",
+    "text": "An efficient way to set up the required spatial and tabular data is to use R (or Python) as much as possible. For text files (such as the project configuration file), use a powerful editor such as Notepad++ that is capable of syntax highlighting. Using a spreadsheet program such as Excel is fine, but it is advisable to create the actual input files for SVD in R (e.g., by editing Excel, importing Excel into R, writing input files in R).\n\n\nSVD used one spatial grid that defines the extent of the landscape (see also configuring the landscape). This grid set with the landscape.grid key in the config file and is considered as the “master” grid. The grid defines:\n\nthe extent of the landscape (i.e., the “rectangle” around the actual project area)\nthe base resolution. SVD uses the resolution of this grid as the base resolution. 100m are the SVD default, but other resolutions can be used as well (note that some functions such as local neighborhood relationships are linked to the basic resolution and thus functionality may change)\nthe spatial projection used - the lower left corner of this specific grid is used as the origin of the local coordinate system (0/0) in SVD. Note that you can use any metric coordinate system - as long as all used geodata uses the same system consistently\nall cells on the landscape that are part of the simulated area (use NA for cells not simulated).\n\nNote that any cell with a valid value here is expected to have input also other data sources (e.g., initial state of cells, SVD throws errors otherwise). Similarly, other input are only allowed for valid cells in the landscape grid (e.g., providing a initial state for a cell that is NA will throw an error).\nTherefore: Double-check all grids, particularly if you reproject / aggregate / combine data from different sources! A relatively safe approach is to start with the landscape, and resample() other grids (e.g., the initial states) to the exact specification of the landscape. Below are some examples how typical problems can be addressed.\n\nlibrary(raster)\n\nlscp &lt;- raster(\"....\") # load raster\ninit.state &lt;- raster(\"...\") # load init state\n\nextent(lscp) == extent(init.state) # check extent\ncrs(lscp) == crs(init.state) # check projection\n\n# show pixels missing in the init layer\nplot( is.na(init.state) & !is.na(lscp))\n\n# show pixels missing in the landscape layer\nplot( !is.na(init.state) & is.na(lscp))\n\n# To fix problems, you can e.g. remove pixels (=set to NA) e.g. from the init layer\ninit.state[][ !is.na(init.state[]) & is.na(lscp[]) ] &lt;- NA\n\n### To change size / projection, use functions from the raster package such as\n# crop(), extend(), resample() (with resample, be careful to use the right method, e.g. ngb for classes)\n\n\n\nVariables that vary in space (think of site variables such as soil depth) are stored much like polygons in vector based GIS: space is divided into “polygons” and an attached data table specifies attributes for each polygon. For SVD, the spatial polygons are “rastered” to a grid with an environmentId as value. The attribute data is stored in table linking attributes to each environmentId. Note that as a corner case, you can define each as a “polygon”, and thus define attributes for each cell of the landscape.\nBelow is a simple setup with unique environmentIds for each cell on the landscape. Note that this setup may be inefficient for very large landscapes.\n\n# assume we have a grid with all valid pixels, e.g. the init.state grid\nlscp &lt;- init.state.grid # make a copy\n\n# generate a grid with a unique ID for each cell, starting with 1\n# First, get the indices of all valid cells\nlindex &lt;- which(!is.na(init.state.grid[]))\n\n# now overwrite all valid values with a sequence of 1 .. number of cells\nlscp[lindex] &lt;- 1:length(lindex)\nplot(lscp) \n\n# assume further, we have a grid of some site attribute with matching\n# extent and resolution. Say, we have matching layers for soil depth and for nutrients:\n\n# in this case we can create a basic landscape table:\nenv.table &lt;- data.frame(\n     enviromentId = lscp[lindex],\n     climateId = 1, # see below\n     soilDepth = soil.depth[lindex],\n     nutrients = nutriets[lindex]\n)\n\nwrite.csv(env.table, file=\"gis/landscape.txt\", row.names=F, sep=\".\")\n\n\n\n\nSVD requires data for both the initial state and the residence time of each cell on the landscape. There are different mechanisms for loading this information, which are controlled with initialState.mode in the config file. If you specify grid, you need to provide grids for both. Note that you need to specify data for residence time even if you do not make of this variable. To generate a valid file, you can use the following code:\n\n# assuming we have the initial state in the grid init.state:\n# This sets 1 for all valid pixels (regardless of the current state)\ninit.restime &lt;- init.state * 0 + 1 \n\n# remember, set the datatype:\nwriteRaster(init.restime, \"gis/init_restime.tif\", datatype=\"INT4S\", overwrite=T)\n\n\n\n\nClimate data - and more generally, all information that can change over time - uses tabular data with time series of the relevant data linked to via the climateId in the environment table. The most simple approach is to assume homogeneous climate for the whole landscape, and a table with dummy data. The climate data is homogeneous, when the same climateId is used for the whole landscape (see example code above, where climateId = 1 everywhere). To create a table with dummy data, you can:\n\n# assume we have only climateId = 1\n\n# create a dummy time series for 1000 yrs \ndummy.climate &lt;- data.frame( climateId = 1,\n                             year = 1:1000) \nwrite.csv(dummy.climate, \"climate/dummy_climate.csv\", row.names = F)\n\nMake sure to switch off the climate.sequence in the config file. Note, that in this setup no useful climate data is available - the data is necessary to make SVD happy.\nA relatively simple way to provide spatial climate information and a change signal is as follows:\n\nget gridded data for long-term averages and use the environment table to store a value for each cell\nderive / assume a single time series for change in climatic parameters (e.g. a linear increase of temperature)\ncombine standard value with the change signal within SVD\n\nHere is an example:\n\n# see also the code snippet above: now we have climate data:\nenv.table &lt;- data.frame(\n     enviromentId = lscp[lindex],\n     climateId = 1, # see below\n     MAT = annual.temp[lindex],\n     MAP = annual.precip[lindex]\n)\n\n# ....\n\ncc.climate &lt;- data.frame( climateId = 1,\n                             year = 1:100,\n                             dT = (1:100)/50, # linear increase up to 2 deg \n                             dP = 1 - (1:100)/500 )# decrease of precip by 20%\n# ....\n\n# now you can use *both* variables in expression \n# (make sure that climate.publishVariables is true)\n\n# e.g. use a threshold of 800mm mean annual precip: if(MAP*dp &lt; 800, 2, 1)",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "Svd Data Preparation"
+    ]
+  },
+  {
+    "objectID": "SVD_data_preparation.html#setting-up-a-project-for-svd",
+    "href": "SVD_data_preparation.html#setting-up-a-project-for-svd",
+    "title": "Svd Data Preparation",
+    "section": "",
+    "text": "An efficient way to set up the required spatial and tabular data is to use R (or Python) as much as possible. For text files (such as the project configuration file), use a powerful editor such as Notepad++ that is capable of syntax highlighting. Using a spreadsheet program such as Excel is fine, but it is advisable to create the actual input files for SVD in R (e.g., by editing Excel, importing Excel into R, writing input files in R).\n\n\nSVD used one spatial grid that defines the extent of the landscape (see also configuring the landscape). This grid set with the landscape.grid key in the config file and is considered as the “master” grid. The grid defines:\n\nthe extent of the landscape (i.e., the “rectangle” around the actual project area)\nthe base resolution. SVD uses the resolution of this grid as the base resolution. 100m are the SVD default, but other resolutions can be used as well (note that some functions such as local neighborhood relationships are linked to the basic resolution and thus functionality may change)\nthe spatial projection used - the lower left corner of this specific grid is used as the origin of the local coordinate system (0/0) in SVD. Note that you can use any metric coordinate system - as long as all used geodata uses the same system consistently\nall cells on the landscape that are part of the simulated area (use NA for cells not simulated).\n\nNote that any cell with a valid value here is expected to have input also other data sources (e.g., initial state of cells, SVD throws errors otherwise). Similarly, other input are only allowed for valid cells in the landscape grid (e.g., providing a initial state for a cell that is NA will throw an error).\nTherefore: Double-check all grids, particularly if you reproject / aggregate / combine data from different sources! A relatively safe approach is to start with the landscape, and resample() other grids (e.g., the initial states) to the exact specification of the landscape. Below are some examples how typical problems can be addressed.\n\nlibrary(raster)\n\nlscp &lt;- raster(\"....\") # load raster\ninit.state &lt;- raster(\"...\") # load init state\n\nextent(lscp) == extent(init.state) # check extent\ncrs(lscp) == crs(init.state) # check projection\n\n# show pixels missing in the init layer\nplot( is.na(init.state) & !is.na(lscp))\n\n# show pixels missing in the landscape layer\nplot( !is.na(init.state) & is.na(lscp))\n\n# To fix problems, you can e.g. remove pixels (=set to NA) e.g. from the init layer\ninit.state[][ !is.na(init.state[]) & is.na(lscp[]) ] &lt;- NA\n\n### To change size / projection, use functions from the raster package such as\n# crop(), extend(), resample() (with resample, be careful to use the right method, e.g. ngb for classes)\n\n\n\nVariables that vary in space (think of site variables such as soil depth) are stored much like polygons in vector based GIS: space is divided into “polygons” and an attached data table specifies attributes for each polygon. For SVD, the spatial polygons are “rastered” to a grid with an environmentId as value. The attribute data is stored in table linking attributes to each environmentId. Note that as a corner case, you can define each as a “polygon”, and thus define attributes for each cell of the landscape.\nBelow is a simple setup with unique environmentIds for each cell on the landscape. Note that this setup may be inefficient for very large landscapes.\n\n# assume we have a grid with all valid pixels, e.g. the init.state grid\nlscp &lt;- init.state.grid # make a copy\n\n# generate a grid with a unique ID for each cell, starting with 1\n# First, get the indices of all valid cells\nlindex &lt;- which(!is.na(init.state.grid[]))\n\n# now overwrite all valid values with a sequence of 1 .. number of cells\nlscp[lindex] &lt;- 1:length(lindex)\nplot(lscp) \n\n# assume further, we have a grid of some site attribute with matching\n# extent and resolution. Say, we have matching layers for soil depth and for nutrients:\n\n# in this case we can create a basic landscape table:\nenv.table &lt;- data.frame(\n     enviromentId = lscp[lindex],\n     climateId = 1, # see below\n     soilDepth = soil.depth[lindex],\n     nutrients = nutriets[lindex]\n)\n\nwrite.csv(env.table, file=\"gis/landscape.txt\", row.names=F, sep=\".\")\n\n\n\n\nSVD requires data for both the initial state and the residence time of each cell on the landscape. There are different mechanisms for loading this information, which are controlled with initialState.mode in the config file. If you specify grid, you need to provide grids for both. Note that you need to specify data for residence time even if you do not make of this variable. To generate a valid file, you can use the following code:\n\n# assuming we have the initial state in the grid init.state:\n# This sets 1 for all valid pixels (regardless of the current state)\ninit.restime &lt;- init.state * 0 + 1 \n\n# remember, set the datatype:\nwriteRaster(init.restime, \"gis/init_restime.tif\", datatype=\"INT4S\", overwrite=T)\n\n\n\n\nClimate data - and more generally, all information that can change over time - uses tabular data with time series of the relevant data linked to via the climateId in the environment table. The most simple approach is to assume homogeneous climate for the whole landscape, and a table with dummy data. The climate data is homogeneous, when the same climateId is used for the whole landscape (see example code above, where climateId = 1 everywhere). To create a table with dummy data, you can:\n\n# assume we have only climateId = 1\n\n# create a dummy time series for 1000 yrs \ndummy.climate &lt;- data.frame( climateId = 1,\n                             year = 1:1000) \nwrite.csv(dummy.climate, \"climate/dummy_climate.csv\", row.names = F)\n\nMake sure to switch off the climate.sequence in the config file. Note, that in this setup no useful climate data is available - the data is necessary to make SVD happy.\nA relatively simple way to provide spatial climate information and a change signal is as follows:\n\nget gridded data for long-term averages and use the environment table to store a value for each cell\nderive / assume a single time series for change in climatic parameters (e.g. a linear increase of temperature)\ncombine standard value with the change signal within SVD\n\nHere is an example:\n\n# see also the code snippet above: now we have climate data:\nenv.table &lt;- data.frame(\n     enviromentId = lscp[lindex],\n     climateId = 1, # see below\n     MAT = annual.temp[lindex],\n     MAP = annual.precip[lindex]\n)\n\n# ....\n\ncc.climate &lt;- data.frame( climateId = 1,\n                             year = 1:100,\n                             dT = (1:100)/50, # linear increase up to 2 deg \n                             dP = 1 - (1:100)/500 )# decrease of precip by 20%\n# ....\n\n# now you can use *both* variables in expression \n# (make sure that climate.publishVariables is true)\n\n# e.g. use a threshold of 800mm mean annual precip: if(MAP*dp &lt; 800, 2, 1)",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "Svd Data Preparation"
+    ]
+  },
+  {
+    "objectID": "SVD_data_preparation.html#tips-and-tricks",
+    "href": "SVD_data_preparation.html#tips-and-tricks",
+    "title": "Svd Data Preparation",
+    "section": "Tips and Tricks",
+    "text": "Tips and Tricks\n\nTables\nBe careful with the decimal separator for numbers (“.” vs “,”). Like most programming languages, SVD requires “.”. To force correct decimal separators, use the dec parameter of write.csv() and related functions.\nCSV files use a comma (“,”) as a separator. This can be a problem if complex expressions that contain commas are in your data. In that case, using a different separator (such as a tab character or white spaces) can be a good idea. Use the sep parameter of write.csv() and related functions. While at it, do not use quoting (quote=F), and avoid row names (row.names=F).\n\nlibrary(readxl)\n# read data from Excel sheet. You can load from a specific sheet or range (see also the Import from Excel dialog)\nstates.tab &lt;- read_xls(\"states.xlsx\", sheet=\"states\")\n\n# process data\n\n# write a CSV / TSV \nwrite.csv(states.tab, \"stm/states.csv\", row.names = F, quote=F, sep = \"\\t\", dec=\".\")\n\n\n\nLogging\nYou can control the level of details in the log file. It can be useful to increase the level of detail when hunting down problems. To do so, change the logging levels in the config file (e.g, logging.setup.level , see project file).\nUse a capable editor that allows to reload the file whenever the file changes on disk (e.g., RStudio, Notepad++). Pro tip: use an editor that allows custom syntax highlighting (e.g. change appearance of warning/error lines).",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "Svd Data Preparation"
+    ]
+  },
+  {
+    "objectID": "SVD_data_formats.html",
+    "href": "SVD_data_formats.html",
+    "title": "Data formats",
+    "section": "",
+    "text": "Configuration files\nData tables\nRaster data",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Data formats"
+    ]
+  },
+  {
+    "objectID": "SVD_data_formats.html#configuration-files",
+    "href": "SVD_data_formats.html#configuration-files",
+    "title": "Data formats",
+    "section": " Configuration files",
+    "text": "Configuration files\nSVD uses a simple text file based format for the configuration of the model. The model reads single configuration items as key-value pairs from the file.\nThe general layout is:\nkey = &lt;value&gt;\nThe key is a string that may contain . characters for logical grouping. The value is a string which is interpreted by the model. Possible data types are string, numeric, and bool (with the possible values true and false).\n\nlines that start with a # are considered as comments, empty lines are ignored\nThe sequence of items is not important\nMissing keys are (in general) not allowed and produce errors\n\nExample:\noutput.StateGrid.enabled = true\noutput.StateGrid.path = output/state_$year$.asc\noutput.StateGrid.interval = 20\nThis specifies that the output (output.) StateGrid (output.StateGrid) is enabled (boolean value), output data is saved at a specific location (path, a string), and with a given interval (numeric).",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Data formats"
+    ]
+  },
+  {
+    "objectID": "SVD_data_formats.html#data-tables",
+    "href": "SVD_data_formats.html#data-tables",
+    "title": "Data formats",
+    "section": " Data tables",
+    "text": "Data tables\nTabular data is read into SVD as delimited text tables.\n\nComments: lines starting with # are considered as comment and ignored\nthe first (non-comment) line has the column names (quotes (\") are removed)\nthe delimiter is auto-detected and can be one of: tab (\\t), semicolon (;), colon (,), or space ()\nfloating point values must use . as decimal separator and can use scientific notation (e.g. 0.1234 or 1.23e02)\nthe file extension is not considered\n\nExample:\n\"id\",\"climateId\",\"availableNitrogen\",\"pctSand\"\n1,4368,47,50.9185174306234\n2,4368,48,50.9185174306234\n3,4368,49,50.9185174306234\n....",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Data formats"
+    ]
+  },
+  {
+    "objectID": "SVD_data_formats.html#raster-data",
+    "href": "SVD_data_formats.html#raster-data",
+    "title": "Data formats",
+    "section": " Raster data",
+    "text": "Raster data\nSVD supports GeoTIFF and simple ASCII file format for spatial data. Such grids can be produced by GIS Software (e.g., QGis, Arcmap) or also by the R raster or terra packages.\nThe coordinates system has to be metric, and the requirements for the cell size vary (a typical cell size is 100m). SVD uses internally a flat metric coordinate system without considering spatial projections. Therefore all spatial input data should use a consistent projection.\nSVD uses the FreeImage library for handling GeoTIFF files. Currently, the selection of data types is limited to INT16 (16-bit signed integers) and INT32 (32-bit signed integer) for integer grids, and 32 bit / 64 bit floating point data. In R you can use the datatype parameter of writeGrid() to force a specific format (use ‘INT2S’ or ‘INT4S’ for 16 and 32 bit integers, and ‘FLT4S’ for 32 bit float or ‘FLT8S’ for 64 bit double precision floating point numbers).\nThe origin (i.e. the 0/0 point of the internal coordinate system) is derived from the landscape.grid.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Data formats"
+    ]
+  },
+  {
+    "objectID": "configuring_dnn_metadata.html",
+    "href": "configuring_dnn_metadata.html",
+    "title": "Configuring DNN meta data",
+    "section": "",
+    "text": "In order to define the meta data that describes the bindings to the DNN SVD uses a single configuration file which is set by the dnn.metadata setting in the main configuration file.\nEach binding is described by a number of settings, which follow this naming scheme:\ninput.&lt;tensorname&gt;.&lt;key&gt; = &lt;value&gt;",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring DNN meta data"
+    ]
+  },
+  {
+    "objectID": "configuring_dnn_metadata.html#introduction",
+    "href": "configuring_dnn_metadata.html#introduction",
+    "title": "Configuring DNN meta data",
+    "section": "",
+    "text": "In order to define the meta data that describes the bindings to the DNN SVD uses a single configuration file which is set by the dnn.metadata setting in the main configuration file.\nEach binding is described by a number of settings, which follow this naming scheme:\ninput.&lt;tensorname&gt;.&lt;key&gt; = &lt;value&gt;",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring DNN meta data"
+    ]
+  },
+  {
+    "objectID": "configuring_dnn_metadata.html#common-settings",
+    "href": "configuring_dnn_metadata.html#common-settings",
+    "title": "Configuring DNN meta data",
+    "section": "Common settings",
+    "text": "Common settings\n\nenabled\nBoolean value, if true the binding is active, if false the binding is not active ### dim The number of dimensions of the input tensor. Possible values are 0, 1, and 2. 0 dimensions can be used for constants (e.g. training_phase = false) ### sizeX number of elements along the first axis of the tensor. For 1-dimensional tensors this is the total number of elements, for 2-dimensional tensors it is the number of rows ### sizeY number of elements along the second axis of the tensor. For 1-dimensional tensors this is 0, for 2-dimensional tensors it is the number of columns ### dtype The data type of the tensor. Currently, the following data types are supported:\n\n\n\n\n\n\n\ndtype\ndescription\n\n\n\n\nfloat\n32-bit floating point number; this is the preferred floating point type used for DNN (since calculations are faster compared 64-bit floating points (double))\n\n\nint16\n16-bit signed integer (value range: -32,768 to +32,767)\n\n\nint64\n64-bit signed integer (value range: -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807)\n\n\nuint16\n16-bit unsigned integer (value range: 0 - 65,535)\n\n\nfloat16\n16-bit floating point number (half precision)\n\n\nbool\n1 bit boolean value\n\n\n\nNote, that not all bindings support all possible data types.\n\n\ntype\nThe type tells SVD what kind of data is expected by the binding. The following types are possible, detailed description are below.\n\n\n\n\n\n\n\ntype\ndescription\n\n\n\n\nState\nThe current state of the cell (single integer value of stateId - 1). Data type is uint16.\n\n\nResidenceTime\nthe residence time of the cell in years divided by 10. Data type is float, single value.\n\n\nClimate\nclimate time series for the next 10 years for the given cell. The tensor is 2-dimensional and the data type is float.\n\n\nNeighbors\na 1-dimensional vector (data type float) with species share for the local and intermediate neighborhood.\n\n\nScalar\na constant (with a fixed value set during the setup process)\n\n\nVar\na 1-dimensional vector (data type float) with variable size that is populated with user-defined values.\n\n\nFunction\na single float value that is calculated on the fly by built in functions.\n\n\n\nDeprecated types (used in earlier versions of SVD):\n\n\n\n\n\n\n\ntype\ndescription\n\n\n\n\nDistanceOutside\nsingle float value populated with the environment variable distanceOutside\n\n\nSiteNPKA\ntwo float values, populated with “(availableNitrogen-58.5)/41.436” and “(soilDepth-58.5)/41.436”",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring DNN meta data"
+    ]
+  },
+  {
+    "objectID": "configuring_dnn_metadata.html#available-bindings",
+    "href": "configuring_dnn_metadata.html#available-bindings",
+    "title": "Configuring DNN meta data",
+    "section": "Available bindings",
+    "text": "Available bindings\n\nVar\nDefines a 1d vector (with size sizeX) and populates the vector with user-defined “expressions”. The expressions are defined by the transformations setting (e.g., to specify the transformations for a tensor with the name site, use input.site.transformations).\nThe syntax is as follows:\ninput.&lt;name&gt;.transformations = { expression1 }, { expressione2 }, ...,  { expressionN }\nexpression[1-N] corresponds to the 1st - Nth value in the vector, i.e. N equals sizeX.\nThe expression can make use of all available context variables for a cell (e.g. state variables and environment variables).\nExample:\n# environment variables for available nitrogen and percentage of sand, divided by 100\ninput.site.transformations={availableNitrogen/100}, {pctSand/100}\n\n\nFunction\nThe Function binding is a gateway to data items that are provided by (hard-coded) functions in SVD. The function key defines which function to execute for a cell.\n\n\n\n\n\n\n\nfunction\ndescription\n\n\n\n\nDistToSeedSource\ncalculates the minimum distance to a cell that acts as seed source for the current cell\n\n\n\nExample:\n# specifies to use the \"DistToSeedSource\" function for the \"distance\" tensor\ninput.distance.function=DistToSeedSource\n\n\nNeighbors\nSVD calculates the shares for the local and intermediate neighborhood for all available species (i.e. potential seed input). The species shares are calculated based on state information (mainly the compositional type). A list of available species is defined with the model.species setting in the SVD config file. For each species in model.species the function produces two values (local, and intermediate neighborhood). The size of the tensor has to be number of species * 2.\nTODO: more details\n\n\nClimate\nTODO: more details",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring DNN meta data"
+    ]
+  },
+  {
+    "objectID": "dnn_setup.html",
+    "href": "dnn_setup.html",
+    "title": "Configuring the DNN",
+    "section": "",
+    "text": "SVD integrates ONNX Runtime and allows thus to run any trained Deep Neural Network (in .onnx format) within the framework. A conceptual view is depicted below:\nThe network architecture of the DNN defines not only the layers of the network, but also the shapes and types of the input and output data. SVD adopts a “multiple-inputs/multiple-outputs” model, where a single network is trained to be fed simultaneously with data from multiple inputs, and provides multiple outputs as result. Typical inputs are the current state and residence time of a cell, climate and site conditions, typical outputs are a probability distribution for the next state S*, and a distribution for the time until state change.\nEach of this inputs and outputs is (in Deep Learning lingo) a tensor, i.e. a multidimensional array of data with a given shape (the number of dimensions and the size along each axis of the tensor) and type (the internal data type of the tensor, for example floating point or integer). The input/output data needs to comply with the definition of the tensors both during the training and inference phase.\nIn order to integrate (an existing) DNN with SVD one needs to:",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring the DNN"
+    ]
+  },
+  {
+    "objectID": "dnn_setup.html#input-tensors",
+    "href": "dnn_setup.html#input-tensors",
+    "title": "Configuring the DNN",
+    "section": "Input tensors",
+    "text": "Input tensors\nSVD includes a flexible mechanism to define input tensors and provides several pre-defined and user defined input “slots”. The input tensors are defined in a configuration file which is set by the dnn.metadata setting.\nHere is an example of a pre-defined slot:\n# defines the tensor \"climate\" with data type \"float\" \n# and 2 dimensions (10 years x 24 values per year).\n# The slot is \"Climate\" \ninput.climate.enabled=true\ninput.climate.dim=2\ninput.climate.sizeX=10\ninput.climate.sizeY=24\ninput.climate.dtype=float\ninput.climate.type=Climate\nSVD detects the pre-defined type Climate and sets up a link to the available climate data in the model. The name of the tensor is climate (as in input.climate), and the data is a 2-dimensional matrix with 10x24 values. For each cell that should be processed by the DNN SVD populates the tensor with climate data for the next 10 years (in this case the time series consists of 24 values per year).\nAnother example with user defined input data:\n# defines the tensor \"site\" with data type \"float\"\n# and 1 dimension (2 values)\n# The type is \"Var\" \ninput.site.enabled=true\ninput.site.dim=1\ninput.site.sizeX=2\ninput.site.sizeY=0\ninput.site.dtype=float\ninput.site.type=Var\ninput.site.transformations={availableNitrogen/100}, {pctSand/100}\nIn this case SVD fills for each cell the two variables in the input tensor with availableNitrogen/100 and pctSand/100. availableNitrogen and pctSand need to be available in the model (e.g. provided as environment variables in landscape.file). Note that the data values are transformed on the fly. The name of the tensor is site.\nA more detailed description of the available input slots is given on the DNN metadata page.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring the DNN"
+    ]
+  },
+  {
+    "objectID": "dnn_setup.html#output-tensors",
+    "href": "dnn_setup.html#output-tensors",
+    "title": "Configuring the DNN",
+    "section": "Output tensors",
+    "text": "Output tensors\nSVD expects two output tensors of the DNN:\n\na probability distribution for the next state. The distribution is typically the result of a Softmax layer which provides for each potential state a values between 0 and 1. For example, if there are 1000 possible states, the output tensor is expected to be a 1-dimensional vector with 1000 values (float). The output tensor is specified in the main configuration file with the dnn.state.name (name of the tensor), and dnn.state.N (the number of classes).\na probability distribution for the time of state change. Again, the tensor is the result of a Softmax operation and the tensor is specified with the dnn.restime.name and dnn.restime.N settings.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "Configuring the DNN"
+    ]
+  },
+  {
+    "objectID": "install.html",
+    "href": "install.html",
+    "title": "Installing and compiling SVD",
+    "section": "",
+    "text": "You can either use the precompiled version of SVD, or build SVD for yourself.",
+    "crumbs": [
+      "Home",
+      "Installing and compiling SVD"
+    ]
+  },
+  {
+    "objectID": "install.html#installing-svd",
+    "href": "install.html#installing-svd",
+    "title": "Installing and compiling SVD",
+    "section": "Installing SVD",
+    "text": "Installing SVD\nThe executable folder contains all the required files and libraries for Windows. There is no separate installation. To run SVD, start the SVDUI.exe (instructions).\nFor DNN inference, SVD now uses ONNX Runtime. The required library onnxruntime.dll (CPU version) is included in the executable folder.",
+    "crumbs": [
+      "Home",
+      "Installing and compiling SVD"
+    ]
+  },
+  {
+    "objectID": "install.html#instructions-for-compiling-svd",
+    "href": "install.html#instructions-for-compiling-svd",
+    "title": "Installing and compiling SVD",
+    "section": "Instructions for compiling SVD",
+    "text": "Instructions for compiling SVD\nThe SVD model is a stand alone modelling software written in C++ and available under a GPL license. SVD builds on the Qt framework, and is best compiled and modified with the tools provided by Qt (e.g. the QtCreator IDE).\nCurrently, building SVD is available for Windows, Linux, and macOS.\nSVD consists of a number of sub-projects:\n\nPredictor: the link to ONNX Runtime; this part includes ONNX-headers and contains the logic for communicating with the inference engine.\nSVDCore: The main part of the model (representation of the simulated area, data, …)\nSVDUI: The Qt-based user interface\n\nTo build SVD:\n\nopen the SVDModel.pro file in QtCreator\nBuild all sub-projects\nRun the SVDUI.exe (Windows) or the resulting binary (Linux/Mac)\n\n\nCompiling SVD with ONNX Runtime\nSVD requires the ONNX Runtime C++ API.\n\n[!IMPORTANT] Do NOT use pip install, nuget, or other package managers for installing ONNX Runtime for SVD. These are intended for Python or .NET environments. For SVD (C++), you must download the precompiled shared library binaries (headers and .so / .dll files) directly from the Official GitHub Releases.\n\n\nWindows\n\nDownload the ONNX Runtime binaries (e.g., onnxruntime-win-x64-n.n.n.zip) from the official releases.\nExtract the archive to a local directory (e.g., C:\\dev\\onnxruntime).\nIn SVD’s SVDModel/config.pri, set the ONNXRUNTIME_DIR to this path if it differs from the default.\nCopy onnxruntime.dll to your build output folder (where SVDUI.exe resides).\n\n\n\nLinux (Ubuntu / Fedora)\nThe build system expects ONNX Runtime to be located in /opt/onnxruntime.\nExample: Manual installation for GPU support\n# 1. Choose a version compatible with your CUDA/cuDNN (e.g., 1.17.1)\nVERSION=\"1.17.1\"\nFILENAME=\"onnxruntime-linux-x64-gpu-${VERSION}.tgz\"\n\n# 2. Download from GitHub\nwget https://github.com/microsoft/onnxruntime/releases/download/v${VERSION}/${FILENAME}\n\n# 3. Extract and move to /opt/onnxruntime\nsudo mkdir -p /opt/onnxruntime\nsudo tar -xzf ${FILENAME} -C /opt/onnxruntime --strip-components=1\n\n# 4. Cleanup\nrm ${FILENAME}\n\n# 5. Configure the dynamic linker so the OS can find the libraries\necho \"/opt/onnxruntime/lib\" | sudo tee /etc/ld.so.conf.d/onnxruntime.conf\nsudo ldconfig\nIf you only need CPU support, replace gpu with cpu in the filename above.\n\n\nmacOS\n\nDownload the macOS binaries (universal or x64/arm64 depending on your hardware).\nExtract to a preferred location and update ONNXRUNTIME_DIR in SVDModel/config.pri.\nAlternatively, you can install via Homebrew (brew install onnxruntime), but ensure the paths in config.pri match (Homebrew usually installs to /usr/local on Intel or /opt/homebrew on Apple Silicon).\n\n\n\n\nUsing GPU acceleration (CUDA)\nTo use NVIDIA GPUs for faster DNN inference:\n\nRequirement: You must have an NVIDIA GPU and compatible drivers installed.\nONNX Runtime: Download the GPU-enabled version of ONNX Runtime (e.g., onnxruntime-linux-x64-gpu-*).\nCUDA & cuDNN: Install the versions of CUDA and cuDNN that are compatible with the ONNX Runtime version you downloaded (check the ONNX Runtime documentation).\n\nNote: Newer versions of ONNX Runtime (e.g., 1.17+) often require cuDNN 9.x.\nUbuntu Installation: To install cuDNN 9, you typically need to add the NVIDIA repository and run: bash     sudo apt-get install libcudnn9-cuda-12\nVerification: Use ldd /opt/onnxruntime/lib/libonnxruntime_providers_cuda.so to ensure all dependencies (like libcudnn.so.9) are found.\n\nBuild Configuration: In SVDModel/config.pri, uncomment the line: DEFINES += USE_CUDA\nExecution: When SVD starts, it will attempt to initialize the CUDA execution provider. Check the log output to verify if it succeeded or fell back to CPU.",
+    "crumbs": [
+      "Home",
+      "Installing and compiling SVD"
+    ]
+  },
+  {
+    "objectID": "install.html#other-installs",
+    "href": "install.html#other-installs",
+    "title": "Installing and compiling SVD",
+    "section": "other installs",
+    "text": "other installs\n\nFreeImage\nUsed in SVD for loading and saving GeoTIFF files.\nLinux:\nsudo apt-get install libfreeimage-dev   # Ubuntu\nsudo dnf install FreeImage-devel        # Fedora\n\n\nOpenGL\nUsed for rendering the landscape.\nLinux:\nsudo apt-get install libgl-dev libgl1-mesa-dev  # Ubuntu\nsudo dnf install mesa-libGL-devel               # Fedora",
+    "crumbs": [
+      "Home",
+      "Installing and compiling SVD"
+    ]
+  },
+  {
+    "objectID": "install.html#svd-without-onnx",
+    "href": "install.html#svd-without-onnx",
+    "title": "Installing and compiling SVD",
+    "section": "SVD without ONNX",
+    "text": "SVD without ONNX\nSVD can be used without ONNX Runtime. This version is not able to use DNNs for estimating state transitions, but can still be useful, e.g., as a pure state-and-transition-model using the matrix module.\nTo build SVD without ONNX, you need to update the file SVDModel/config.pri. To disable ONNX, comment out this line:\nDEFINES += USE_ONNXRUNTIME\nSave and recompile (ensure that qmake is executed).",
+    "crumbs": [
+      "Home",
+      "Installing and compiling SVD"
+    ]
+  },
+  {
+    "objectID": "module_fire.html",
+    "href": "module_fire.html",
+    "title": "Fire module",
+    "section": "",
+    "text": "The SVD fire module simulates wildfire on 100 m resolution (the SVD base resolution). Fire spreads dynamically with a cellular automaton approach and considers wind conditions, terrain, and burn probabilities specified for each vegetation state. A fire keeps spreading until it stops intrinsically (e.g., when the combustible biomass is exhausted and no further spread is possible), or when a pre-defined maximum fire size is reached. Fire ignition processes are not explicitly simulated in SVD, but rely on a list of predefined ignitions. Multiple fires can start in any given year, and a fire is defined by starting location, maximum fire size, and wind conditions (direction, speed).\nThe implementation of fire spread is done in rounds. In each round, first the probability of spreading to neighboring cells is calculated for each cell currently on fire (Moore-Neighborhood) and accumulated for potential target cells (i.e., the probability is higher if several neighboring cells are currently burning). In a second pass, for each target cell fire reaches the cell with the accumulated probability from the previous step, and consumes the cell with a state specific burn probability. After burning, fire may spread further in the next round, unless the fire extinguishes on the focal cell (with probability pext). The process stops when the burned area reaches the pre-defined maximum fire size for the event, or when within one round no new cells are ignited. In order to avoid the risk of a fire stopping due to chance very early, the state specific burn probability is assumed to be 1 and no fire extinguishing is simulated (i.e. pext set to 0) during the first five rounds (but note that the maximum fire size is still enforced).\nSpread probability\nThe probability of fire spread from a burning cell to one of its neighboring cells is based on the approach of FireBGC v2 (Keane et al., 2011) and the specific implementation in iLand (Seidl et al., 2014). The fire spread distance dspread (m) is influenced by wind speed and wind direction as well as the slope on the DEM, with fires spreading further upslope and downwind (Keane et al., 2011). Since fire can only spread from cell to cell, dspread is transformed into the probability of reaching the focus cell pspread (Eq. S3-1).\nwith dcell the distance to the focus cell (100m for immediate neighbors, and 141.42m for diagonal neighbors), and pdist a parameter specifying the probability that the fire reaches a distance of dspread when it would have to spread across multiple cells. Fire spotting is currently not implemented.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Fire module"
+    ]
+  },
+  {
+    "objectID": "module_fire.html#configuration",
+    "href": "module_fire.html#configuration",
+    "title": "Fire module",
+    "section": "Configuration",
+    "text": "Configuration\nThe module is configured in the project file. In addition to the enabled and type setting, the fire module has the following settings:\n\ntransitionFile (filepath)\nThe file containing a transition matrix (see matrix module) for post fire states (see above).\n\n\nignitionFile (filepath)\nThe data table with the list of ignition points and fire sizes.\n\n\nstateFile (filepath)\nData file with additional state-specific variables that specify per-state burn probabilities.\n\n\nextinguishProb (numeric)\nProbability that the fire does not spread after burning a cell.\n\n\nspreadDistProb (numeric)\nThe parameter pdist used in the calculation of fire spread probabilities (see text above). Higher values translate to higher probabilities of fire spread from one cell to another.\n\n\nfireSizeMultiplier (expression)\nIf not empty, the expression is used to scale the maximum fire size provided from the ignition file. Many fire do not reach the maximum size because of topography (lack of contiguous flammable area) or other reasons. This can be countered by scaling fire sizes, so that on average the realized fire sizes match the input. The expression takes one parameter, the fire size from the ignition file.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Fire module"
+    ]
+  },
+  {
+    "objectID": "module_fire.html#variables",
+    "href": "module_fire.html#variables",
+    "title": "Fire module",
+    "section": "Variables",
+    "text": "Variables\nThe fire module provides the following variables that can be used in expressions:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nfireSpread\nprogress of the last fire (value is the iteration)\n\n\nfireNFires\ncumulative number of fires\n\n\nfireNHighSeverity\ncumulative number of high severity fires\n\n\nfireLastBurn\nthe year of the last fire on a cell (or 0 if never burned)",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Fire module"
+    ]
+  },
+  {
+    "objectID": "module_fire.html#output",
+    "href": "module_fire.html#output",
+    "title": "Fire module",
+    "section": "Output",
+    "text": "Output\nThe module can provide tabular and gridded output.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Fire module"
+    ]
+  },
+  {
+    "objectID": "module_matrix.html",
+    "href": "module_matrix.html",
+    "title": "Matrix module",
+    "section": "",
+    "text": "The transition matrix used by the module is loaded from transitionFile and has the following columns:\n\n\n\nColumn\nDesription\n\n\n\n\nstateId\nThe Id of the current state\n\n\nkey\nan additional qualifier (see text)\n\n\ntargetId\nThe Id of the target state\n\n\np\nThe probability (0..1) of a transition from stateId to targetId\n\n\npmin\nMinimum probability (0..1), (not mandatory)\n\n\npmax\nMaximum probability (0..1), (not mandatory)\n\n\nexpression\nexpression to condition probabilities on data\n\n\n\nThe probabilities p need to sum up to 1 for every unique combination of stateId and key. The key allows the definition of (many) alternative transition probabilities for the same state.\nConsider the following (constructed) example, where the transition probabilities depend on an environment variable “soilDepth” and are different for shallow soils (soilDepth &lt; 30cm). The table below shows a transition matrix for shallow, and deep soils (note that for state 2 and shallow soils the state does not change):\n\n\n\nState\np(State 1)\np(State 2)\np(State 3)\nSoildepth\n\n\n\n\n1\n0%\n20%\n80%\n&lt;30cm\n\n\n1\n0%\n40%\n60%\n&gt;=30cm\n\n\n2\n0%\n100%\n0%\n&lt;30cm\n\n\n2\n10%\n80%\n10%\n&gt;=30cm\n\n\n…\n…\n…\n…\n…\n\n\n\nConverted to the “long” format used by the module, the table looks like:\n\n\n\nstateId\nkey\ntargetId\np\n\n\n\n\n1\n0\n2\n0.2\n\n\n1\n0\n3\n0.8\n\n\n1\n1\n2\n0.4\n\n\n1\n1\n3\n0.6\n\n\n2\n0\n2\n1\n\n\n2\n1\n1\n0.1\n\n\n2\n1\n2\n0.8\n\n\n2\n1\n3\n0.1\n\n\n…\n…\n…\n…\n\n\n\nThe information whether a cell has shallow or deep soil, can be derived from the environment (assuming there is a variable soilDepth) and can be expressed as an expression (keyFormula):\nif(soilDepth&lt;30, 0, 1)\n\n\nIf for a given state several targetIds are provided, then the target state is chosen based on the provided probabilities. Deterministic transition based on some criterion (e.g. change from state 1 to state 2 after 20 years) can be simulated by setting the probabilities p to 1 and by expressing the criterion as an expression for different keys (as long as the required variables are available). For example, the expression min(residenceTime/10, 10) yields the decade (0: 0-9yrs, 1: 10-19yrs, …), which can be used as key in the transition matrix:\n\n\n\nstateId\nkey\ntargetId\np\ncomment\n\n\n\n\n1\n0\n1\n1\n0-9 years, no change\n\n\n1\n1\n1\n1\n10-19 years, no change\n\n\n1\n2\n2\n1\n&gt;=20 years, change to state 2\n\n\n\n\n\n\nThe probability of a transition from one state to another need not to be constant, but can depend on environmental data, or on the local neighborhood. For example, a transition could be more probable, if local site conditions allow faster growth (e.g., difference in soil depth), or if specific species are available in the neighborhood (e.g. seed input). Such dependencies can be expressed by using expressions.\nExpressions can be provided in the expression column in the transitionFile. Expressions can make use of all available variables, and functions (e.g., for querying the state of neighboring cells). The result of the expression modifies the transition probability provided in the file.\n\n\nThe result of an expression either scales directly the probability prob, or is used to calculate a probability between pmin and pmax.\nDirect scaling happens when no values for pmin and pmax are given. In this case the resulting probability is calculated as the product of base probability and the result of the expression (note that the expression increases the probability with values &gt; 1):\n\\[\np_{eff} = prob \\cdot f_{expr}(x)\n\\]\nOtherwise (pmin and pmax provided), the result of the expression is limited to [0 .. 1] and used as a linear ramp between min and max:\n\\[\np_{eff}=p_{min} + (p_{max}-p_{min}) \\cdot f_{expr}(x)\n\\]\nNote that in this case the value of prob is not used.\n\n\n\nAltering the probabilities of individual transitions affects also other transitions originating from the same state. SVD allows two modes how this is done. The following image illustrates the difference:\n\nIn case (A) the transitionFile contains transitions for states B and C, but none for A. SVD assumes that remaining in state A is the default with p=1-(pB + pC). In case (B) all three transitions are explicitly included in the data file. Now consider the case the the probability of state C is modified (pCmod) by an expression (the green arrow). In the former case (now (C)), pB and pCmod remain unchanged, only pA (the probability of remaining state A) is altered (in this case: reduced). If all pathways are specified (case (D)), all three probabilities are re-scaled (to 1).\nThe following tables illustrate the difference numerically. If the values of the expression for states B and C are 0, the probabilities are the same in both cases (pA=0.96, pB=pC=0.02). But if pB and pC are scaled by the expression to 0.12, the results differ: in the upper table (showing case (A)), only pA is affected, in the lower table (illustrating (C)) all probabilities are altered.\nTable. Example when when only changes are provided in the transitionFile.\n\n\n\nState\npmin\npmax\np_calc\np_result\n\n\n\n\nState A (not provided!)\n\n\n\n0.76\n\n\nState B\n0.02\n0.15\n0.12\n0.12\n\n\nState C\n0.02\n0.15\n0.12\n0.12\n\n\n\nTable. Example when all pathways are provided (see figure above)\n\n\n\nState\npmin\npmax\np_calc\np_result\n\n\n\n\nState A\n0.96\n0.96\n0.96\n0.8\n\n\nState B\n0.02\n0.15\n0.12\n0.1\n\n\nState C\n0.02\n0.15\n0.12\n0.1",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Matrix module"
+    ]
+  },
+  {
+    "objectID": "module_matrix.html#transition-matrix",
+    "href": "module_matrix.html#transition-matrix",
+    "title": "Matrix module",
+    "section": "",
+    "text": "The transition matrix used by the module is loaded from transitionFile and has the following columns:\n\n\n\nColumn\nDesription\n\n\n\n\nstateId\nThe Id of the current state\n\n\nkey\nan additional qualifier (see text)\n\n\ntargetId\nThe Id of the target state\n\n\np\nThe probability (0..1) of a transition from stateId to targetId\n\n\npmin\nMinimum probability (0..1), (not mandatory)\n\n\npmax\nMaximum probability (0..1), (not mandatory)\n\n\nexpression\nexpression to condition probabilities on data\n\n\n\nThe probabilities p need to sum up to 1 for every unique combination of stateId and key. The key allows the definition of (many) alternative transition probabilities for the same state.\nConsider the following (constructed) example, where the transition probabilities depend on an environment variable “soilDepth” and are different for shallow soils (soilDepth &lt; 30cm). The table below shows a transition matrix for shallow, and deep soils (note that for state 2 and shallow soils the state does not change):\n\n\n\nState\np(State 1)\np(State 2)\np(State 3)\nSoildepth\n\n\n\n\n1\n0%\n20%\n80%\n&lt;30cm\n\n\n1\n0%\n40%\n60%\n&gt;=30cm\n\n\n2\n0%\n100%\n0%\n&lt;30cm\n\n\n2\n10%\n80%\n10%\n&gt;=30cm\n\n\n…\n…\n…\n…\n…\n\n\n\nConverted to the “long” format used by the module, the table looks like:\n\n\n\nstateId\nkey\ntargetId\np\n\n\n\n\n1\n0\n2\n0.2\n\n\n1\n0\n3\n0.8\n\n\n1\n1\n2\n0.4\n\n\n1\n1\n3\n0.6\n\n\n2\n0\n2\n1\n\n\n2\n1\n1\n0.1\n\n\n2\n1\n2\n0.8\n\n\n2\n1\n3\n0.1\n\n\n…\n…\n…\n…\n\n\n\nThe information whether a cell has shallow or deep soil, can be derived from the environment (assuming there is a variable soilDepth) and can be expressed as an expression (keyFormula):\nif(soilDepth&lt;30, 0, 1)\n\n\nIf for a given state several targetIds are provided, then the target state is chosen based on the provided probabilities. Deterministic transition based on some criterion (e.g. change from state 1 to state 2 after 20 years) can be simulated by setting the probabilities p to 1 and by expressing the criterion as an expression for different keys (as long as the required variables are available). For example, the expression min(residenceTime/10, 10) yields the decade (0: 0-9yrs, 1: 10-19yrs, …), which can be used as key in the transition matrix:\n\n\n\nstateId\nkey\ntargetId\np\ncomment\n\n\n\n\n1\n0\n1\n1\n0-9 years, no change\n\n\n1\n1\n1\n1\n10-19 years, no change\n\n\n1\n2\n2\n1\n&gt;=20 years, change to state 2\n\n\n\n\n\n\nThe probability of a transition from one state to another need not to be constant, but can depend on environmental data, or on the local neighborhood. For example, a transition could be more probable, if local site conditions allow faster growth (e.g., difference in soil depth), or if specific species are available in the neighborhood (e.g. seed input). Such dependencies can be expressed by using expressions.\nExpressions can be provided in the expression column in the transitionFile. Expressions can make use of all available variables, and functions (e.g., for querying the state of neighboring cells). The result of the expression modifies the transition probability provided in the file.\n\n\nThe result of an expression either scales directly the probability prob, or is used to calculate a probability between pmin and pmax.\nDirect scaling happens when no values for pmin and pmax are given. In this case the resulting probability is calculated as the product of base probability and the result of the expression (note that the expression increases the probability with values &gt; 1):\n\\[\np_{eff} = prob \\cdot f_{expr}(x)\n\\]\nOtherwise (pmin and pmax provided), the result of the expression is limited to [0 .. 1] and used as a linear ramp between min and max:\n\\[\np_{eff}=p_{min} + (p_{max}-p_{min}) \\cdot f_{expr}(x)\n\\]\nNote that in this case the value of prob is not used.\n\n\n\nAltering the probabilities of individual transitions affects also other transitions originating from the same state. SVD allows two modes how this is done. The following image illustrates the difference:\n\nIn case (A) the transitionFile contains transitions for states B and C, but none for A. SVD assumes that remaining in state A is the default with p=1-(pB + pC). In case (B) all three transitions are explicitly included in the data file. Now consider the case the the probability of state C is modified (pCmod) by an expression (the green arrow). In the former case (now (C)), pB and pCmod remain unchanged, only pA (the probability of remaining state A) is altered (in this case: reduced). If all pathways are specified (case (D)), all three probabilities are re-scaled (to 1).\nThe following tables illustrate the difference numerically. If the values of the expression for states B and C are 0, the probabilities are the same in both cases (pA=0.96, pB=pC=0.02). But if pB and pC are scaled by the expression to 0.12, the results differ: in the upper table (showing case (A)), only pA is affected, in the lower table (illustrating (C)) all probabilities are altered.\nTable. Example when when only changes are provided in the transitionFile.\n\n\n\nState\npmin\npmax\np_calc\np_result\n\n\n\n\nState A (not provided!)\n\n\n\n0.76\n\n\nState B\n0.02\n0.15\n0.12\n0.12\n\n\nState C\n0.02\n0.15\n0.12\n0.12\n\n\n\nTable. Example when all pathways are provided (see figure above)\n\n\n\nState\npmin\npmax\np_calc\np_result\n\n\n\n\nState A\n0.96\n0.96\n0.96\n0.8\n\n\nState B\n0.02\n0.15\n0.12\n0.1\n\n\nState C\n0.02\n0.15\n0.12\n0.1",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Matrix module"
+    ]
+  },
+  {
+    "objectID": "module_matrix.html#handled-states",
+    "href": "module_matrix.html#handled-states",
+    "title": "Matrix module",
+    "section": "Handled states",
+    "text": "Handled states\nTo set the module as handler for specific states, use the module name as the type property in the state definition (see modules).",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Matrix module"
+    ]
+  },
+  {
+    "objectID": "module_matrix.html#configuration",
+    "href": "module_matrix.html#configuration",
+    "title": "Matrix module",
+    "section": "Configuration",
+    "text": "Configuration\nThe module is configured in the project file. In addition to the enabled and type setting, the matrix module has the following settings:\n\ntransitionFile (filepath)\nThe file containing the data for the transition matrix (see above).\n\n\nkeyFormula (expression)\nThe keyFormula is an expression that can access all cell variables. The result of the expression is used as the key in the transition matrix (see above). The value of the expression is converted to an integer (the floating point fraction is truncated, i.e. 1.9 -&gt; 1). To disable, set to “” or to a constant (“0”).",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Matrix module"
+    ]
+  },
+  {
+    "objectID": "modules.html",
+    "href": "modules.html",
+    "title": "Modules",
+    "section": "",
+    "text": "The core functionality of SVD is the simulation of state transitions by the means of a Deep Neural Network. In addition, SVD can be extended with “modules”. Modules can be used to:",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Modules"
+    ]
+  },
+  {
+    "objectID": "modules.html#interaction-types",
+    "href": "modules.html#interaction-types",
+    "title": "Modules",
+    "section": "Interaction types",
+    "text": "Interaction types\nSVD provides two conceptually different ways how modules can interact with the landscape. Modules can either fully handle specific states (i.e. calculate vegetation transitions for all cells in these states), or affect cells in states that are normally handled by a different process / module. The following figure depicts the difference:\n\n\n\nhandling modules in SVD\n\n\nLeft: different states are handled by different modules (DNN, Module A, Module B), right: a module (Module C) affects cells that are handled by a different process / module.\nIn the figure, “Module A” and “Module B” are assigned to handle specific states (blue and green). Note that only the input of a module is limited to cells with specific states (blue and green). For instance, cells that are handled by “Module A” (that are currently in a blue state), can transition to “Module B” (green) or to the main DNN (orange). If, say, the DNN handles forest and “Module A” grass land, then the reforestation of a cell would be a transition from a blue to an orange state, and consequently the DNN would handle the cell in the future. Note also, that the modules could be totally separated with no transitions between different modules.\n“Module C” is different (right part of the figure): when the module is executed, it can affect different cells (orange, green, or blue states) and change their states. Such a module typically represents some kind of intervention process, such as disturbances or forest management. Note that a state transition caused by the module can also affect the handling module; for example, a fire module could change a forested state that is handled by the DNN (orange) to a grass land state (blue).",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Modules"
+    ]
+  },
+  {
+    "objectID": "modules.html#supported-modules",
+    "href": "modules.html#supported-modules",
+    "title": "Modules",
+    "section": "Supported modules",
+    "text": "Supported modules\nModules are configured in the project file. The specific implementation of a module is chosen with the type setting. The following modules are available:\n\nmatrix State-specific transitions based on a transition probability matrix.\nfire Wildfire disturbance module that simulates pre-defined events.\nwind Wind disturbance module that simulates pre-defined events.\nbark beetle Bark beetle disturbance module that simulates spruce bark beetle dynamics.\nmanagement Management module that simulates pre-defined events.",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Modules"
+    ]
+  },
+  {
+    "objectID": "modules.html#specifying-handling-modules-for-states",
+    "href": "modules.html#specifying-handling-modules-for-states",
+    "title": "Modules",
+    "section": "Specifying handling modules for states",
+    "text": "Specifying handling modules for states\nTo set the module as handler for specific states, use the module name as the type property in the state definition.\nFor example, consider the following definition of a module test_matrix:\nmodules.test_matrix.enabled = true\nmodules.test_matrix.type = matrix\nmodules.test_matrix.transitionFile = stm/stm.trans.csv\nmodules.test_matrix.keyFormula = min(residenceTime/10, 10)\nTo specify that (for example) the states 1 and 2 are handled by test_matrix while all other states are handled by the DNN, update the type column in the state input file (note that a blank type defaults to DNN):\n\n\n\nstateId\ntype\n(other columns)\n\n\n\n\n1\ntest_matrix\n…\n\n\n2\ntest_matrix\n…\n\n\n3\n\n….\n\n\n…\n…\n….",
+    "crumbs": [
+      "Home",
+      "Concepts",
+      "Modules"
+    ]
+  },
+  {
+    "objectID": "project_file.html",
+    "href": "project_file.html",
+    "title": "Project file",
+    "section": "",
+    "text": "The project file is the central configuration file of a SVD project. When referring to input files, a relative path to the folder with the project file may be provided.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Project file"
+    ]
+  },
+  {
+    "objectID": "project_file.html#general-settings",
+    "href": "project_file.html#general-settings",
+    "title": "Project file",
+    "section": "General settings",
+    "text": "General settings\n\nlogging.file (filepath)\nLocation of the SVD log file. The file is overwritten when the model is created. See TODO\n\n\nlogging.setup.level (string)\nThe logging level during the startup of the model (possible levels with decreasing level of detail: trace, debug, info, error, off)\n\n\nlogging.model.level (string)\nThe logging level during a simulation for processes in the main model (see also `logging.setup.level’).\n\n\nlogging.dnn.level (string)\nThe logging level during a simulation for the DNN (see also `logging.setup.level’).\n\n\nmodel.multithreading (boolean)\nMultithreading is disabled if false (mainly for debugging) (default true)\n\n\nmodel.threads (numeric)\nnumber of threads used by the SVD model (without threads specifically for the DNN) (default 4)\n\n\nfilemask.&lt;mask&gt; (string)\nspecify one or multiple strings (mask) that can be used to adapt file paths used by SVD. For example, consider you set filemask.run = experiment4. Every instance of $run$ in a file name is consequently replaced with experiment4. For example, stategrid_$run$_$year$.tif is expanded to stategrid_experiment4_42.tif (in year 42).",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Project file"
+    ]
+  },
+  {
+    "objectID": "project_file.html#dnn-specific-settings",
+    "href": "project_file.html#dnn-specific-settings",
+    "title": "Project file",
+    "section": "DNN specific settings",
+    "text": "DNN specific settings\n\ndnn.threads (numeric)\nThe number of threads in the DNN thread pool. This pool manages the execution of parallel DNN instances (see dnn.count). (default: 2)\n\n\ndnn.threads.intra (numeric)\nThe number of threads used by ONNX Runtime for intra-operator parallelism (i.e., parallelism within a single operator). Set to 0 to use all available cores. (default: 0)\n\n\ndnn.threads.inter (numeric)\nThe number of threads used by ONNX Runtime for inter-operator parallelism (i.e., parallelism between independent operators). Set to 0 to use all available cores. (default: 0)\n\n\ndnn.count (numeric)\nNumber of parallel DNN instances that are used. Each instance uses the same network (dnn.file). (default: 1)\n\n\ndnn.gpuCount (numeric)\nThe number of available GPUs to use for DNN inference. When dnn.count &gt; 1 and dnn.gpuCount &gt; 1, SVD will automatically distribute the DNN instances across the specified number of GPUs in a round-robin fashion (e.g., DNN 0 on GPU 0, DNN 1 on GPU 1, DNN 2 on GPU 0, etc.). This setting requires SVD to be built with CUDA support. (default: 1)\n\n\ndnn.batchSize (numeric)\nThe size of a single “batch”. Multiple cells are processed simultaneously by the DNN, and the batch size indicates how many. Bigger batch sizes are usually processed faster, if batches are too large memory problems might occur. Typical values are between 512 and 4096 (powers of 2 are not required)\n\n\ndnn.maxBatchQueue (numeric)\nSVD maintains a queue of batches that wait for DNN processing. maxBatchQueue indicates the maximum number of batches in the queue. Larger numbers might increase parallelism, but require more memory. Typical values are between 4 - 100.\n\n\ndnn.file (filepath)\nThe path of the “frozen” Deep Neural Network. See TODO…\n\n\ndnn.metadata (filepath)\nConfiguration file that describes the meta data of the DNN (input tensors). See the configuration page for details.\n\n\ndnn.topKNClasses (numeric)\nSVD select the topKNClasses most likely states from the probability distribution over all states (topK-algorithm). See also: TODO\n\n\ndnn.state.name (string)\nThe name of the output tensor in the trained network for the future state of a cell.\n\n\ndnn.state.N (numeric)\nThe number of classes (number of different states) in the output tensor for the future state of a cell.\n\n\ndnn.restime.name (string)\nThe name of the output tensor in the trained network for the remaining residence time.\n\n\ndnn.restime.N (numeric)\nThe number of classes (number of different durations) in the output tensor for the remaining residence time.\n\n\ndnn.allowStateChangeAtMaxTime (boolean)\nThe setting controls whether the selected residence time controls the subsequent state change. If the value is false, then both are linked: a maximal time means no state change, and a lower residence time forces a state change (i.e. disallows the current state as future state). If the value is true, then no interaction between residence time and state is simulated (default: false).\n\n\nThreading Recommendations for DNN Inference\nThe optimal threading configuration depends significantly on whether you are using the CPU or a GPU for inference.\n\nCPU Inference\nWhen running on the CPU, ONNX Runtime can use multiple threads to parallelize the execution of a single model (intra-op) and independent operators (inter-op).\n\nIntra-op Parallelism (dnn.threads.intra): This is usually the most important setting. Set this to the number of physical cores available to the DNN. If dnn.count is 1, you can set it to 0 (auto-detect all cores).\nParallel DNNs (dnn.count): If you have many cores, you can also increase dnn.count to run multiple batches in parallel. However, ensure that dnn.count * dnn.threads.intra does not exceed the total number of cores to avoid performance degradation due to thread contention.\nDNN Thread Pool (dnn.threads): Ensure this is at least equal to dnn.count.\n\n\n\nGPU Inference\nWhen running on a GPU (using CUDA), the threading strategy is different. The GPU handles its own parallelism internally.\n\nIntra/Inter-op Parallelism: It is highly recommended to set dnn.threads.intra = 1 and dnn.threads.inter = 1. Using more threads on the CPU side often adds unnecessary management overhead and can actually slow down the inference process.\nParallel DNNs (dnn.count): You can set dnn.count to 2 or more to keep the GPU saturated with work, especially if your GPU has a lot of memory. This allows one batch to be processed while another is being prepared (data transfer).\nBatch Size (dnn.batchSize): For GPUs, larger batch sizes (e.g., 2048 or 4096) are typically much more efficient than smaller ones.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Project file"
+    ]
+  },
+  {
+    "objectID": "project_file.html#model-components",
+    "href": "project_file.html#model-components",
+    "title": "Project file",
+    "section": "Model components",
+    "text": "Model components\n\nStates\n\nstates.file (filepath)\nThe data table containing the available states. The required columns in the file are: stateId, composition, structure, fct, type. See TODO for details on setting up states.\n\n\nstates.extraFile (filepath)\nIf provided, SVD loads additional properties for each state from a table. See also “cell variables” [TODO]\n\n\n\nLandscape\n\nlandscape.grid (filepath)\nThe raster file that defines the spatial extent of the simulated landscape (and the environemnt). See here for details.\n\n\nlandscape.file (filepath)\nThe data table that defines the climatic and environmental properties of the landscape. See here for details.\n\n\ninitialState.mode (string)\nThe setting define how the initial state of the vegetation is set up. Possible values are:\n\nfile: initial states are extracted from the table in landscape.file. The expected column names are stateId for the initial state, and residenceTime for the initial value of residence time.\ngrid: the initial state of the landscape is retrieved from raster file (settings initialState.stateGrid, initialState.residenceTimeGrid)\nrandom: creates a random landscape (state: 1 - max-state, residence time: 0-10)\n\n\n\ninitialState.stateGrid (filepath)\nRaster file with the initial state Id for each cell. Missing values are not allowed.\n\n\ninitialState.residenceTimeGrid (filepath)\nRaster file with the initial value for residence time for each cell. Missing values are not allowed.\n\n\n\nClimate\n\nclimate.file (filepath)\nA data table with climate data. The required columns are:\n\nclimateId: The climate region (see landscape configuration )\nyear: the year (e.g. 2010)\nall other columns are the “payload” and describe climatic indicators for the given year\n\n\n\nclimate.sequence.enabled (boolean)\nIf true SVD uses a pre-defined sequence of year (see climate.sequence). The first simulation year uses the first year of the sequence. If false SVD starts the first simulation year with the first year in the climate data and runs until the end.\n\n\nclimate.sequence (string)\nThe climate.sequence is a list of years (separated by ,) that is sequentially processed. For example, if the sequence starts with 1950,1967,1954,..., the year 1950 is used for the first simulation year, 1967 for the second, and so forth.\n\n\nmodel.species (string)\nList of species codes that are available (comma separated). See also Neighbors.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Project file"
+    ]
+  },
+  {
+    "objectID": "project_file.html#outputs",
+    "href": "project_file.html#outputs",
+    "title": "Project file",
+    "section": "Outputs",
+    "text": "Outputs\nOutput-specific settings start with output.. The general scheme is: output.&lt;outputname&gt;.&lt;setting&gt;. The outputname specifies the type of the output; see the output page for details on available outputs.\nSettings that are generally available are:\n\nenabled (boolean): if true the output is active\nfile or path: path to the output-file (file) or path that defines the path for output files (path).\nadditional settings are available for specific outputs\n\nOutputs are data tables (, separated text files), see the output page for details. Example:\noutput.StateGrid.enabled = true\noutput.StateGrid.path = output/state_$year$.asc\noutput.StateGrid.interval = 20",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Project file"
+    ]
+  },
+  {
+    "objectID": "project_file.html#modules",
+    "href": "project_file.html#modules",
+    "title": "Project file",
+    "section": "Modules",
+    "text": "Modules\nSettings that are specific to a module start with modules.. The general scheme is: modules.&lt;module-name&gt;.&lt;setting&gt; = &lt;value&gt;, where the module-name can be freely chosen.\nSee the module page for details.\nSettings that are generally available are:\n\nenabled (boolean): if true the module is active\ntype (string): specifies the module type (See module page for available types)\n\nAdditional module settings are type specific, and are described on the respective module pages. Note that multiple modules of the same type (but with different a module-name) can be used.",
+    "crumbs": [
+      "Home",
+      "Reference",
+      "Project file"
+    ]
+  },
+  {
+    "objectID": "svdUI.html",
+    "href": "svdUI.html",
+    "title": "Running SVD",
+    "section": "",
+    "text": "A pre-built version of the SVD model software is currently available only for Windows (https://github.com/edfm-tum/SVD). The software bundles a compiled version of ONNX Runtime (onnxruntime.dll).\nBy default, the bundled version uses the CPU for calculations and does not require a GPU. SVD can also leverage NVIDIA GPUs for faster DNN inference if the GPU-enabled version of ONNX Runtime and the necessary libraries (CUDA, cuDNN) are installed (see Installation guide).\nAlternatively, SVD can be compiled from source (see Installation guide).",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "Running SVD"
+    ]
+  },
+  {
+    "objectID": "svdUI.html#svd-software",
+    "href": "svdUI.html#svd-software",
+    "title": "Running SVD",
+    "section": "",
+    "text": "A pre-built version of the SVD model software is currently available only for Windows (https://github.com/edfm-tum/SVD). The software bundles a compiled version of ONNX Runtime (onnxruntime.dll).\nBy default, the bundled version uses the CPU for calculations and does not require a GPU. SVD can also leverage NVIDIA GPUs for faster DNN inference if the GPU-enabled version of ONNX Runtime and the necessary libraries (CUDA, cuDNN) are installed (see Installation guide).\nAlternatively, SVD can be compiled from source (see Installation guide).",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "Running SVD"
+    ]
+  },
+  {
+    "objectID": "svdUI.html#operating-svd",
+    "href": "svdUI.html#operating-svd",
+    "title": "Running SVD",
+    "section": "Operating SVD",
+    "text": "Operating SVD\nStart SVD by running the executable (SVDUI.exe).\n\n\n\nSVD image\n\n\nMain controls of SVD (see image above):\n\n(1): select a configuration file from the project folder (e.g. config.conf)\n(2): Click on Setup: this loads the project and all required data. Status information is shown in the area (5). In addition, SVD creates a detailed log file during setup and execution (the path to the log file is configured in the configuration file).\n(3): Run the model for the given number of time steps (=years).\n(4): Visualization: SVD includes a powerful 3D visualization. Use the right mouse button for rotate and zoom operations. The data category for visualization can be selected in the right hand panel.\n\n“State”: shows the state associated with each cell (using the color specified in the state table)\n“Expression”: type in any valid expression (e.g., soilDepth/100). A list of all available variables is provided in the log file of SVD.\n\n\n\nNotes\n\nCheck the log file\nThe SVD log file is the primary tool for diagnosing problems during the model setup and during execution. You can specify different levels of log verbosity in the configuration file\n\n\nOutputs of SVD\nOutputs of SVD are either tabular or spatial data (i.e., tables or grids) - see data formats in SVD. Outputs are configured in the configuration file. The link to attribute data (vegetation attribute database) is currently not directly supported from SVD.",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "Running SVD"
+    ]
+  },
+  {
+    "objectID": "svd_setup.html",
+    "href": "svd_setup.html",
+    "title": "SVD Setup",
+    "section": "",
+    "text": "The page covers the spatial setup of the simulated landscape.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "SVD Setup"
+    ]
+  },
+  {
+    "objectID": "svd_setup.html#configuring-the-landscape",
+    "href": "svd_setup.html#configuring-the-landscape",
+    "title": "SVD Setup",
+    "section": "",
+    "text": "The page covers the spatial setup of the simulated landscape.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "SVD Setup"
+    ]
+  },
+  {
+    "objectID": "svd_setup.html#guide-to-data-preparation",
+    "href": "svd_setup.html#guide-to-data-preparation",
+    "title": "SVD Setup",
+    "section": "Guide to data preparation",
+    "text": "Guide to data preparation\nThe page provides a high level guide to data preparation with R.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "SVD Setup"
+    ]
+  },
+  {
+    "objectID": "svd_setup.html#states",
+    "href": "svd_setup.html#states",
+    "title": "SVD Setup",
+    "section": "States",
+    "text": "States\nDefinition of the unique states of SVD and accompanying meta data for states.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "SVD Setup"
+    ]
+  },
+  {
+    "objectID": "svd_setup.html#setup-of-the-deep-neural-network",
+    "href": "svd_setup.html#setup-of-the-deep-neural-network",
+    "title": "SVD Setup",
+    "section": "Setup of the Deep Neural Network",
+    "text": "Setup of the Deep Neural Network\nThe integration of trained DNNs is at the core of DNN; the page describes the procedure to configure and link a DNN within the SVD framework.",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "SVD Setup"
+    ]
+  },
+  {
+    "objectID": "svd_setup.html#modules",
+    "href": "svd_setup.html#modules",
+    "title": "SVD Setup",
+    "section": "Modules",
+    "text": "Modules\nSVD allows to includes so called “modules” to extend the basic functionality. ### Fire module\n\nTransitions\nThe transition module allows to provide either deterministic or probabilistic transition probabilities for states (i.e. without DNNs).",
+    "crumbs": [
+      "Home",
+      "Setup & Configuration",
+      "SVD Setup"
+    ]
+  },
+  {
+    "objectID": "svdc.html",
+    "href": "svdc.html",
+    "title": "SVDc",
+    "section": "",
+    "text": "The SVD console application (“SVDc”) is a command-line version of SVD. It contains the same core functionality as the version with a user interface (SVD UI) (actually, both applications use the same code base), but does not use a graphical user interface. The main purpose of SVDc is for automating simulation jobs and/or for running in environments where no graphical user interface is available. The name of the executable of the console version is SVDc (whereas the name of the GUI version is SVDUI).",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "SVDc"
+    ]
+  },
+  {
+    "objectID": "svdc.html#instructions",
+    "href": "svdc.html#instructions",
+    "title": "SVDc",
+    "section": "Instructions",
+    "text": "Instructions\nRun SVDc from a shell with options:\nSVDc config-file years additional-options\n\nconfig-file path of a valid SVD configuration file.\nyears: the number of years to simulate\nadditonal-options: additional key=value pairs that represent values for settings that are set after the project is loaded, i.e., to change values given in the config file. If the value contains and space characters, the value string must be enclosed by “-characters.\n\nA typical use is to run multiple simulations, and use different input data for each simulation (think climate data) and store the results to a specific location. Here is an example:\n# run this script \n\nsvdc E:\\Daten\\SVD\\projects\\gye\\config_historic.conf 142 filemask.run=41 modules.fire.ignitionFile=fire/ignitions/HadGEM2-ES-85_1.txt climate.file=climate/historic.txt \nsvdc E:\\Daten\\SVD\\projects\\gye\\config_historic.conf 142 filemask.run=42 modules.fire.ignitionFile=fire/ignitions/HadGEM2-ES-85_2.txt climate.file=climate/historic.txt\nThis script:\n\nloads the project config_historic.conf. All relative file paths are resolved relative to the gye folder where the config file is located\nThe simulation duration is set to 142 years\nthe filemask.run setting is set - this can be used to change multiple output file paths\nsimilarly, a specific ignitionFile for the fire module, and a climate.file is set. Note that relative paths are always resolved relative to the location of the config file.",
+    "crumbs": [
+      "Home",
+      "Using SVD",
+      "SVDc"
+    ]
+  }
+]

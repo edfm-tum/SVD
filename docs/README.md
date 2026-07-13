@@ -24,6 +24,22 @@ To compile the entire site into static HTML assets:
 quarto render
 ```
 
+### Publishing to GitHub Pages
+To publish the documentation to GitHub Pages:
+```bash
+# 1. Change to the docs/ directory where the Quarto source files are located
+cd docs
+
+# 2. Run the publish command
+quarto publish gh-pages
+```
+
+#### What happens in the background:
+When you run `quarto publish gh-pages`, Quarto performs the following steps automatically:
+1. **Renders the site**: It compiles all `.qmd` source files into a temporary directory containing the final static HTML, CSS, JS, and image assets.
+2. **Updates the `gh-pages` branch**: It commits the rendered static assets directly to a dedicated local `gh-pages` branch (creating it first if it does not exist).
+3. **Pushes to GitHub**: It pushes the local `gh-pages` branch to the remote repository on GitHub, which triggers GitHub's automated build and deployment process to publish the site live.
+
 ---
 
 ## 2. Structure of the Source Files

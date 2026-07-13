@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1121</width>
+    <height>719</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SVD - Scaling Vegetation dynamics</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="res/resource.qrc">
+    <normaloff>:/mainicon</normaloff>:/mainicon</iconset>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>3</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
+    <property name="bottomMargin">
+     <number>3</number>
+    </property>
+    <item>
+     <widget class="QWidget" name="progressBarContainer" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QSpinBox" name="sYears">
+         <property name="toolTip">
+          <string>number of years to simulate</string>
+         </property>
+         <property name="maximum">
+          <number>10000</number>
+         </property>
+         <property name="value">
+          <number>10</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lModelState">
+         <property name="minimumSize">
+          <size>
+           <width>400</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="mainTab">
+       <attribute name="title">
+        <string>main</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="SurfaceGraph" name="main3d" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="cursor">
+           <cursorShape>CrossCursor</cursorShape>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="testTab">
+       <attribute name="title">
+        <string>Tab 2</string>
+       </attribute>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>190</y>
+          <width>511</width>
+          <height>80</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>GroupBox</string>
+        </property>
+        <widget class="QPushButton" name="pbTest">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>30</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Test grid</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_2">
+         <property name="geometry">
+          <rect>
+           <x>110</x>
+           <y>30</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Test settings</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_3">
+         <property name="geometry">
+          <rect>
+           <x>190</x>
+           <y>30</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test logging</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>30</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test random</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_5">
+         <property name="geometry">
+          <rect>
+           <x>350</x>
+           <y>30</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Tensor test</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pbTestExpre">
+         <property name="geometry">
+          <rect>
+           <x>430</x>
+           <y>30</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Expression</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QPushButton" name="pbTestTF">
+        <property name="geometry">
+         <rect>
+          <x>160</x>
+          <y>330</y>
+          <width>75</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>test tf</string>
+        </property>
+       </widget>
+       <widget class="QPlainTextEdit" name="lLog">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>50</y>
+          <width>541</width>
+          <height>121</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1121</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFunctions">
+    <property name="title">
+     <string>Model</string>
+    </property>
+    <widget class="QMenu" name="menuRecent_files">
+     <property name="title">
+      <string>Recent files</string>
+     </property>
+     <addaction name="actionFileSlot1"/>
+     <addaction name="actionFileSlot2"/>
+     <addaction name="actionFileSlot3"/>
+     <addaction name="actionFileSlot4"/>
+     <addaction name="actionFileSlot5"/>
+     <addaction name="actionFileSlot6"/>
+     <addaction name="actionFileSlot7"/>
+     <addaction name="actionFileSlot8"/>
+     <addaction name="actionFileSlot9"/>
+     <addaction name="actionFileSlot10"/>
+    </widget>
+    <addaction name="actionOpenProject"/>
+    <addaction name="menuRecent_files"/>
+    <addaction name="actionSetupProject"/>
+    <addaction name="actionRunSim"/>
+    <addaction name="actionRun_single_step"/>
+    <addaction name="actionContinue"/>
+    <addaction name="actionStopSim"/>
+    <addaction name="actiondelete_model"/>
+   </widget>
+   <widget class="QMenu" name="menuVisualization">
+    <property name="title">
+     <string>Visualization</string>
+    </property>
+    <widget class="QMenu" name="menuSave_custom_view">
+     <property name="title">
+      <string>Save custom view...</string>
+     </property>
+     <addaction name="actionSaveView_1"/>
+     <addaction name="actionSaveView_2"/>
+     <addaction name="actionSaveView_3"/>
+    </widget>
+    <addaction name="actionRender_to_file"/>
+    <addaction name="actionSave_as_grid"/>
+    <addaction name="action3D_Camera_settings"/>
+    <addaction name="actionReset_view"/>
+    <addaction name="actionCustom_view_1"/>
+    <addaction name="actionCustom_View_2"/>
+    <addaction name="actionCustom_View_3"/>
+    <addaction name="menuSave_custom_view"/>
+   </widget>
+   <widget class="QMenu" name="menuOther">
+    <property name="title">
+     <string>Other</string>
+    </property>
+    <addaction name="actionTest_DNN"/>
+    <addaction name="actioncreate_output_docs"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOnline_resources"/>
+    <addaction name="actionAbout_SVD"/>
+   </widget>
+   <addaction name="menuFunctions"/>
+   <addaction name="menuVisualization"/>
+   <addaction name="menuOther"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextBesideIcon</enum>
+   </property>
+   <property name="floatable">
+    <bool>true</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="separator"/>
+   <addaction name="actionSetupProject"/>
+   <addaction name="actionStopSim"/>
+   <addaction name="actionRunSim"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockRunning">
+   <property name="minimumSize">
+    <size>
+     <width>250</width>
+     <height>156</height>
+    </size>
+   </property>
+   <property name="windowTitle">
+    <string>Options</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>3</number>
+     </property>
+     <property name="leftMargin">
+      <number>3</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>3</number>
+     </property>
+     <item>
+      <widget class="QTabWidget" name="tabLeft">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="tab">
+        <attribute name="title">
+         <string>Project</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="legendLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <property name="leftMargin">
+          <number>3</number>
+         </property>
+         <property name="topMargin">
+          <number>3</number>
+         </property>
+         <property name="rightMargin">
+          <number>3</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Project config file</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="projectOptionsLayout">
+           <item>
+            <widget class="QLineEdit" name="lConfigFile">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="openProject">
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="icon">
+              <iconset resource="res/resource.qrc">
+               <normaloff>:/document-open.png</normaloff>:/document-open.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="pbReloadQml">
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QWidget" name="legendContainer" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_2">
+        <attribute name="title">
+         <string>Run stats</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QTableWidget" name="listStatus">
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <column/>
+           <column/>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="minimumSize">
+    <size>
+     <width>150</width>
+     <height>327</height>
+    </size>
+   </property>
+   <property name="windowTitle">
+    <string>Visualization</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_6">
+     <property name="leftMargin">
+      <number>3</number>
+     </property>
+     <property name="rightMargin">
+      <number>3</number>
+     </property>
+     <property name="bottomMargin">
+      <number>3</number>
+     </property>
+     <item>
+      <widget class="QTabWidget" name="tabWidget_2">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="tabVisualization">
+        <attribute name="title">
+         <string>Visualization</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="spacing">
+            <number>3</number>
+           </property>
+           <item>
+            <widget class="QLineEdit" name="lExpression"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pbRenderExpression">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="res/resource.qrc">
+               <normaloff>:/camera.png</normaloff>:/camera.png</iconset>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="visNone">
+           <property name="text">
+            <string>Nothing</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="visState">
+           <property name="text">
+            <string>State</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="visExpression">
+           <property name="text">
+            <string>Expression</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="visVariable">
+           <property name="text">
+            <string>Variable</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTreeWidget" name="visVariables">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>1000</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="indentation">
+            <number>8</number>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="visCoords">
+           <property name="text">
+            <string>-</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabInspector">
+        <attribute name="title">
+         <string>Inspector</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>3</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="visCoordsInspector">
+           <property name="text">
+            <string>-</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTreeWidget" name="visCellData">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>1000</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="indentation">
+            <number>8</number>
+           </property>
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">Variable</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Value</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionTest_DNN">
+   <property name="text">
+    <string>Test DNN</string>
+   </property>
+  </action>
+  <action name="actioncreate_output_docs">
+   <property name="text">
+    <string>create output docs</string>
+   </property>
+  </action>
+  <action name="actionSetupProject">
+   <property name="icon">
+    <iconset resource="res/resource.qrc">
+     <normaloff>:/www.png</normaloff>:/www.png</iconset>
+   </property>
+   <property name="text">
+    <string>Setup</string>
+   </property>
+  </action>
+  <action name="actionStopSim">
+   <property name="icon">
+    <iconset resource="res/resource.qrc">
+     <normaloff>:/process-stop.png</normaloff>:/process-stop.png</iconset>
+   </property>
+   <property name="text">
+    <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionRunSim">
+   <property name="icon">
+    <iconset resource="res/resource.qrc">
+     <normaloff>:/Play.png</normaloff>:/Play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionRender_to_file">
+   <property name="text">
+    <string>Render to file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actiondelete_model">
+   <property name="text">
+    <string>delete model</string>
+   </property>
+  </action>
+  <action name="actionOpenProject">
+   <property name="icon">
+    <iconset resource="res/resource.qrc">
+     <normaloff>:/document-open.png</normaloff>:/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open project</string>
+   </property>
+  </action>
+  <action name="actionFileSlot1">
+   <property name="text">
+    <string>FileSlot1</string>
+   </property>
+  </action>
+  <action name="actionFileSlot2">
+   <property name="text">
+    <string>FileSlot2</string>
+   </property>
+  </action>
+  <action name="actionFileSlot3">
+   <property name="text">
+    <string>FileSlot3</string>
+   </property>
+  </action>
+  <action name="actionFileSlot4">
+   <property name="text">
+    <string>FileSlot4</string>
+   </property>
+  </action>
+  <action name="actionFileSlot5">
+   <property name="text">
+    <string>FileSlot5</string>
+   </property>
+  </action>
+  <action name="actionFileSlot6">
+   <property name="text">
+    <string>FileSlot6</string>
+   </property>
+  </action>
+  <action name="actionFileSlot7">
+   <property name="text">
+    <string>FileSlot7</string>
+   </property>
+  </action>
+  <action name="actionFileSlot8">
+   <property name="text">
+    <string>FileSlot8</string>
+   </property>
+  </action>
+  <action name="actionFileSlot9">
+   <property name="text">
+    <string>FileSlot9</string>
+   </property>
+  </action>
+  <action name="actionFileSlot10">
+   <property name="text">
+    <string>FileSlot10</string>
+   </property>
+  </action>
+  <action name="action3D_Camera_settings">
+   <property name="text">
+    <string>3D Camera settings</string>
+   </property>
+  </action>
+  <action name="actionOnline_resources">
+   <property name="text">
+    <string>Online resources</string>
+   </property>
+  </action>
+  <action name="actionAbout_SVD">
+   <property name="text">
+    <string>About SVD</string>
+   </property>
+  </action>
+  <action name="actionReset_view">
+   <property name="text">
+    <string>Reset view</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
+  </action>
+  <action name="actionCustom_view_1">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Custom view 1</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F1</string>
+   </property>
+  </action>
+  <action name="actionCustom_View_2">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Custom View 2</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F2</string>
+   </property>
+  </action>
+  <action name="actionCustom_View_3">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Custom View 3</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F3</string>
+   </property>
+  </action>
+  <action name="actionSaveView_1">
+   <property name="text">
+    <string>View 1</string>
+   </property>
+  </action>
+  <action name="actionSaveView_2">
+   <property name="text">
+    <string>View 2</string>
+   </property>
+  </action>
+  <action name="actionSaveView_3">
+   <property name="text">
+    <string>View 3</string>
+   </property>
+  </action>
+  <action name="actionRun_single_step">
+   <property name="icon">
+    <iconset resource="res/resource.qrc">
+     <normaloff>:/Play.png</normaloff>:/Play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Run single step</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
+  </action>
+  <action name="actionContinue">
+   <property name="icon">
+    <iconset resource="res/resource.qrc">
+     <normaloff>:/Play.png</normaloff>:/Play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Continue</string>
+   </property>
+   <property name="shortcut">
+    <string>F10</string>
+   </property>
+  </action>
+  <action name="actionSave_as_grid">
+   <property name="text">
+    <string>Save as grid file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Tab</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>SurfaceGraph</class>
+   <extends>QWidget</extends>
+   <header>visualization/surfacegraph.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="res/resource.qrc"/>
+  <include location="res/resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>

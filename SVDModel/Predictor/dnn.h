@@ -89,6 +89,7 @@ private:
     // ONNX Runtime
     static Ort::Env mEnv;
     std::unique_ptr<Ort::Session> mSession;
+    Ort::MemoryInfo mMemoryInfo{nullptr};
 
     std::vector<std::string> mInputNames;
     std::vector<std::string> mOutputNames;

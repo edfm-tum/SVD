@@ -110,6 +110,23 @@ bool DNN::setupDNN(size_t aindex)
         session_options.SetInterOpNumThreads(inter_threads);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
+        // Prevent memory bloat from variable batch sizes
+        session_options.DisableMemPattern();
+        // Force ORT to use standard OS memory allocation to prevent BFC Arena fragmentation
+        session_options.DisableCpuMemArena();
+
+        lg->trace(fmt::runtime("Loading ONNX model (Threads: intra={}, inter={})..."), intra_threads, inter_threads);
+
+#ifdef _WIN32
+        std::wstring wfile(file.begin(), file.end());
+        mSession = std::make_unique<Ort::Session>(mEnv, wfile.c_str(), session_options);
+#else
+        mSession = std::make_unique<Ort::Session>(mEnv, file.c_str(), session_options);
+#endif
+
+        // Initialize the persistent memory info object using the standard Device Allocator
+        mMemoryInfo = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+
         bool using_cuda = false;
 #ifdef USE_CUDA
         try {
@@ -132,6 +149,7 @@ bool DNN::setupDNN(size_t aindex)
 
             session_options.AppendExecutionProvider_CUDA(cuda_options);
             using_cuda = true;
+            lg->info("CUDA acceleration for GPU sucessfully activated");
         } catch (const Ort::Exception& e) {
             lg->warn("Failed to enable CUDA: {}. Falling back to CPU.", e.what());
 #ifndef _WIN32
@@ -238,7 +256,7 @@ Batch * DNN::run(Batch *abatch)
 
         timr.print("before main inference");
         
-        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        //Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
         std::vector<Ort::Value> input_tensors;
         
         const std::list<InputTensorItem> &tdef = tensorDefinition();
@@ -264,7 +282,12 @@ Batch * DNN::run(Batch *abatch)
             if (def.ndim >= 1) total_elements *= def.sizeX;
             if (def.ndim >= 2) total_elements *= def.sizeY;
 
-            input_tensors.push_back(Ort::Value::CreateTensor(memory_info, raw_data, total_elements * InputTensorItem::sizeOf(def.type), shape.data(), shape.size(), ort_type));
+            input_tensors.push_back(Ort::Value::CreateTensor(mMemoryInfo,
+                                                             raw_data,
+                                                             total_elements * InputTensorItem::sizeOf(def.type),
+                                                             shape.data(),
+                                                             shape.size(),
+                                                             ort_type));
         }
 
         // Run inference

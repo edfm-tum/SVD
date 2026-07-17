@@ -86,8 +86,15 @@ void FileReader::loadFile(const std::string &fileName)
     if (!mInStream.is_open())
         throw std::logic_error("FileReader:: cannot open file: " + fileName);
     // read first line...
+    bool isFirst = true;
     while (!mInStream.eof()) {
        mInStream.getline(mBuffer, FRBUFSIZE);
+       if (isFirst) {
+           isFirst = false;
+           if (strncmp(mBuffer, "\xEF\xBB\xBF", 3) == 0) {
+               memmove(mBuffer, mBuffer + 3, strlen(mBuffer + 3) + 1);
+           }
+       }
        if (mBuffer[0]!='#' && *mBuffer!='\0')    // skip comment lines
            break;
     }

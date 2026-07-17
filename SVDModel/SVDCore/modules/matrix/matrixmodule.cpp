@@ -46,7 +46,7 @@ void MatrixModule::setup()
 
     // set up the transition matrix
     std::string filename = settings.valueString("modules."+name()+".transitionFile");
-    mMatrix.load(Tools::path(filename));
+    mMatrix.load(Tools::path(filename), "matrix");
 
     // set up key formula
     std::string expr = settings.valueString("modules." + name() + ".keyFormula");

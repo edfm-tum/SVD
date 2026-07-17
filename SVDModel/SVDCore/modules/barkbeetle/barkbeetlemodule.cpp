@@ -59,7 +59,7 @@ void BarkBeetleModule::setup()
 
     // set up the transition matrix
     std::string filename = settings.valueString(modkey("transitionFile"));
-    mBBMatrix.load(Tools::path(filename));
+    mBBMatrix.load(Tools::path(filename), "bark beetle");
 
 
     // set up additional parameter values for each state state

@@ -30,7 +30,7 @@ class TransitionMatrix
 {
 public:
     TransitionMatrix();
-    bool load(const std::string &filename);
+    bool load(const std::string &filename, const std::string &matrix_name);
 
     // access
 
@@ -50,6 +50,9 @@ private:
     /// storage for transition matrix: key: state + numerical key, content: list of target states + probabilties
     std::map< std::pair<state_t, int>,
               std::vector< STransitionItem > > mTM;
+
+    /// a name for messages
+    std::string mName;
 };
 
 #endif // TRANSITIONMATRIX_H

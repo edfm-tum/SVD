@@ -41,7 +41,7 @@ void FireModule::setup()
 
     // set up the transition matrix
     std::string filename = settings.valueString("modules.fire.transitionFile");
-    mFireMatrix.load(Tools::path(filename));
+    mFireMatrix.load(Tools::path(filename), "fire");
 
     // set up additional fire parameter values per state
     filename = settings.valueString("modules.fire.stateFile");

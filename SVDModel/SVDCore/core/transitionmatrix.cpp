@@ -35,8 +35,9 @@ TransitionMatrix::TransitionMatrix()
 
 }
 
-bool TransitionMatrix::load(const std::string &filename)
+bool TransitionMatrix::load(const std::string &filename, const std::string &matrix_name)
 {
+    mName = matrix_name;
     FileReader rdr(filename);
     rdr.requiredColumns({"stateId", "key", "targetId", "p"});
     auto is = rdr.columnIndex("stateId");
@@ -48,7 +49,7 @@ bool TransitionMatrix::load(const std::string &filename)
     auto iexpr = rdr.columnIndex("expression");
     bool has_pminmax = ipmin != std::string::npos && ipmax != std::string::npos;
     if (has_pminmax)
-        spdlog::get("setup")->debug("Transition matrix includes pmin / pmax columns.");
+        spdlog::get("setup")->debug("Transition matrix '{}' includes pmin / pmax columns.", mName);
     int n=0;
     while (rdr.next()) {
         // read line
@@ -57,7 +58,7 @@ bool TransitionMatrix::load(const std::string &filename)
         state_t target = state_t( rdr.value(it) );
         double p =  rdr.value(ip);
         if (p<0. || p>1.)
-            throw logic_error_fmt("TransitionMatrix: invalid probability {}. Allowed is the range 0..1", p);
+            throw logic_error_fmt("TransitionMatrix '{}': invalid probability {}. Allowed is the range 0..1", mName, p);
 
         auto &e = mTM[ {id, key} ];
         e.push_back(STransitionItem(target, p));
@@ -65,7 +66,7 @@ bool TransitionMatrix::load(const std::string &filename)
             double pmin = rdr.value(ipmin);
             double pmax = rdr.value(ipmax);
             if (pmin<0. || pmin>1. || pmax<0. || pmax>1.)
-                throw logic_error_fmt("TransitionMatrix: invalid probability for pmin/pmax ({}/{}). Allowed is the range 0..1", pmin, pmax);
+                throw logic_error_fmt("TransitionMatrix '{}': invalid probability for pmin/pmax ({}/{}). Allowed is the range 0..1", mName, pmin, pmax);
             if (pmax > 0.) {
                 e.back().pmin = pmin;
                 e.back().pmax = pmax;
@@ -87,6 +88,7 @@ bool TransitionMatrix::load(const std::string &filename)
             state_t st = static_cast<state_t>(sk.first.first);
             const auto &s = Model::instance()->states()->stateById(st);
 
+            ss << "Transition matrix: " << mName << std::endl;
             ss << fmt::format("State: #{}: '{}' (key: '{}')", st, s.name(), sk.first.second) << std::endl;
             for (const auto &item : sk.second) {
                 const auto &s_target = Model::instance()->states()->stateById(item.state);
@@ -103,7 +105,7 @@ bool TransitionMatrix::load(const std::string &filename)
     }
 
 
-    spdlog::get("setup")->debug("Loaded transition matrix for {} states from file '{}' (processed {} records).", mTM.size(), filename, n);
+    spdlog::get("setup")->debug("Loaded transition matrix '{}' for {} states from file '{}' (processed {} records).", mName, mTM.size(), filename, n);
     return true;
 }
 
@@ -111,7 +113,7 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
 {
     auto it = mTM.find({stateId, key});
     if (it == mTM.end()) {
-        throw logic_error_fmt("TransitionMatrix: no valid transitions found for state {}, key {}", stateId, key);
+        throw logic_error_fmt("TransitionMatrix '{}': no valid transitions found for state {}, key {}", mName, stateId, key);
     }
 
     const auto &prob = it->second;
@@ -130,7 +132,7 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
         if (item.expr) {
             has_expr=true;
             if (!cell)
-                logic_error_fmt("TransitionMatrix: a transition with an expression: {}, state {} key {} is used, but there is no valid cell.", item.expr->expression(), stateId, key);
+                logic_error_fmt("TransitionMatrix '{}': a transition with an expression: {}, state {} key {} is used, but there is no valid cell.", mName, item.expr->expression(), stateId, key);
 
         }
     }
@@ -153,7 +155,7 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
             p_sum+= *cp++;
         }
         if (p_sum>1. && !has_self)
-            throw logic_error_fmt("TransitionMatrix: the sum of probababilities for states (excl.self) are > 1. ");
+            throw logic_error_fmt("TransitionMatrix '{}': the sum of probababilities for states (excl.self) are > 1. For source state: {} ", mName, stateId);
 
         // see almost identical code below
         double p;
@@ -172,11 +174,11 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
         }
         if (!has_self)
             return stateId;
-        throw logic_error_fmt("TransitionMatrix: no valid target found for state {}, key {}. Maybe all probabilites = 0?", stateId, key);
+        throw logic_error_fmt("TransitionMatrix '{}': no valid target found for state {}, key {}. Maybe all probabilites = 0?", mName, stateId, key);
 
     }
     if (p_sum>1. && !has_self)
-        throw logic_error_fmt("TransitionMatrix: the sum of probababilities for states (excl.self) are > 1. ");
+        throw logic_error_fmt("TransitionMatrix '{}': the sum of probababilities for states (excl.self) are > 1. For source state: {} ", mName, stateId);
     double p;
 
     /*  Two options:
@@ -201,5 +203,5 @@ state_t TransitionMatrix::transition(state_t stateId, int key, CellWrapper *cell
     if (!has_self)
         return stateId; // same state
 
-    throw logic_error_fmt("TransitionMatrix: no valid target found for state {}, key {}", stateId, key);
+    throw logic_error_fmt("TransitionMatrix '{}': no valid target found for state {}, key {}. Maybe all probabilites = 0?", mName, stateId, key);
 }

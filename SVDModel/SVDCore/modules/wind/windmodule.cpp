@@ -47,7 +47,7 @@ void WindModule::setup()
 
     // set up the transition matrix
     std::string filename = settings.valueString(modkey("transitionFile"));
-    mWindMatrix.load(Tools::path(filename));
+    mWindMatrix.load(Tools::path(filename), "wind");
 
 
     // set up additional wind parameter values per state

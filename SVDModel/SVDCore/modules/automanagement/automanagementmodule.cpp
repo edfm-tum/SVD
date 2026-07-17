@@ -19,7 +19,7 @@ void AutoManagementModule::setup()
 
     // set up the transition matrix
     std::string filename = settings.valueString(modkey("transitionFile"));
-    mMgmtMatrix.load(Tools::path(filename));
+    mMgmtMatrix.load(Tools::path(filename), "auto-mgmt");
 
     // set up additional parameter values per state (height increment threshold)
     filename = Tools::path(settings.valueString(modkey("stateFile")));

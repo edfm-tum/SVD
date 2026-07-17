@@ -52,7 +52,7 @@ void StateGridOut::execute()
     auto &grid = Model::instance()->landscape()->grid();
 
     if (!gridToFile<GridCell, short>( grid, file_name, GeoTIFF::DTSINT16,
-                                   [](const GridCell &c) -> short {if(c.isNull())
+                                   [](const GridCell &c) -> short {if(c.isNull() || c.cell().state()==nullptr)
                                                                      return std::numeric_limits<short>::lowest();
                                                                   return static_cast<short>(c.cell().state()->id()); }))
         throw std::logic_error("StateGridOut: couldn't write output file: " + file_name);

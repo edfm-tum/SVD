@@ -87,7 +87,7 @@ private:
     static std::list<InputTensorItem> mTensorDef;
 
     // ONNX Runtime
-    static Ort::Env mEnv;
+    static Ort::Env *mEnv;
     std::unique_ptr<Ort::Session> mSession;
     Ort::MemoryInfo mMemoryInfo{nullptr};
 

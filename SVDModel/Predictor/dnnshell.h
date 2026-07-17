@@ -46,6 +46,7 @@ public:
 private:
 public Q_SLOTS:
     void setup(QString fileName);
+    void clear();
     void doWork(Batch *batch);
 
     void dnnFinished(void *vbatch);

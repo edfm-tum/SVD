@@ -38,9 +38,16 @@ DNNShell::DNNShell()
 
 DNNShell::~DNNShell()
 {
-    delete_and_clear(mDNNs);
+    clear();
     delete mThreads;
+}
 
+void DNNShell::clear()
+{
+    if (mThreads)
+        mThreads->waitForDone();
+    delete_and_clear(mDNNs);
+    mBatchManager.reset();
 }
 
 

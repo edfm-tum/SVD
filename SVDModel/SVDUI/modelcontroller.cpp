@@ -137,6 +137,9 @@ std::unordered_map<std::string, std::string> ModelController::systemStatus()
 
 void ModelController::setup(QString fileName, Settings *settings)
 {
+    // Wait for any running DNN tasks to finish and clear old DNN instances
+    QMetaObject::invokeMethod(mDNNShell, "clear", Qt::BlockingQueuedConnection);
+
     // use a blocking connection for initial creation (logging, etc.)
     QMetaObject::invokeMethod(mModelShell, "createModel", Qt::BlockingQueuedConnection,
                               Q_ARG(QString, fileName),

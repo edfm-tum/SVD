@@ -35,10 +35,13 @@
 
 // Initialize static members
 std::list<InputTensorItem> DNN::mTensorDef;
-Ort::Env DNN::mEnv(ORT_LOGGING_LEVEL_WARNING, "SVDModel");
+Ort::Env *DNN::mEnv = nullptr;
 
 DNN::DNN()
 {
+    if (!mEnv) {
+        mEnv = new Ort::Env(ORT_LOGGING_LEVEL_WARNING, "SVDModel");
+    }
     if (spdlog::get("dnn"))
         spdlog::get("dnn")->debug("DNN created: {}", static_cast<void*>(this));
     mTopK_tf = false;
@@ -119,9 +122,9 @@ bool DNN::setupDNN(size_t aindex)
 
 #ifdef _WIN32
         std::wstring wfile(file.begin(), file.end());
-        mSession = std::make_unique<Ort::Session>(mEnv, wfile.c_str(), session_options);
+        mSession = std::make_unique<Ort::Session>(*mEnv, wfile.c_str(), session_options);
 #else
-        mSession = std::make_unique<Ort::Session>(mEnv, file.c_str(), session_options);
+        mSession = std::make_unique<Ort::Session>(*mEnv, file.c_str(), session_options);
 #endif
 
         // Initialize the persistent memory info object using the standard Device Allocator
@@ -176,9 +179,9 @@ bool DNN::setupDNN(size_t aindex)
         lg->trace(fmt::runtime("Loading ONNX model..."), intra_threads, inter_threads);
 #ifdef _WIN32
         std::wstring wfile(file.begin(), file.end());
-        mSession = std::make_unique<Ort::Session>(mEnv, wfile.c_str(), session_options);
+        mSession = std::make_unique<Ort::Session>(*mEnv, wfile.c_str(), session_options);
 #else
-        mSession = std::make_unique<Ort::Session>(mEnv, file.c_str(), session_options);
+        mSession = std::make_unique<Ort::Session>(*mEnv, file.c_str(), session_options);
 #endif
         lg->trace("Successfully loaded ONNX model!");
 

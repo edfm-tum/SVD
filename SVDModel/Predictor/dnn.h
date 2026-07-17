@@ -22,20 +22,16 @@
 #undef SWIG
 
 #include "spdlog/spdlog.h"
-#ifdef USE_TENSORFLOW
-namespace tensorflow { // forward declarations...
-class Session;
-class Tensor;
-//class Status;
-class Input;
-class GraphDef;
-}
-#endif
+#include <onnxruntime_cxx_api.h>
+
 class Batch; // forward
+class Settings; // forward
 
 #include "inputtensoritem.h"
 #include "tensorhelper.h"
 #include <list>
+#include <memory>
+
 
 class DNN
 {
@@ -44,11 +40,11 @@ public:
     ~DNN();
     size_t index() const {return mIndex; }
 
-    /// set up the actual DNN (TensorFlow)
+    /// set up the actual DNN
     bool setupDNN(size_t aindex);
 
     /// set up the links to the main model
-    static void setupInput();
+    void setupInput();
 
     static void setupBatch(Batch *abatch, std::vector<TensorWrapper*> &tensors);
 
@@ -62,40 +58,44 @@ public:
 
 private:
 
-#ifdef USE_TENSORFLOW
     static TensorWrapper *buildTensor(size_t batch_size, InputTensorItem &item);
-#endif
+    std::string findMetadataSectionByTensorName(Settings *mg, const std::string &tensor_name, const std::vector<std::string> &sections);
+
     // logging
     std::shared_ptr<spdlog::logger> lg;
 
     // DNN specifics
     size_t mIndex; ///< internal number of the DNN
-    bool mDummyDNN; ///< if true, then the tensorflow components are not really used (for debug builds)
+    bool mDummyDNN; ///< if true, then the DNN components are not really used (for debug builds)
 
-    bool mTopK_tf; ///< use tensorflow for the state top k calculation
+    bool mTopK_tf; ///< use framework for the state top k calculation (not supported by ORT currently)
     size_t mTopK_NClasses; ///< number of classes used for the top k algorithm
     std::vector<std::string> mOutputTensorNames; ///< names of the output tensors (e.g. output/Softmax)
     size_t mNStateCls; ///< number of output classes for state
     size_t mNResTimeCls; ///< number of classes for residence time
-#ifdef USE_TENSORFLOW
-    tensorflow::Status getTopClassesOldCode(const tensorflow::Tensor &classes, const int n_top, tensorflow::Tensor *indices, tensorflow::Tensor *scores);
+    size_t mOutIndexState; ///< index of state prediction result in output tensors
+    size_t mOutIndexRestime; ///< index oof residence time prediction result in output tensors
 
     /// retrieve the top n classes in "classes" and store results in 'indices' and 'scores'.
-    /// this function uses CPU (and not tensorflow)
-    void getTopClasses(tensorflow::Tensor &classes, const size_t batch_size, const size_t n_top, tensorflow::Tensor *indices, tensorflow::Tensor *scores);
-    tensorflow::Session *session;
-    tensorflow::Session *top_k_session;
-
-    tensorflow::Status loadGraph(std::string graph_file_name, tensorflow::Session* session);
-    void dumpTensorInfo(tensorflow::GraphDef &graph_def, std::string name_tensor);
+    /// this function uses CPU
+    void getTopClasses(TensorWrapper &classes, const size_t batch_size, const size_t n_top, TensorWrapper &indices, TensorWrapper &scores);
 
     /// select randomly an index 0..n-1, with values the weights.
     int chooseProbabilisticIndex(float *values, int n, int skip_index=-1);
-#endif
 
     /// definition of input tensors
     static std::list<InputTensorItem> mTensorDef;
 
+    // ONNX Runtime
+    static Ort::Env mEnv;
+    std::unique_ptr<Ort::Session> mSession;
+    Ort::MemoryInfo mMemoryInfo{nullptr};
+    std::vector<std::string> mInputNames;
+    std::vector<std::string> mOutputNames;
+    std::vector<const char*> mInputNodeNames;
+    std::vector<const char*> mOutputNodeNames;
+
+    ONNXTensorElementDataType mapDataType(InputTensorItem::DataType type);
 
 };
 

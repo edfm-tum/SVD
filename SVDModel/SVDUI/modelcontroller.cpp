@@ -43,7 +43,7 @@ ModelController::ModelController(QObject *)
     mModelShell = model_shell;
     mModelShell->moveToThread(modelThread);
 
-    connect(modelThread, &QThread::finished, model_shell, &QObject::deleteLater);
+    // connect(modelThread, &QThread::finished, model_shell, &QObject::deleteLater);
     connect(mModelShell, &ModelShell::stateChanged, this, &ModelController::stateChanged);
 
 
@@ -51,7 +51,7 @@ ModelController::ModelController(QObject *)
     mDNNShell = new DNNShell();
     mDNNShell->moveToThread(dnnThread);
 
-    connect(dnnThread, &QThread::finished, mDNNShell, &QObject::deleteLater);
+    // connect(dnnThread, &QThread::finished, mDNNShell, &QObject::deleteLater);
 
     // connection between main model and DNN: [this requires the old way of connect, because there are errors with Batch* otherwise]
     QObject::connect(mModelShell, SIGNAL(newPackage(Batch*)), mDNNShell, SLOT(doWork(Batch*)), Qt::QueuedConnection);
@@ -91,11 +91,13 @@ ModelController::~ModelController()
     modelThread->wait();
     dnnThread->wait();
 
-    //if (mModelShell)
-    //    delete mModelShell;
-    //if (mDNNShell)
-    //    delete mDNNShell;
+    if (mModelShell)
+        delete mModelShell;
+    if (mDNNShell)
+        delete mDNNShell;
 
+    delete modelThread;
+    delete dnnThread;
 }
 
 std::unordered_map<std::string, std::string> ModelController::systemStatus()

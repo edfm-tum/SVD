@@ -24,6 +24,9 @@
 #include "expressionwrapper.h"
 #include "expression.h"
 
+#include "spdlog/async.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
 #include <QThreadPool>
 
 Model *Model::mInstance = nullptr;
@@ -170,42 +173,44 @@ void Model::inititeLogging()
     std::string log_file = Tools::path(settings().valueString("logging.file"));
 
 
-    // asynchronous logging, 2 seconds auto-flush
-    spdlog::set_async_mode(8192, spdlog::async_overflow_policy::block_retry,
-                           nullptr,
-                           std::chrono::seconds(2));
+    // asynchronous logging, 1 thread
+    spdlog::init_thread_pool(8192, 1);
 
     std::vector<spdlog::sink_ptr> sinks;
-    sinks.push_back(std::make_shared<spdlog::sinks::simple_file_sink_mt>(log_file,true));
+    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file,true));
 
     //sinks.push_back(std::make_shared<my_threaded_sink>(ui->lLog));
-    std::vector<std::string> levels = SPDLOG_LEVEL_NAMES; // trace, debug, info, ...
+    std::vector<std::string> levels = {"trace", "debug", "info", "warn", "err", "critical", "off"};
 
-    auto combined_logger = spdlog::create("main", sinks.begin(), sinks.end());
-    combined_logger->flush_on(spdlog::level::err);
-
+    auto combined_logger = std::make_shared<spdlog::async_logger>("main", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(combined_logger);
+    combined_logger->flush_on(spdlog::level::info);
+    spdlog::flush_every(std::chrono::seconds(2));
     int idx = indexOf(levels, settings().valueString("logging.model.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.model.level") + "' is not a valid logging level for logging.model.level. Valid are: " + join(levels) );
     combined_logger->set_level(spdlog::level::level_enum(idx) );
 
-    combined_logger=spdlog::create("setup", sinks.begin(), sinks.end());
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger = std::make_shared<spdlog::async_logger>("setup", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(combined_logger);
+    combined_logger->flush_on(spdlog::level::info);
     idx = indexOf(levels, settings().valueString("logging.setup.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.setup.level") + "' is not a valid logging level for logging.setup.level. Valid are: " + join(levels) );
     combined_logger->set_level(spdlog::level::level_enum(idx) );
 
 
-    combined_logger=spdlog::create("dnn", sinks.begin(), sinks.end());
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger = std::make_shared<spdlog::async_logger>("dnn", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(combined_logger);
+    combined_logger->flush_on(spdlog::level::info);
     idx = indexOf(levels, settings().valueString("logging.dnn.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.dnn.level") + "' is not a valid logging level for logging.dnn.level. Valid are: " + join(levels) );
     combined_logger->set_level(spdlog::level::level_enum(idx) );
 
-    combined_logger=spdlog::create("modules", sinks.begin(), sinks.end());
-    combined_logger->flush_on(spdlog::level::err);
+    combined_logger = std::make_shared<spdlog::async_logger>("modules", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(combined_logger);
+    combined_logger->flush_on(spdlog::level::info);
     idx = indexOf(levels, settings().valueString("logging.modules.level"));
     if (idx==-1)
         throw std::logic_error("Setup logging: the value '" + settings().valueString("logging.modules.level") + "' is not a valid logging level for logging.modules.level. Valid are: " + join(levels) );
@@ -234,7 +239,7 @@ void Model::shutdownLogging()
         l->flush();
     });
     spdlog::drop_all();
-
+    spdlog::shutdown();
 
 }
 
@@ -245,7 +250,7 @@ void Model::setupSpecies()
     for (std::string &s : mSpeciesList)
         s = trimmed(s);
 
-    // add as constants
+    // add as constants for expressions
     Expression::setConstants(mSpeciesList);
     lg_setup->debug("Setup of species: N={}.", mSpeciesList.size());
 

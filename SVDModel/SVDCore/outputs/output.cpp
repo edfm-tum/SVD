@@ -58,7 +58,7 @@ void Output::flush()
 std::string Output::createDocumentation()
 {
     std::string result;
-    result = fmt::format("<a name=\"{}\"></a>\n## {}\n", mName, mName);
+    result = fmt::format("## {} {{#{}}}\n", mName, mName);
     result += fmt::format("{}\n", mDescription);
     if (mColumns.size() > 0) {
         result += "\n### Columns\n";

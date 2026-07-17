@@ -1,0 +1,174 @@
+---
+title: "SVD outputs"
+---
+
+<!-- GENERATED-CODE-START -->
+# SVD outputs
+## List of outputs
+
+* [StateGrid](#StateGrid)
+* [ResTimeGrid](#ResTimeGrid)
+* [StateChange](#StateChange)
+* [StateHist](#StateHist)
+* [StateMatrix](#StateMatrix)
+* [Fire](#Fire)
+* [Wind](#Wind)
+* [AutoManagement](#AutoManagement)
+* [BarkBeetle](#BarkBeetle)
+
+## StateGrid {#StateGrid}
+writes ASCII grids with the stateId for each cell.
+
+Grids are save to the location specified with the `path`property (`$year$` is replaced with the actual year).
+
+### Parameters
+
+* `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
+
+
+
+## ResTimeGrid {#ResTimeGrid}
+output of ASCII grids with the residence time (years) for each cell.
+Grids are save to the location specified with the `path`property (`$year$` is replaced with the actual year).
+
+### Parameters
+
+* `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
+
+
+## StateChange {#StateChange}
+Details for individual state changes from DNN (potentially a lot of output data!)
+
+The output contains for each cell the predicted states/probabilities (for `dnn.topKNClasses` classes), and the probabilities for the year of state change.
+
+### Parameters
+
+* `filter`: a filter expression; output is written if the expression is true; available variables are: `state`, `restime`, `x`, `y`, `year`
+* `interval`: output is written only every `interval` years (or every year if `interval=0`). For example, a value of 10 limits output to the simulation years 1, 11, 21, ...
+
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year of the state change | Int
+cellIndex | index of the affected cell (0-based) | Int
+state | original stateId (before change) | Int
+restime | residence time (yrs) (before change) | Int
+nextState | new stateId (selected from s[i]) | Int
+nextTime | year the state change (selected from t[i]) | Int
+s[i] | candidate state Id *i* (with i 1..number of top-K classes) | Int
+p[i] | probability for state *i* (0..1) | Double
+t[i] | probability for a change in year *i* (with i 1..number of residence time classes) | Double
+
+
+## StateHist {#StateHist}
+Outputs a frequency distribution of states over the landscape.
+
+### Parameters
+
+ * `lastFireGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+stateId | state Id | Int
+n | number of cells that are currently in the state `stateId` | Int
+
+
+## StateMatrix {#StateMatrix}
+Outputs the number of cumulative state transition between any two states.
+
+### Parameters
+
+ * `interval`: output is only generated every `interval` years.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+stateId | state Id of the originating state | Int
+stateToId | state Id of the target state | Int
+n | cumulated number of cells that transitioned from `stateId` to `stateToId` | Int
+
+
+## Fire {#Fire}
+Output on fire events (one event per line) and grids for the year of the last burn.
+
+Grids are saved as ASCII/GeoTIFF grids to the location specified by the`lastFireGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.
+
+### Parameters
+
+ * `lastFireGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year of the fire event | Int
+id | unique identifier of a single fire | Int
+x | x coordinate (m) of the ignition point | Double
+y | y coordinate (m) of the ignition point | Double
+planned_size | planned fire size (ha) | Double
+realized_size | realized fire size (ha) | Double
+share_high_severity | share of pixels burning with high severity (0..1) | Double
+
+
+## Wind {#Wind}
+Output on wind events (one storm per line) and grids for the year of the last burn.
+
+Grids are saved as ASCII/TIF grids to the location specified by the`lastFireGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last burn in a cell or 0 for unburned cells.
+
+### Parameters
+
+ * `lastFireGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year of the storm event | Int
+id | unique identifier of a single storm event | Int
+x | x coordinate (m) of the centerpoint of the initial regional grid cell | Double
+y | y coordinate (m) of the centerpoint of the initial regional grid cell | Double
+proportion | (predefined) proportion of affected cells (per event) | Double
+regions_planned | # of regions planned to be affected | Int
+regions_affected | realized number of regions (10x10km) by the storm event | Int
+cells_forested | total number of forested cells (ha) in all regions | Int
+mean_susceptibility | mean wind susceptibility of forested cells (ha) in all regions | Double
+cells_planned | number of ha planned to be affected (over all regions) | Double
+cells_affected | number of ha affected by the storm (over all regions) | Double
+
+
+## AutoManagement {#AutoManagement}
+Output of the AutoManagement module. The output contains a histogram of how many cells were managed per state. 
+
+Each line is holds a single state; note: only states with at least one affected cell are saved.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+stateId | unique identifier of a | Int
+n | number of cells affected by management of this state in this year | Int
+
+
+## BarkBeetle {#BarkBeetle}
+Output on bark beetle activity and grids with the year of the last bark beetle attack on a cell.
+
+Grids are saved as ASCII/TIF grids to the location specified by the`lastBarkBeetleGrid.path` property (`$year$` is replaced with the actual year). The value of the grid cells is the year of the last impact on a cell or 0 for cells never affected by beetles.
+
+### Parameters
+
+ * `lastBarkBeetleGrid.filter`: a grid is written only if the expression evaluates to `true` (with `year` as variable). A value of 0 deactivates the grid output.
+
+### Columns
+Column|Description|Data type
+------|-----------|---------
+year | simulation year | Int
+n_background_infestation | number of cells that have a bark beetle infestatation due to random background infesetations (wind-triggered cells are not included) | Int
+n_wind_infestation | number of cells that have a bark beetle infestatation due to wind | Int
+n_impact | number of cells, that are affected by bark beetles (and thus change its state) | Int
+n_active_yearend | number of cells with living bark beetles at the end of the year (i.e., which will be actively spreading next year) | Int
+
+
+
+<!-- GENERATED-CODE-END -->

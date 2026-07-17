@@ -66,7 +66,7 @@ const char *currentVersion(){ return version;}
 
 QString compiler()
 {
-    return QString("%1 %2 Qt %3 TF %4").arg(MYCC).arg(BITS).arg(qVersion()).arg(DNNShell::tensorFlowVersion());
+    return QString("%1 %2 Qt %3 ONNX %4").arg(MYCC).arg(BITS).arg(qVersion()).arg(DNNShell::onnxVersion());
 }
 
 QString verboseVersion()

@@ -1,0 +1,124 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - img/
+
+website:
+  title: "SVD"
+  navbar:
+    logo:
+      light: img/svd_logo_light.png
+      dark: img/svd_logo_dark.png
+    logo-href: /index.qmd
+    title: false
+    background: primary
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Installation"
+        href: install.qmd
+      - text: "Using SVD"
+        menu:
+          - text: "SVD UI"
+            href: svdUI.qmd
+          - text: "SVDc (Console)"
+            href: svdc.qmd
+          - text: "Data Preparation"
+            href: SVD_data_preparation.qmd
+      - text: "Concepts"
+        menu:
+          - text: "States"
+            href: states.qmd
+          - text: "Modules Overview"
+            href: modules.qmd
+          - text: "Fire Module"
+            href: module_fire.qmd
+          - text: "Wind Module"
+            href: module_wind.qmd
+          - text: "Barkbeetle Module"
+            href: module_barkbeetle.qmd
+          - text: "Matrix Module"
+            href: module_matrix.qmd
+          - text: "Management Module"
+            href: module_management.qmd
+      - text: "Setup & Configuration"
+        menu:
+          - text: "SVD Setup"
+            href: svd_setup.qmd
+          - text: "Landscape Configuration"
+            href: configuring_the_landscape.qmd
+          - text: "DNN Setup"
+            href: dnn_setup.qmd
+          - text: "DNN Metadata"
+            href: configuring_dnn_metadata.qmd
+      - text: "Reference"
+        menu:
+          - text: "Project File"
+            href: project_file.qmd
+          - text: "Outputs"
+            href: outputs.qmd
+          - text: "Variables"
+            href: variables.qmd
+          - text: "Data Formats"
+            href: SVD_data_formats.qmd
+      - text: "About"
+        menu:
+          - text: "Publications"
+            href: svd_papers.qmd
+          - text: "Team"
+            href: svd_team.qmd
+    right:
+      - icon: github
+        href: https://github.com/edfm-tum/SVD
+
+  sidebar:
+    - id: wiki
+      title: "SVD Documentation"
+      style: "docked"
+      collapse-level: 2
+      contents:
+        - index.qmd
+        - install.qmd
+        - section: "Using SVD"
+          contents:
+            - svdUI.qmd
+            - svdc.qmd
+            - SVD_data_preparation.qmd
+        - section: "Concepts"
+          contents:
+            - states.qmd
+            - modules.qmd
+            - module_fire.qmd
+            - module_wind.qmd
+            - module_barkbeetle.qmd
+            - module_matrix.qmd
+            - module_management.qmd
+        - section: "Setup & Configuration"
+          contents:
+            - svd_setup.qmd
+            - configuring_the_landscape.qmd
+            - dnn_setup.qmd
+            - configuring_dnn_metadata.qmd
+        - section: "Reference"
+          contents:
+            - project_file.qmd
+            - outputs.qmd
+            - variables.qmd
+            - SVD_data_formats.qmd
+        - section: "About"
+          contents:
+            - svd_papers.qmd
+            - svd_team.qmd
+
+format:
+  html:
+    theme:
+      light: [cosmo, custom-light.scss]
+      dark: [cosmo, custom-dark.scss]
+    css: custom.css
+    toc: true
+    toc-depth: 3
+    html-math-method: mathjax
+    code-copy: true
+    search: true

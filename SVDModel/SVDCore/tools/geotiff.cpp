@@ -90,7 +90,7 @@ int GeoTIFF::loadImage(const std::string &fileName)
         mNrow = FreeImage_GetHeight(dib);
 
 
-        lg->info("Loaded TIF '{}', x/y: {:f}/{:f}, cellsize: {}, width: {}, height: {}, datatype {}, {} bits per cell", fileName, mOx, mOy, mCellsize, mNcol, mNrow, FreeImage_GetImageType(dib), FreeImage_GetBPP(dib));
+        lg->info(fmt::runtime("Loaded TIF '{}', x/y: {:f}/{:f}, cellsize: {}, width: {}, height: {}, datatype {}, {} bits per cell"), fileName, mOx, mOy, mCellsize, mNcol, mNrow, static_cast<int>(FreeImage_GetImageType(dib)), FreeImage_GetBPP(dib));
         return 0;
 
     } else {
@@ -106,7 +106,7 @@ void GeoTIFF::copyToIntGrid(Grid<int> *grid)
         throw std::logic_error("Copy TIF to grid: tif not loaded!");
     auto dtype = FreeImage_GetImageType(dib);
     if (dtype != FIT_INT32 && dtype != FIT_UINT16 && dtype != FIT_INT16) {
-        throw logic_error_fmt("Copy TIF to grid: wrong data type, INT32, UINT16 or INT16 expected, got type {}", FreeImage_GetImageType(dib));
+        throw logic_error_fmt("Copy TIF to grid: wrong data type, INT32, UINT16 or INT16 expected, got type {}", static_cast<int>(FreeImage_GetImageType(dib)));
     }
     // the null value of grids (at least for INT) is weird; it is not the smallest possible value (−2,147,483,648), but instead −2,147,483,647.
     int null_value = grid->nullValue();
@@ -248,7 +248,7 @@ void GeoTIFF::setValue(size_t ix, size_t iy, double value)
     } else if (mDType == DTDOUBLE) {
         ((double*)FreeImage_GetScanLine(dib, iy))[ix] = value;
     } else {
-        throw logic_error_fmt("GeoTif:setValue(double): invalid type of TIF: {}", mDType);
+        throw logic_error_fmt("GeoTif:setValue(double): invalid type of TIF: {}", static_cast<int>(mDType));
     }
 }
 
@@ -264,7 +264,7 @@ void GeoTIFF::setValue(size_t ix, size_t iy, float value)
         double dbl_value = static_cast<double>(value);
         ((double*)FreeImage_GetScanLine(dib, iy))[ix] = dbl_value;
     } else {
-        throw logic_error_fmt("GeoTif:setValue(double): invalid type of TIF: {}", mDType);
+        throw logic_error_fmt("GeoTif:setValue(double): invalid type of TIF: {}", static_cast<int>(mDType));
     }
 
 }
@@ -285,7 +285,7 @@ void GeoTIFF::setValue(size_t ix, size_t iy, int value)
         ((int*)FreeImage_GetScanLine(dib, iy))[ix] = value;
 
     } else {
-        throw logic_error_fmt("GeoTif:setValue(int): invalid type of TIF: {}", mDType);
+        throw logic_error_fmt("GeoTif:setValue(int): invalid type of TIF: {}", static_cast<int>(mDType));
     }
 
 
@@ -307,6 +307,6 @@ void GeoTIFF::setValue(size_t ix, size_t iy, short value)
         ((int*)FreeImage_GetScanLine(dib, iy))[ix] = sival;
 
     } else {
-        throw logic_error_fmt("GeoTif:setValue(short int): invalid type of TIF: {}", mDType);
+        throw logic_error_fmt("GeoTif:setValue(short int): invalid type of TIF: {}", static_cast<int>(mDType));
     }
 }

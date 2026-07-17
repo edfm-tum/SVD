@@ -1,0 +1,21 @@
+---
+title: "Scientific publications related to SVD"
+---
+
+Model development and applications are reported in top-level journals such as **Science**, **Nature communications Earth & Environment**, **Global Change Biology**, **Methods in Ecology and Evolution**:
+
+## Modeling papers
+
+-   Rammer W, Seidl R, 2019. A scalable model of vegetation transitions using deep neural networks. Methods Ecol. Evol., [DOI: 10.1111/2041-210X.13171](https://doi.org/10.1111/2041-210X.13171), download [Supplementary information](https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.13171&file=mee313171-sup-0001-Supinfo.pdf)
+
+## Application papers
+
+- Grünig, M., Rammer, W., Senf, C., Albrich, K., André, F., Augustynczik, A. L. D., Baumann, M., Bohn, F. J., Bouwman, M., Bugmann, H., Collalti, A., Cristal, I., Dalmonech, D., De Coligny, F., Dobor, L., Dollinger, C., Espelta, J. M., Forrester, D. I., Garcia-Gonzalo, J., … Seidl, R. (2026). Climate change will increase forest disturbances in Europe throughout the 21st century. Science, 391(6789), eadx6329. <https://doi.org/10.1126/science.adx6329>, data repository: <https://datadryad.org/dataset/doi:10.5061/dryad.tb2rbp0dv>
+
+-   Rammer, W., Braziunas, K. H., Hansen, W. D., Ratajczak, Z., Westerling, A. L., Turner, M. G., & Seidl, R. (2021). Widespread regeneration failure in forests of Greater Yellowstone under scenarios of future climate and fire. Global Change Biology, 27(18), 4339--4351. <https://doi.org/10.1111/gcb.15726>
+
+## Related papers
+
+- Grünig, M., Rammer, W., Baumann, M., Albrich, K., André, F., Augustynczik, A. L. D., Bohn, F. J., Bouwman, M., Bugmann, H., Collalti, A., Cristal, I., Dalmonech, D., De Caceres, M., De Coligny, F., Dobor, L., Dollinger, C., Forrester, D. I., Garcia-Gonzalo, J., González-Olabarria, J. R., … Seidl, R. (2026). Loss of competitive strength in European conifer species under climate change. Communications Earth & Environment, 7(1), 401. <https://doi.org/10.1038/s43247-026-03582-0>
+- Perry, G. L. W., Seidl, R., Bellvé, A. M., & Rammer, W. (2022). An Outlook for Deep Learning in Ecosystem Science. Ecosystems. <https://doi.org/10.1007/s10021-022-00789-y>
+

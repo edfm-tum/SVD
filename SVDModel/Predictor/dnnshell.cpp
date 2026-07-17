@@ -31,10 +31,6 @@
 #include "batchmanager.h"
 #include "dnn.h"
 
-#ifdef USE_TENSORFLOW
-#include <tensorflow/core/public/version.h>
-#endif
-
 DNNShell::DNNShell()
 {
     mThreads = new QThreadPool();
@@ -97,10 +93,12 @@ void DNNShell::setup(QString fileName)
             QCoreApplication::processEvents();
         }
 
-        if (RunState::instance()->modelState() != ModelRunState::ErrorDuringSetup)
-            DNN::setupInput();
-        else
+        if (RunState::instance()->modelState() != ModelRunState::ErrorDuringSetup) {
+            for (auto *dnn : mDNNs)
+                dnn->setupInput();
+        } else {
             lg->debug("Error during model setup - setup of DNN interrupted.");
+        }
 
     } catch (const std::exception &e) {
         RunState::instance()->dnnState()=ModelRunState::ErrorDuringSetup;
@@ -140,11 +138,11 @@ void DNNShell::doWork(Batch *batch)
 
 
     if (batch->state()!=Batch::Fill)
-        lg->error("Batch {} [{}] is in the wrong state {}, size: {}", batch->packageId(), static_cast<void*>(batch), batch->state(), batch->usedSlots());
+        lg->error("Batch {} [{}] is in the wrong state {}, size: {}", batch->packageId(), static_cast<void*>(batch), static_cast<int>(batch->state()), batch->usedSlots());
 
     batch->changeState(Batch::DNNInference);
     mProcessing++;
-    lg->debug("DNNShell: received package {}. Starting DNN (batch: {}, state: {}, active threads now: {}, #processing: {}) ", batch->packageId(), static_cast<void*>(batch), batch->state(), mThreads->activeThreadCount(), mProcessing);
+    lg->debug("DNNShell: received package {}. Starting DNN (batch: {}, state: {}, active threads now: {}, #processing: {}) ", batch->packageId(), static_cast<void*>(batch), static_cast<int>(batch->state()), mThreads->activeThreadCount(), static_cast<int>(mProcessing));
 
     QtConcurrent::run( mThreads,
                        [](DNNShell *shell, Batch *batch, DNN *dnn){
@@ -203,14 +201,13 @@ bool DNNShell::isRunnig()
     return mProcessing > 0;
 }
 
-const char *DNNShell::tensorFlowVersion()
+const char *DNNShell::onnxVersion()
 {
-#ifdef USE_TENSORFLOW
-return TF_VERSION_STRING;
+#ifdef USE_ONNXRUNTIME
+    return OrtGetApiBase()->GetVersionString();
 #else
-    return "No Tensorflow";
+    return "No ONNX";
 #endif
-
 }
 
 

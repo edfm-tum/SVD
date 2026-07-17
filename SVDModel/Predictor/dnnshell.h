@@ -41,7 +41,7 @@ public:
     bool isRunnig();
     size_t batchesProcessed() const { return mBatchesProcessed; }
     size_t cellsProcessed() const { return mCellsProcessed; }
-    static const char *tensorFlowVersion();
+    static const char *onnxVersion();
 
 private:
 public Q_SLOTS:

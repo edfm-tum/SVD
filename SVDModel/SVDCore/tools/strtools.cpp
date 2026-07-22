@@ -91,7 +91,11 @@ std::string unquote(const std::string &str)
 {
     std::string s = trimmed(str);
     if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\''))) {
-        return s.substr(1, s.size() - 2);
+        s = s.substr(1, s.size() - 2);
+        s = trimmed(s);
+    }
+    if (s == "NA" || s == "N/A" || s == "#N/A" || s == "na" || s == "n/a") {
+        return "";
     }
     return s;
 }

@@ -87,6 +87,15 @@ std::string trimmed(const std::string &str)
    return result;
 }
 
+std::string unquote(const std::string &str)
+{
+    std::string s = trimmed(str);
+    if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\''))) {
+        return s.substr(1, s.size() - 2);
+    }
+    return s;
+}
+
 void replace_string(std::string& str, const std::string& oldStr, const std::string& newStr)
 {
   size_t pos = 0;

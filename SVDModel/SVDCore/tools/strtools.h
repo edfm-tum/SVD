@@ -53,6 +53,9 @@ std::string &trimRight(std::string &str);
 // trim left and right and return new string
 std::string trimmed(const std::string &str);
 
+// trim whitespace and remove surrounding double or single quotes if present
+std::string unquote(const std::string &str);
+
 // replace every occurence of 'oldStr' with 'newStr' in str. 'str' will be modified.
 void replace_string(std::string& str, const std::string& oldStr, const std::string& newStr);
 

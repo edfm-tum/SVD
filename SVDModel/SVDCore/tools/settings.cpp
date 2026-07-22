@@ -40,7 +40,7 @@ bool Settings::loadFromFile(const std::string &fileName)
             size_t p = s.find('=');
             if (p!=std::string::npos) {
                 std::string key = trimmed(s.substr(0,p));
-                std::string value = trimmed(s.substr(p+1, s.size()));
+                std::string value = unquote(s.substr(p+1));
 
                 if (mValues.find(key)!=mValues.end())
                     throw std::logic_error("Error in Settings: The key '" + key +"' is not unique! In line: " + std::to_string(line));

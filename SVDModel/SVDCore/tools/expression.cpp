@@ -212,7 +212,7 @@ void Expression::setAndParse(const std::string &expr)
 /// do some preprocessing (e.g. handle the different use of ",", ".", ";")
 void Expression::setExpression(const std::string& aExpression)
 {
-    m_expression=trimmed(aExpression);
+    m_expression=unquote(aExpression);
 
     m_expr=const_cast<char*>(m_expression.c_str());
 

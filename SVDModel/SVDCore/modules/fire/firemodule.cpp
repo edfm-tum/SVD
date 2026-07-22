@@ -22,6 +22,7 @@
 #include "model.h"
 #include "filereader.h"
 #include "randomgen.h"
+#include "expressionwrapper.h"
 
 #ifndef M_PI
 #define M_PI 3.141592653589793
@@ -298,7 +299,8 @@ bool FireModule::burnCell(int ix, int iy, int &rHighSeverity, int round)
 
     bool high_severity = drandom() <= s.state()->value(miHighSeverity);
     // effect of fire: a transition to another state
-    state_t new_state = mFireMatrix.transition(s.stateId(), high_severity ? 1 : 0);
+    CellWrapper cw(&s);
+    state_t new_state = mFireMatrix.transition(s.stateId(), high_severity ? 1 : 0, &cw);
     s.setNewState(new_state);
 
     // test for landcover change

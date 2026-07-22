@@ -22,6 +22,7 @@
 #include "model.h"
 #include "filereader.h"
 #include "randomgen.h"
+#include "expressionwrapper.h"
 
 #include <queue>
 #include <stack>
@@ -414,7 +415,8 @@ SWindStat WindModule::windImpactOnRegion(const RectF &area, double proportion, c
             auto &s = grid[loc].cell();
 
             // effect of wind: a transition to another state
-            state_t new_state = mWindMatrix.transition(s.stateId());
+            CellWrapper cw(&s);
+            state_t new_state = mWindMatrix.transition(s.stateId(), 0, &cw);
             s.setNewState(new_state);
 
             auto &stat = mGrid[loc];

@@ -4,6 +4,7 @@
 #include "environmentcell.h"
 #include "tools.h"
 #include "filereader.h"
+#include "expressionwrapper.h"
 
 AutoManagementModule::AutoManagementModule(std::string module_name, std::string module_type): Module(module_name, module_type, State::None)
 {
@@ -186,9 +187,10 @@ std::pair<int, int> AutoManagementModule::runArea(const RectF &rect, double p_bu
                     //if (c.state()->topHeight() < 36)
                     //    --n_tested; // fake
                     // (1) save stats:
+                    CellWrapper cw(&c);
                     ++mStateHistogram[ static_cast<size_t>(c.stateId())];
                     // (2) effect of management: a transition to another state
-                    state_t new_state = mMgmtMatrix.transition(c.stateId());
+                    state_t new_state = mMgmtMatrix.transition(c.stateId(),0, &cw);
                     c.setNewState(new_state);
                     // (3) track changes in grid for output / visualization
                     mGrid[c.cellIndex()] = Model::instance()->year();

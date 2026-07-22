@@ -303,13 +303,14 @@ void BarkBeetleModule::spread()
     size_t n_active_this_year = active_now.size();
     int n_impact = 0.;
     int n_tested = 0;
-
+    CellWrapper cw(nullptr);
 
     while (!active_now.empty()) {
         int cell_index = active_now.top();
         active_now.pop();
         auto &g = mGrid[cell_index];
         auto &cell = model->landscape()->cell(cell_index);
+        cw.setData(&cell);
         double generations = model->climate()->value(miVarBBgen, cell.environment()->climateId());
         if (generations == 0.) {
             // if the climate does not support even a single generation,
@@ -326,7 +327,7 @@ void BarkBeetleModule::spread()
             ++n_impact;
 
             // effect of bark beetles: a transition to another state
-            state_t new_state = mBBMatrix.transition(cell.stateId());
+            state_t new_state = mBBMatrix.transition(cell.stateId(), 0, &cw);
             cell.setNewState(new_state);
         }
 
@@ -375,7 +376,8 @@ void BarkBeetleModule::spread()
                     ++n_impact;
 
                     // effect of bark beetles: a transition to another state
-                    state_t new_state = mBBMatrix.transition(scell.stateId());
+                    cw.setData(&scell);
+                    state_t new_state = mBBMatrix.transition(scell.stateId(), 0, &cw);
                     scell.setNewState(new_state);
                     sg.outbreak_age = g.outbreak_age + 1; // increase age of outbreak from the source cell
 

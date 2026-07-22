@@ -27,6 +27,7 @@
 #include "tools.h"
 
 #include <mutex>
+#include <algorithm>
 
 
 #include "strtools.h"
@@ -137,22 +138,20 @@ std::pair<Batch *, size_t> BatchManager::findValidSlot(Module *module)
         }
     }
     if (!batch || batch->freeSlots()<=0) {
-        if (mBatches.size() >= mMaxQueueLength) {
-            // currently we don't find a proper place for the data.
-            return std::pair<Batch*, size_t>(nullptr, 0);
+        Batch::BatchType type = module ? module->batchType() : Batch::DNN;
+        if (type == Batch::DNN) {
+            size_t dnn_batches = std::count_if(mBatches.begin(), mBatches.end(),
+                [](const Batch *b) { return b->type() == Batch::DNN; });
+            if (dnn_batches >= mMaxQueueLength) {
+                // currently we don't find a proper place for the data in a DNN batch.
+                return std::pair<Batch*, size_t>(nullptr, 0);
+            }
         }
         // create a new batch; the default (forest) is a batch for DNN
-        batch = createBatch(module ? module->batchType() : Batch::DNN);
+        batch = createBatch(type);
         batch->setModule(module);
         mBatches.push_back( batch );
         lg->trace("created a new batch. Now the list contains {} batch(es).", mBatches.size());
-        /*if ( lg->should_log(spdlog::level::trace) ) {
-            int idx=0;
-            for (auto b : mBatches) {
-                lg->trace("#{}: state: {}, used: {}, free: {}", idx, b->state(), b->usedSlots(), b->freeSlots());
-                ++idx;
-            }
-        }*/
     }
 
 

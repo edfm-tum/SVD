@@ -26,10 +26,14 @@
 #include <QtDataVisualization/Q3DTheme>
 #include <QtDataVisualization/Q3DSurface>
 
+#include <QApplication>
 #include <QPainter>
 #include <QMessageBox>
 #include <QScreen>
 #include <QLayout>
+#include <QKeyEvent>
+#include <QtMath>
+#include <cmath>
 
 
 // dummy axis formatter
@@ -40,18 +44,21 @@ public:
     virtual QStringList &labelStrings() const { return empty_list; }
     virtual QVector<float> &labelPositions() const { return empty_vec; }
 private:
-    mutable QStringList empty_list;
-    mutable QVector<float> empty_vec;
+    static QStringList empty_list;
+    static QVector<float> empty_vec;
 };
+
+QStringList DummyAxisFormatter::empty_list;
+QVector<float> DummyAxisFormatter::empty_vec;
 
 
 SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
 {
-
+    setFocusPolicy(Qt::StrongFocus);
     Q3DSurface *graph = new Q3DSurface();
     m_graph = graph;
     m_topography = nullptr;
-    //QWidget::createWindowContainer();
+    m_maxZoomLevel = 500.0f;
 
     QWidget *container = QWidget::createWindowContainer(graph);
     QSize screenSize = graph->screen()->size();
@@ -62,13 +69,13 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     container->setFocusPolicy(Qt::StrongFocus);
     container->setParent(this);
 
+    m_graph->installEventFilter(this);
+
     QHBoxLayout *hLayout = new QHBoxLayout(this);
     QVBoxLayout *vLayout = new QVBoxLayout();
     hLayout->addWidget(container, 1);
     hLayout->addLayout(vLayout);
     vLayout->setAlignment(Qt::AlignTop);
-    //hLayout->setMargin(0);
-    //vLayout->setMargin(0);
 
     if (!graph->hasContext()) {
         QMessageBox msgBox;
@@ -86,12 +93,9 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
 
     m_graph->axisY()->setTitleVisible(false);
 
-
-    //DummyAxisFormatter *af = new DummyAxisFormatter();
     m_graph->axisX()->setFormatter(new DummyAxisFormatter);
     m_graph->axisY()->setFormatter(new DummyAxisFormatter);
     m_graph->axisZ()->setFormatter(new DummyAxisFormatter);
-
 
     m_graph->activeTheme()->setType(Q3DTheme::ThemePrimaryColors);
 
@@ -100,31 +104,13 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     m_graph->activeTheme()->setFont(font);
 
     Q3DTheme *theme = new Q3DTheme(Q3DTheme::ThemeDigia);
-    // theme->setAmbientLightStrength(0.3f);
-    //theme->setBackgroundColor(Qt::white);
     theme->setBackgroundEnabled(false);
-    //theme->setBaseColor(QColor(QRgb(0x209fdf)));
-    //theme->setColorStyle(Q3DTheme::ColorStyleUniform);
-    //theme->setFont(QFont(QStringLiteral("Impact"), 35));
     theme->setGridEnabled(false);
     theme->setLabelTextColor(Qt::white);
     theme->setLabelBorderEnabled(false);
     theme->setLabelBackgroundEnabled(false);
 
-//    theme->setGridLineColor(QColor(QRgb(0x99ca53)));
-//    theme->setHighlightLightStrength(7.0f);
-//    theme->setLabelBackgroundColor(QColor(0xf6, 0xa6, 0x25, 0xa0));
-//    theme->setLabelBackgroundEnabled(true);
-//    theme->setLabelBorderEnabled(true);
-//    theme->setLabelTextColor(QColor(QRgb(0x404044)));
-//    theme->setLightColor(Qt::white);
-//    theme->setLightStrength(6.0f);
-//    theme->setMultiHighlightColor(QColor(QRgb(0x6d5fd5)));
-//    theme->setSingleHighlightColor(QColor(QRgb(0xf6a625)));
-//    theme->setWindowColor(QColor(QRgb(0xffffff)));
-
     m_graph->setActiveTheme(theme);
-
 
     QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::targetChanged, this, &SurfaceGraph::cameraChanged);
     QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::zoomLevelChanged, this, &SurfaceGraph::cameraChanged);
@@ -134,7 +120,9 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     QObject::connect(m_graph->axisY(), &QValue3DAxis::maxChanged, this, &SurfaceGraph::cameraChanged);
     QObject::connect(m_graph, &Q3DSurface::queriedGraphPositionChanged, this, &SurfaceGraph::queryPositionChanged);
 
-    m_graph->setActiveInputHandler(new Custom3dInputHandler());
+    Custom3dInputHandler *inputHandler = new Custom3dInputHandler(this);
+    inputHandler->setSurfaceGraph(this);
+    m_graph->setActiveInputHandler(inputHandler);
 }
 
 SurfaceGraph::~SurfaceGraph()
@@ -142,13 +130,19 @@ SurfaceGraph::~SurfaceGraph()
     delete m_graph;
 }
 
-
+void SurfaceGraph::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+}
 
 void SurfaceGraph::setup(Grid<float> &dem, float min_h, float max_h)
 {
 
     float longer_side = static_cast<float>(std::max(dem.metricSizeX(), dem.metricSizeY()));
     float max_range = 10000 + pow(longer_side, 0.9f); // a rule of thumb
+    m_maxZoomLevel = std::max(500.0f, longer_side / 10.0f);
+    m_graph->scene()->activeCamera()->setMaxZoomLevel(m_maxZoomLevel);
+
     m_graph->axisX()->setLabelFormat("%i");
     m_graph->axisZ()->setLabelFormat("%i");
     m_graph->axisX()->setRange(0.0f, static_cast<float>(dem.metricSizeX()));
@@ -307,4 +301,54 @@ void SurfaceGraph::ViewParams::setFromString(QString str)
     valid = dat["valid"] == "true";
 
     //spdlog::get("main")->info("viewparams: target {}, {}, {}", camera->target().x(), camera->target().y(), camera->target().z());
+}
+
+void SurfaceGraph::keyPressEvent(QKeyEvent *event)
+{
+    handleCameraPanKeys(event);
+    QWidget::keyPressEvent(event);
+}
+
+void SurfaceGraph::handleCameraPanKeys(QKeyEvent *event)
+{
+    auto *cam = m_graph ? m_graph->scene()->activeCamera() : nullptr;
+    if (!cam)
+        return;
+
+    float angleRad = qDegreesToRadians(cam->xRotation());
+    float zoomFactor = std::max(1.0f, cam->zoomLevel() / 100.0f);
+    float step = 0.05f / sqrt(zoomFactor);
+
+    float dx = 0.0f;
+    float dz = 0.0f;
+
+    switch (event->key()) {
+    case Qt::Key_Up:
+    case Qt::Key_W:
+        dx = sin(angleRad) * step;
+        dz = cos(angleRad) * step;
+        break;
+    case Qt::Key_Down:
+    case Qt::Key_S:
+        dx = -sin(angleRad) * step;
+        dz = -cos(angleRad) * step;
+        break;
+    case Qt::Key_Left:
+    case Qt::Key_A:
+        dx = cos(angleRad) * step;
+        dz = -sin(angleRad) * step;
+        break;
+    case Qt::Key_Right:
+    case Qt::Key_D:
+        dx = -cos(angleRad) * step;
+        dz = sin(angleRad) * step;
+        break;
+    default:
+        return;
+    }
+
+    QVector3D target = cam->target();
+    target.setX(target.x() + dx);
+    target.setZ(target.z() + dz);
+    cam->setTarget(target);
 }

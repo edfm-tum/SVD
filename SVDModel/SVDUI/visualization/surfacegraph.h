@@ -22,12 +22,16 @@
 
 #include <QtDataVisualization/Q3DSurface>
 #include <QtDataVisualization/QSurface3DSeries>
+#include <QtDataVisualization/QCustom3DItem>
 #include <QtWidgets/QSlider>
 #include "topographicseries.h"
 
 
 #include "grid.h"
 
+
+#include <QPainter>
+#include <QPen>
 
 class SurfaceGraph : public QWidget
 {
@@ -56,9 +60,16 @@ signals:
     void cameraChanged();
     void pointSelected(QVector3D pos);
 
+protected:
+    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void resizeEvent(QResizeEvent *event) override;
+
 private:
+    void handleCameraPanKeys(QKeyEvent *event);
 
     Q3DSurface *m_graph;
+    float m_maxZoomLevel;
+
     struct ViewParams {
         ViewParams();
         ~ViewParams();

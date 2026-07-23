@@ -22,6 +22,7 @@
 #include <QString>
 #include <QImage>
 #include <QVector3D>
+#include <QTimer>
 #include "grid.h"
 #include "expression.h"
 #include "colorpalette.h"
@@ -70,6 +71,10 @@ public slots:
     void setFillColor(QColor col);
     void setAlpha(int alpha) { mAlpha = alpha; }
     void setStride(int stride) {mStride = stride; mNeedNewTexture=true; }
+private slots:
+    void onCameraChanged();
+    void updateStrideFromCamera();
+
 signals:
     void pointSelected(QVector3D world_coord); ///< coordinates of the point where a user clicks on the visualization
 
@@ -112,6 +117,7 @@ private:
 
     Palette *mStatePalette;
     Palette *mContinuousPalette;
+    QTimer mZoomTimer;
 
 };
 

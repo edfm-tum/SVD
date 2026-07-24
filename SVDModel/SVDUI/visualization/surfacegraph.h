@@ -66,6 +66,7 @@ protected:
 
 private:
     void handleCameraPanKeys(QKeyEvent *event);
+    void handleCameraZoomKeys(QKeyEvent *event);
 
     Q3DSurface *m_graph;
     float m_maxZoomLevel;

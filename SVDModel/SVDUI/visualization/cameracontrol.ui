@@ -80,7 +80,7 @@
     </rect>
    </property>
    <property name="maximum">
-    <number>10000</number>
+    <number>50000</number>
    </property>
    <property name="singleStep">
     <number>20</number>

@@ -562,14 +562,15 @@ void MainWindow::readVisualizationSettings()
 
     settings.beginGroup(view_name);
 
-    for(int i = 0;i < settings.childKeys().size();i++){
-        QString camsettings = settings.value(QString("camera-%1").arg(i)).toString();
-        mLandscapeVis->setViewString(i, camsettings);
+    for (int i = 1; i < 4; ++i) {
+        if (settings.contains(QString("camera-%1").arg(i))) {
+            QString camsettings = settings.value(QString("camera-%1").arg(i)).toString();
+            mLandscapeVis->setViewString(i, camsettings);
+        }
     }
     ui->actionCustom_view_1->setEnabled( mLandscapeVis->isViewValid(1) );
     ui->actionCustom_View_2->setEnabled( mLandscapeVis->isViewValid(2) );
     ui->actionCustom_View_3->setEnabled( mLandscapeVis->isViewValid(3) );
-
 
     settings.endGroup();
 }
@@ -582,8 +583,11 @@ void MainWindow::writeVisualizationSettings()
                                                    .replace(QChar('/'),"_")
                                                    .replace(QChar('\\'), "_"));
         settings.beginGroup(view_name);
-        for (int i=0; i< mLandscapeVis->viewCount(); ++i)
-            settings.setValue(QString("camera-%1").arg(i), mLandscapeVis->viewString(i));
+        for (int i = 1; i < mLandscapeVis->viewCount(); ++i) {
+            if (mLandscapeVis->isViewValid(i)) {
+                settings.setValue(QString("camera-%1").arg(i), mLandscapeVis->viewString(i));
+            }
+        }
         settings.endGroup();
     }
 
@@ -835,6 +839,13 @@ void MainWindow::on_actionReset_view_triggered()
 {
     if (mLandscapeVis->isValid()) {
         mLandscapeVis->resetView();
+    }
+}
+
+void MainWindow::on_actionToggle_projection_triggered()
+{
+    if (ui->main3d && ui->main3d->graph()) {
+        ui->main3d->graph()->setOrthoProjection(!ui->main3d->graph()->isOrthoProjection());
     }
 }
 

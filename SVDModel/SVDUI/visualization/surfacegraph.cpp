@@ -139,15 +139,17 @@ void SurfaceGraph::setup(Grid<float> &dem, float min_h, float max_h)
 {
 
     float longer_side = static_cast<float>(std::max(dem.metricSizeX(), dem.metricSizeY()));
-    float max_range = 10000 + pow(longer_side, 0.9f); // a rule of thumb
-    m_maxZoomLevel = std::max(500.0f, longer_side / 10.0f);
+    float height_span = std::max(max_h - min_h, longer_side * 0.25f);
+    m_maxZoomLevel = 50000.0f;
     m_graph->scene()->activeCamera()->setMaxZoomLevel(m_maxZoomLevel);
 
     m_graph->axisX()->setLabelFormat("%i");
     m_graph->axisZ()->setLabelFormat("%i");
     m_graph->axisX()->setRange(0.0f, static_cast<float>(dem.metricSizeX()));
-    m_graph->axisY()->setRange(min_h, min_h + std::max(max_h, max_range));
+    m_graph->axisY()->setRange(min_h, min_h + height_span);
     m_graph->axisZ()->setRange(0.0f, static_cast<float>(dem.metricSizeY()));
+
+    m_graph->setAspectRatio(2.0f);
 
     qDebug() << "set y-range: max-side:"<< longer_side << "min:" << min_h << "max:" << m_graph->axisY()->max();
     m_topography = new TopographicSeries();
@@ -159,15 +161,22 @@ void SurfaceGraph::setup(Grid<float> &dem, float min_h, float max_h)
 
     m_graph->addSeries(m_topography);
 
+    QVector3D centerTarget(0.0f, 0.0f, 0.0f);
+    m_graph->scene()->activeCamera()->setTarget(centerTarget);
+    m_graph->scene()->activeCamera()->setZoomLevel(100.0f);
+    m_graph->scene()->activeCamera()->setXRotation(45.0f);
+    m_graph->scene()->activeCamera()->setYRotation(30.0f);
+
     mDefaultViews.clear();
     ViewParams vp;
     for (int i=0;i<4;++i) {
         mDefaultViews.push_back(vp);
         mDefaultViews[i].camera = new Q3DCamera();
         mDefaultViews[i].camera->copyValuesFrom(*m_graph->scene()->activeCamera());
+        mDefaultViews[i].camera->setTarget(centerTarget);
         mDefaultViews[i].aspectRatio = m_graph->aspectRatio();
         mDefaultViews[i].maxAxisYRange = m_graph->axisY()->max();
-
+        mDefaultViews[i].valid = (i == 0);
     }
 
 }
@@ -222,21 +231,20 @@ void SurfaceGraph::queryPositionChanged(const QVector3D &pos)
 
 void SurfaceGraph::resetCameraPosition(int cameraPreset)
 {
-   if (cameraPreset>=mDefaultViews.length())
-       return;
+    if (cameraPreset < 0 || cameraPreset >= mDefaultViews.length())
+        return;
 
-   //auto *camera = mDefaultViews[cameraPreset].camera;
-   //spdlog::get("main")->info("set viewparams: target {}, {}, {}", camera->target().x(), camera->target().y(), camera->target().z());
+    auto *cam = m_graph->scene()->activeCamera();
+    cam->copyValuesFrom(*mDefaultViews[cameraPreset].camera);
+    cam->setTarget(mDefaultViews[cameraPreset].camera->target());
+    if (mDefaultViews[cameraPreset].aspectRatio > 0.1) {
+        m_graph->setAspectRatio(mDefaultViews[cameraPreset].aspectRatio);
+    }
 
-   m_graph->scene()->activeCamera()->copyValuesFrom(*mDefaultViews[cameraPreset].camera);
-    m_graph->scene()->activeCamera()->setTarget( mDefaultViews[cameraPreset].camera->target() );
-    m_graph->setAspectRatio(mDefaultViews[cameraPreset].aspectRatio);
-    m_graph->axisY()->setMax(mDefaultViews[cameraPreset].maxAxisYRange);
-
-   // force a repaint of the scene
-   float rot = m_graph->scene()->activeCamera()->xRotation();
-   m_graph->scene()->activeCamera()->setXRotation(rot + 1.f);
-   m_graph->scene()->activeCamera()->setXRotation(rot);
+    // force a repaint of the scene
+    float rot = cam->xRotation();
+    cam->setXRotation(rot + 1.f);
+    cam->setXRotation(rot);
 
 }
 
@@ -305,8 +313,51 @@ void SurfaceGraph::ViewParams::setFromString(QString str)
 
 void SurfaceGraph::keyPressEvent(QKeyEvent *event)
 {
+    int k = event->key();
+    if (k == Qt::Key_O) {
+        if (m_graph) {
+            m_graph->setOrthoProjection(!m_graph->isOrthoProjection());
+        }
+        return;
+    }
+    if (k == Qt::Key_Plus || k == Qt::Key_Equal || k == Qt::Key_Minus) {
+        handleCameraZoomKeys(event);
+        return;
+    }
     handleCameraPanKeys(event);
     QWidget::keyPressEvent(event);
+}
+
+void SurfaceGraph::handleCameraZoomKeys(QKeyEvent *event)
+{
+    auto *cam = m_graph ? m_graph->scene()->activeCamera() : nullptr;
+    if (!cam)
+        return;
+
+    int zoomLevel = cam->zoomLevel();
+    double zoom_sq = sqrt(zoomLevel);
+    double step = 3.0;
+
+    int new_level = zoomLevel;
+    if (event->key() == Qt::Key_Plus || event->key() == Qt::Key_Equal) {
+        new_level = static_cast<int>((zoom_sq + step) * (zoom_sq + step));
+    } else if (event->key() == Qt::Key_Minus) {
+        double new_sq = std::max(1.0, zoom_sq - step);
+        new_level = static_cast<int>(new_sq * new_sq);
+    } else {
+        return;
+    }
+
+    int maxZoom = static_cast<int>(cam->maxZoomLevel());
+    if (maxZoom < 50000) maxZoom = 50000;
+    if (new_level > maxZoom) new_level = maxZoom;
+    if (new_level < 10) new_level = 10;
+
+    cam->setZoomLevel(new_level);
+
+    if (m_graph && new_level > 1000 && !m_graph->isOrthoProjection()) {
+        m_graph->setOrthoProjection(true);
+    }
 }
 
 void SurfaceGraph::handleCameraPanKeys(QKeyEvent *event)

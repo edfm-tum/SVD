@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>SVD - Scaling Vegetation dynamics</string>
+   <string>SVD - Scaling Vegetation Dynamics</string>
   </property>
   <property name="windowIcon">
    <iconset resource="res/resource.qrc">
@@ -294,6 +294,7 @@
     <addaction name="actionSave_as_grid"/>
     <addaction name="action3D_Camera_settings"/>
     <addaction name="actionReset_view"/>
+    <addaction name="actionToggle_projection"/>
     <addaction name="actionCustom_view_1"/>
     <addaction name="actionCustom_View_2"/>
     <addaction name="actionCustom_View_3"/>
@@ -818,6 +819,14 @@
    </property>
    <property name="shortcut">
     <string>F6</string>
+   </property>
+  </action>
+  <action name="actionToggle_projection">
+   <property name="text">
+    <string>Toggle projection</string>
+   </property>
+   <property name="shortcut">
+    <string>O</string>
    </property>
   </action>
   <action name="actionCustom_view_1">

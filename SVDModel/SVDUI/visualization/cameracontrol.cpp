@@ -91,7 +91,7 @@ void CameraControl::updateCamera()
                 ui->targetY->value()/100.f,
                 ui->targetZ->value()/100.f
                 );
-    camera->setMinZoomLevel(0.f); camera->setMaxZoomLevel(10000.f);
+    camera->setMinZoomLevel(0.f); camera->setMaxZoomLevel(50000.f);
     camera->setTarget(new_target);
     camera->setZoomLevel( ui->zoomFactor->value() );
     qDebug() << "Camera: target: " << camera->target() << ", zoom:" << camera->zoomLevel() << "aspect:" << mSurface->graph()->aspectRatio();

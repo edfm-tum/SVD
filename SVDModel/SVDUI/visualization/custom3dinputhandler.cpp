@@ -2,6 +2,7 @@
 #include "surfacegraph.h"
 
 #include <QtDataVisualization/Q3DCamera>
+#include <QtDataVisualization/QAbstract3DGraph>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QtMath>
@@ -78,9 +79,14 @@ void Custom3dInputHandler::wheelEvent(QWheelEvent *event)
     double zoom_sq = sqrt(zoomLevel);
     int new_level = (zoom_sq + event->angleDelta().y() / 100) * (zoom_sq + event->angleDelta().y() / 100);
     int maxZoom = static_cast<int>(cam->maxZoomLevel());
-    if (maxZoom < 500) maxZoom = 500;
+    if (maxZoom < 50000) maxZoom = 50000;
     if (new_level > maxZoom) new_level = maxZoom;
     if (new_level < 10) new_level = 10;
 
     cam->setZoomLevel(new_level);
+
+    auto *graph = m_surfaceGraph ? m_surfaceGraph->graph() : nullptr;
+    if (graph && new_level > 1000 && !graph->isOrthoProjection()) {
+        graph->setOrthoProjection(true);
+    }
 }

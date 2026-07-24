@@ -116,6 +116,8 @@ private slots:
 
     void on_actionReset_view_triggered();
 
+    void on_actionToggle_projection_triggered();
+
     void on_actionSaveView_1_triggered();
 
     void on_actionSaveView_2_triggered();

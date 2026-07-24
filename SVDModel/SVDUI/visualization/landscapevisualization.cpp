@@ -431,12 +431,15 @@ void LandscapeVisualization::checkTexture()
     int gridH = Model::instance()->landscape()->grid().sizeY();
     int maxGridDim = std::max(gridW, gridH);
 
-    // Hard safety cap: Ensure texture dimensions never exceed max GPU OpenGL texture limits (4096 px)
     const int MAX_SAFE_TEX_DIM = 4096;
-    int effectiveStride = std::max(mStride, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
+    int minSafeStride = std::max(1, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
 
-    int targetW = std::min(MAX_SAFE_TEX_DIM, (gridW + effectiveStride - 1) / effectiveStride);
-    int targetH = std::min(MAX_SAFE_TEX_DIM, (gridH + effectiveStride - 1) / effectiveStride);
+    if (mStride < minSafeStride) {
+        mStride = minSafeStride;
+    }
+
+    int targetW = (gridW + mStride - 1) / mStride;
+    int targetH = (gridH + mStride - 1) / mStride;
 
     if (mNeedNewTexture || mRenderTexture.isNull() || mRenderTexture.width() != targetW || mRenderTexture.height() != targetH) {
         mRenderTexture = QImage(targetW, targetH, QImage::Format_ARGB32_Premultiplied);
@@ -445,8 +448,6 @@ void LandscapeVisualization::checkTexture()
         spdlog::get("main")->debug("LandscapeVis: Created texture of size x/y {}/{}", mRenderTexture.width(), mRenderTexture.height());
     }
 }
-
-
 
 void LandscapeVisualization::updateStrideFromCamera()
 {
@@ -465,12 +466,15 @@ void LandscapeVisualization::updateStrideFromCamera()
     if (maxGridDim <= 0)
         return;
 
+    const int MAX_SAFE_TEX_DIM = 4096;
+    int minSafeStride = std::max(1, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
+
     // Estimate visible cells along the largest dimension
     int visibleCells = static_cast<int>(maxGridDim / zoomFactor);
 
     // Target a maximum texture resolution (e.g. 2048 pixels) for the visible portion
     const int TARGET_TEX_RES = 2048;
-    int targetStride = std::max(1, visibleCells / TARGET_TEX_RES);
+    int targetStride = std::max(minSafeStride, visibleCells / TARGET_TEX_RES);
 
     if (targetStride != mStride) {
         mStride = targetStride;

@@ -161,6 +161,8 @@ private:
     Legend *mLegend;
     QTimer mUpdateModelTimer;
     QElapsedTimer mRunTimer;
+    int mCreationTime;
+    int mRunTime;
 };
 
 #endif // MAINWINDOW_H

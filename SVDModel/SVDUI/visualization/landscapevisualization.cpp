@@ -365,7 +365,7 @@ void LandscapeVisualization::doRenderExpression(bool auto_scale)
     int texW = mRenderTexture.width();
     int texH = mRenderTexture.height();
     int line_y = 0;
-    for (int y = grid.sizeY()-1; y>=0 && line_y < texH; y-=mStride, ++line_y) {
+    for (int y = grid.sizeY() - 1; y >= 0 && line_y < texH; y -= mStride, ++line_y) {
         QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(line_y))); // write directly to the buffer (without a potential detach)
         int line_x = 0;
         for (int x=0; x<grid.sizeX() && line_x < texW; x+=mStride, ++line_x, ++line) {
@@ -404,7 +404,7 @@ void LandscapeVisualization::doRenderState()
     int texW = mRenderTexture.width();
     int texH = mRenderTexture.height();
     int line_y=0;
-    for (int y = grid.sizeY()-1; y>=0 && line_y < texH; y-=mStride, ++line_y) {
+    for (int y = grid.sizeY() - 1; y >= 0 && line_y < texH; y -= mStride, ++line_y) {
         QRgb* line = reinterpret_cast<QRgb*>(const_cast<uchar*>(mRenderTexture.scanLine(line_y))); // write directly to the buffer (without a potential detach)
         int line_x = 0;
         for (int x=0; x<grid.sizeX() && line_x < texW; x+=mStride, ++line_x, ++line) {
@@ -432,11 +432,7 @@ void LandscapeVisualization::checkTexture()
     int maxGridDim = std::max(gridW, gridH);
 
     const int MAX_SAFE_TEX_DIM = 4096;
-    int minSafeStride = std::max(1, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
-
-    if (mStride < minSafeStride) {
-        mStride = minSafeStride;
-    }
+    mStride = std::max(1, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
 
     int targetW = (gridW + mStride - 1) / mStride;
     int targetH = (gridH + mStride - 1) / mStride;
@@ -451,37 +447,8 @@ void LandscapeVisualization::checkTexture()
 
 void LandscapeVisualization::updateStrideFromCamera()
 {
-    if (!mGraph || !mGraph->graph() || !Model::hasInstance())
-        return;
-
-    auto *camera = mGraph->graph()->scene()->activeCamera();
-    if (!camera)
-        return;
-
-    float zoomFactor = std::max(1.0f, camera->zoomLevel() / 100.0f);
-    int gridW = Model::instance()->landscape()->grid().sizeX();
-    int gridH = Model::instance()->landscape()->grid().sizeY();
-    int maxGridDim = std::max(gridW, gridH);
-
-    if (maxGridDim <= 0)
-        return;
-
-    const int MAX_SAFE_TEX_DIM = 4096;
-    int minSafeStride = std::max(1, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
-
-    // Estimate visible cells along the largest dimension
-    int visibleCells = static_cast<int>(maxGridDim / zoomFactor);
-
-    // Target a maximum texture resolution (e.g. 2048 pixels) for the visible portion
-    const int TARGET_TEX_RES = 2048;
-    int targetStride = std::max(minSafeStride, visibleCells / TARGET_TEX_RES);
-
-    if (targetStride != mStride) {
-        mStride = targetStride;
-        mNeedNewTexture = true;
-        spdlog::get("main")->info("LandscapeVis: Updated stride to {} based on camera zoom factor {:.1f}", mStride, zoomFactor);
-        update();
-    }
+    // Fixed texture stride prevents GPU texture buffer mis-syncs during camera zoom
+    return;
 }
 
 void LandscapeVisualization::setupColorRamps()

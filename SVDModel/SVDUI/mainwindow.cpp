@@ -56,7 +56,9 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    mCreationTime(-1),
+    mRunTime(-1)
 {
     ui->setupUi(this);
     // start basic logging
@@ -153,10 +155,30 @@ void MainWindow::modelStateChanged(QString s)
 
 void MainWindow::modelUpdate()
 {
-    int stime = mRunTimer.elapsed();
+    int stime = 0;
+
+    if (mMC && mMC->state()) {
+        if (mMC->state()->isModelRunning()) {
+            stime = mRunTimer.isValid() ? mRunTimer.elapsed() : 0;
+        } else if (mMC->state()->isModelFinished() || mMC->state()->isModelPaused()) {
+            if (mRunTime < 0 && mRunTimer.isValid()) {
+                mRunTime = mRunTimer.elapsed();
+            }
+            stime = (mRunTime >= 0) ? mRunTime : (mRunTimer.isValid() ? mRunTimer.elapsed() : 0);
+        } else if (mMC->state()->state() == ModelRunState::ReadyToRun) {
+            if (mCreationTime < 0 && mRunTimer.isValid()) {
+                mCreationTime = mRunTimer.elapsed();
+            }
+            stime = (mCreationTime >= 0) ? mCreationTime : 0;
+        } else {
+            stime = mRunTimer.isValid() ? mRunTimer.elapsed() : 0;
+        }
+    } else {
+        stime = mRunTimer.isValid() ? mRunTimer.elapsed() : 0;
+    }
 
     QString statusstring;
-    if (RunState::instance()->isModelRunning()) {
+    if (mMC && mMC->state() && RunState::instance()->isModelRunning()) {
         statusstring = QString("%1 - %3/%4 - %2").arg( QTime(0,0).addMSecs(stime).toString(Qt::ISODate) )
                 .arg(QString::fromStdString(RunState::instance()->state().stateString()))
                 .arg(mMC->model()->year()).arg(mMC->yearsToRun());
@@ -167,11 +189,12 @@ void MainWindow::modelUpdate()
     ui->lModelState->setText(statusstring);
 
     updateModelStats();
-    if (mMC->state()->isModelFinished() || mMC->state()->isModelPaused()) {
+    if (mMC && mMC->state() && (mMC->state()->isModelFinished() || mMC->state()->isModelPaused())) {
         mUpdateModelTimer.stop();
     }
-    if (mMC->state()->isModelRunning())
+    if (mMC && mMC->state() && mMC->state()->isModelRunning()) {
         mUpdateModelTimer.start(100);
+    }
 }
 
 void MainWindow::finishedYear(int)
@@ -439,6 +462,8 @@ void MainWindow::on_actionSetupProject_triggered()
         if (QMessageBox::question(this, "Confirm reload", "The model is already created. Create a new model?")==QMessageBox::No)
             return;
     }
+    mCreationTime = -1;
+    mRunTime = -1;
     mRunTimer.start();
     mMC.reset();
     mMC.reset(new ModelController()); // this frees the current model
@@ -457,6 +482,7 @@ void MainWindow::on_actionRunSim_triggered()
 
     mMC->run( ui->sYears->value() );
 
+    mRunTime = -1;
     mRunTimer.start();
     mUpdateModelTimer.start(100);
 }
@@ -464,6 +490,11 @@ void MainWindow::on_actionRunSim_triggered()
 void MainWindow::on_actionRun_single_step_triggered()
 {
     if (mMC && mMC->model()) {
+        if (mRunTime >= 0 || !mRunTimer.isValid()) {
+            mRunTime = -1;
+            mRunTimer.start();
+        }
+        mUpdateModelTimer.start(100);
         mMC->setInteractiveMode(true);
         mMC->runStep();
     }
@@ -472,6 +503,11 @@ void MainWindow::on_actionRun_single_step_triggered()
 void MainWindow::on_actionContinue_triggered()
 {
     if (mMC && mMC->model()) {
+        if (mRunTime >= 0 || !mRunTimer.isValid()) {
+            mRunTime = -1;
+            mRunTimer.start();
+        }
+        mUpdateModelTimer.start(100);
         mMC->setInteractiveMode(false);
         mMC->runStep();
     }

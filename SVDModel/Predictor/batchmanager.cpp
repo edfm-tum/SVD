@@ -84,29 +84,28 @@ void BatchManager::newYear()
 static std::mutex batch_mutex;
 std::pair<Batch *, size_t> BatchManager::validSlot(Module *module)
 {
-    // serialize this function...
-    std::lock_guard<std::mutex> guard(batch_mutex);
-    mSlotRequested = true;
     std::pair<Batch *, size_t> result;
     int sleeps = 0;
     do {
-        result = findValidSlot(module);
+        {
+            std::lock_guard<std::mutex> guard(batch_mutex);
+            mSlotRequested = true;
+            result = findValidSlot(module);
+        }
         if (!result.first) {
-            // wait
-
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // wait without holding the batch_mutex lock
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             Model::instance()->processEvents();
 
-            if (++sleeps % 100 == 0) // 1s
-                lg->trace("BatchManager: no batch available (queue full). Sleeping for {} s.", sleeps/100);
+            if (++sleeps % 1000 == 0) // 1s
+                lg->trace("BatchManager: no batch available (queue full). Sleeping for {} s.", sleeps/1000);
 
             if (RunState::instance()->cancel() ) {
                 lg->info("Canceled.");
                 return std::pair<Batch*, int>(nullptr, 0);
 
             }
-            if ( sleeps % (30*60*100) == 0) { // wait half an hour: 30 min * 60 sek * 100 1/100s
+            if ( sleeps % (30*60*1000) == 0) { // wait half an hour
                 lg->error("time out in batch manager - no empty slots found.");
                 return std::pair<Batch*, int>(nullptr, -1);
 
@@ -114,7 +113,6 @@ std::pair<Batch *, size_t> BatchManager::validSlot(Module *module)
         }
     } while (!result.first);
     return result;
-
 }
 
 BatchDNN *BatchManager::createDNNBatch()

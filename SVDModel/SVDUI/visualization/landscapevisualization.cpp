@@ -427,9 +427,17 @@ void LandscapeVisualization::doRenderState()
 
 void LandscapeVisualization::checkTexture()
 {
-    mRenderTexture = mGraph->topoSeries()->texture();
-    int targetW = (Model::instance()->landscape()->grid().sizeX() + mStride - 1) / mStride;
-    int targetH = (Model::instance()->landscape()->grid().sizeY() + mStride - 1) / mStride;
+    int gridW = Model::instance()->landscape()->grid().sizeX();
+    int gridH = Model::instance()->landscape()->grid().sizeY();
+    int maxGridDim = std::max(gridW, gridH);
+
+    // Hard safety cap: Ensure texture dimensions never exceed max GPU OpenGL texture limits (4096 px)
+    const int MAX_SAFE_TEX_DIM = 4096;
+    int effectiveStride = std::max(mStride, (maxGridDim + MAX_SAFE_TEX_DIM - 1) / MAX_SAFE_TEX_DIM);
+
+    int targetW = std::min(MAX_SAFE_TEX_DIM, (gridW + effectiveStride - 1) / effectiveStride);
+    int targetH = std::min(MAX_SAFE_TEX_DIM, (gridH + effectiveStride - 1) / effectiveStride);
+
     if (mNeedNewTexture || mRenderTexture.isNull() || mRenderTexture.width() != targetW || mRenderTexture.height() != targetH) {
         mRenderTexture = QImage(targetW, targetH, QImage::Format_ARGB32_Premultiplied);
         mUpscaleFactor = 1;

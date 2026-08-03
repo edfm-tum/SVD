@@ -538,8 +538,9 @@ void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const s
 
     size_t k = std::min(n_top, static_cast<size_t>(64));
 
-    for (size_t i = 0; i < batch_size; i++) {
-        const float *p = cls_dat.example(i);
+#pragma omp parallel for schedule(static)
+    for (int64_t i = 0; i < static_cast<int64_t>(batch_size); i++) {
+        const float *p = cls_dat.example(static_cast<size_t>(i));
 
         // Fixed stack arrays for Top-K (zero heap allocation, lives in CPU registers / L1 cache)
         float top_s[64];
@@ -580,8 +581,8 @@ void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const s
         }
 
         // Copy directly to batch output
-        int32_t *tidx = res_ind.example(i);
-        float *tstate = res_scores.example(i);
+        int32_t *tidx = res_ind.example(static_cast<size_t>(i));
+        float *tstate = res_scores.example(static_cast<size_t>(i));
         for (size_t r = 0; r < k; ++r) {
             tstate[r] = top_s[r];
             tidx[r] = top_idx[r];

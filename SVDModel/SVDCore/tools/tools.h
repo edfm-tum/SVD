@@ -56,7 +56,8 @@ public:
         else
             return (std::to_string(round(t / 1000.) / 1000.)) + "s";
     }
-    void print(std::string s) { _logger->debug("[{}] Timer {}: {}: {}",
+    void print(std::string s) { if (_logger->should_log(spdlog::level::debug))
+        _logger->debug("[{}] Timer {}: {}: {}",
                                                std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count(),
                                                _name, s, elapsedStr()) ; }
     void now() { _logger->debug("Timepoint: {}us", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now() ));}

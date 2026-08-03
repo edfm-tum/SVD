@@ -536,34 +536,55 @@ void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const s
     TensorWrap2d<int32_t> &res_ind = static_cast<TensorWrap2d<int32_t>&>(indices);
     TensorWrap2d<float> &res_scores = static_cast<TensorWrap2d<float>&>(scores);
 
-    // Reuse vector storage across iterations to avoid dynamic heap re-allocations
-    std::vector<std::pair<float, int32_t>> items(n_cls);
+    size_t k = std::min(n_top, static_cast<size_t>(64));
 
     for (size_t i = 0; i < batch_size; i++) {
         const float *p = cls_dat.example(i);
-        for (size_t j = 0; j < n_cls; ++j) {
-            items[j] = {p[j], static_cast<int32_t>(j)};
+
+        // Fixed stack arrays for Top-K (zero heap allocation, lives in CPU registers / L1 cache)
+        float top_s[64];
+        int32_t top_idx[64];
+        for (size_t r = 0; r < k; ++r) {
+            top_s[r] = -1e9f;
+            top_idx[r] = -1;
         }
 
-        // Quickselect O(N) to find top K largest elements
-        size_t k = std::min(n_top, n_cls);
-        std::nth_element(items.begin(), items.begin() + k, items.end(),
-                         [](const std::pair<float, int32_t> &a, const std::pair<float, int32_t> &b) {
-                             return a.first > b.first;
-                         });
+        float min_s = -1e9f;
+        size_t min_pos = 0;
 
-        // Sort only the top K elements in descending order
-        std::sort(items.begin(), items.begin() + k,
-                  [](const std::pair<float, int32_t> &a, const std::pair<float, int32_t> &b) {
-                      return a.first > b.first;
-                  });
+        for (size_t j = 0; j < n_cls; ++j) {
+            float val = p[j];
+            if (val > min_s) {
+                top_s[min_pos] = val;
+                top_idx[min_pos] = static_cast<int32_t>(j);
 
-        // Store results in batch
+                min_s = top_s[0];
+                min_pos = 0;
+                for (size_t r = 1; r < k; ++r) {
+                    if (top_s[r] < min_s) {
+                        min_s = top_s[r];
+                        min_pos = r;
+                    }
+                }
+            }
+        }
+
+        // Sort top K elements in descending order (insertion sort on stack for k <= 64)
+        for (size_t r = 0; r < k; ++r) {
+            for (size_t m = r + 1; m < k; ++m) {
+                if (top_s[m] > top_s[r]) {
+                    std::swap(top_s[r], top_s[m]);
+                    std::swap(top_idx[r], top_idx[m]);
+                }
+            }
+        }
+
+        // Copy directly to batch output
         int32_t *tidx = res_ind.example(i);
         float *tstate = res_scores.example(i);
         for (size_t r = 0; r < k; ++r) {
-            tstate[r] = items[r].first;
-            tidx[r] = items[r].second;
+            tstate[r] = top_s[r];
+            tidx[r] = top_idx[r];
         }
     }
 }

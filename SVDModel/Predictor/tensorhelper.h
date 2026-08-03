@@ -2,6 +2,14 @@
 #define TENSORHELPER_H
 
 #include "inputtensoritem.h"
+#include <onnxruntime_cxx_api.h>
+
+#if defined(__has_include)
+  #if __has_include(<cuda_runtime.h>)
+    #include <cuda_runtime.h>
+    #define HAS_CUDA_RUNTIME 1
+  #endif
+#endif
 
 #include <stdint.h>
 #include <string>
@@ -10,6 +18,7 @@
 #include <iostream>
 #include <typeinfo>
 #include <cassert>
+#include <memory>
 
 // Trait to handle std::vector<bool> specialization issue (bit-packing)
 // ONNX Runtime and raw data access require byte-addressable bools.
@@ -21,6 +30,62 @@ struct StorageTrait {
 template<>
 struct StorageTrait<bool> {
     using Type = int8_t; // Use 1 byte for bool
+};
+
+// Portable Pinned Memory Allocator Wrapper
+template<typename T>
+class PinnedBuffer {
+public:
+    PinnedBuffer() : mData(nullptr), mSize(0), mIsPinned(false) {}
+
+    void resize(size_t count) {
+        if (mSize == count && mData != nullptr)
+            return;
+        freeMemory();
+        mSize = count;
+        if (mSize == 0)
+            return;
+
+        size_t nbytes = mSize * sizeof(T);
+
+#if defined(HAS_CUDA_RUNTIME)
+        cudaError_t err = cudaHostAlloc((void**)&mData, nbytes, cudaHostAllocDefault);
+        if (err == cudaSuccess && mData != nullptr) {
+            mIsPinned = true;
+            return;
+        }
+#endif
+
+        // Fallback to standard CPU heap memory if CUDA is unavailable or allocation failed
+        mData = new T[mSize];
+        mIsPinned = false;
+    }
+
+    ~PinnedBuffer() {
+        freeMemory();
+    }
+
+    T* data() { return mData; }
+    const T* data() const { return mData; }
+
+private:
+    void freeMemory() {
+        if (mData) {
+#if defined(HAS_CUDA_RUNTIME)
+            if (mIsPinned) {
+                cudaFreeHost(mData);
+                mData = nullptr;
+                return;
+            }
+#endif
+            delete[] mData;
+            mData = nullptr;
+        }
+    }
+
+    T* mData;
+    size_t mSize;
+    bool mIsPinned;
 };
 
 class TensorWrapper {
@@ -57,8 +122,8 @@ public:
 
     InputTensorItem::DataType dataType() const override { return mDataType; }
 
-    T value() const { return static_cast<T>(mData[0]); }
-    void setValue(T value) { mData[0] = static_cast<InternalType>(value); }
+    T value() const { return static_cast<T>(mData.data()[0]); }
+    void setValue(T value) { mData.data()[0] = static_cast<InternalType>(value); }
     
     size_t n() const  { return 1; }
     int ndim() const { return 0; }
@@ -75,7 +140,7 @@ public:
 
 private:
     InputTensorItem::DataType mDataType;
-    std::vector<InternalType> mData;
+    PinnedBuffer<InternalType> mData;
 };
 
 
@@ -107,9 +172,6 @@ public:
     
     T *example(size_t element) {
         assert(element < mBatchSize);
-        // This cast is safe for all types except potentially when we want to return a bool pointer
-        // which doesn't exist for bit-packed vector. But since we use int8_t for bool,
-        // we can cast to T* (bool*) safely.
         return reinterpret_cast<T*>(mData.data() + element*mN); 
     }
     const T *example(size_t element) const {
@@ -135,7 +197,7 @@ public:
     }
 private:
     InputTensorItem::DataType mDataType;
-    std::vector<InternalType> mData;
+    PinnedBuffer<InternalType> mData;
     size_t mBatchSize;
     size_t mN;
 };
@@ -209,7 +271,7 @@ public:
 
 private:
     InputTensorItem::DataType mDataType;
-    std::vector<InternalType> mData;
+    PinnedBuffer<InternalType> mData;
     size_t mBatchSize;
     size_t mRows;
     size_t mCols;

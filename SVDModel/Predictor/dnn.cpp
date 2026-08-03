@@ -127,8 +127,16 @@ bool DNN::setupDNN(size_t aindex)
         mSession = std::make_unique<Ort::Session>(*mEnv, file.c_str(), session_options);
 #endif
 
-        // Initialize the persistent memory info object using the standard Device Allocator
+        // Initialize persistent memory info object for CUDA Pinned CPU input memory
+#ifdef USE_CUDA
+        try {
+            mMemoryInfo = Ort::MemoryInfo("CudaPinned", OrtAllocatorType::OrtDeviceAllocator, 0, OrtMemTypeCPUInput);
+        } catch (...) {
+            mMemoryInfo = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+        }
+#else
         mMemoryInfo = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+#endif
 
         bool using_cuda = false;
 #ifdef USE_CUDA
@@ -519,40 +527,43 @@ void DNN::setupBatch(Batch *abatch, std::vector<TensorWrapper *> &tensors)
     }
 }
 
-class ComparisonClassTopK {
-public:
-    bool operator() (const std::pair<float, size_t> &p1, const std::pair<float, size_t> &p2) {
-        return p1.first>p2.first;
-    }
-};
+
 
 void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const size_t n_top, TensorWrapper &indices, TensorWrapper &scores)
 {
-    std::priority_queue< std::pair<float, size_t>, std::vector<std::pair<float, size_t> >, ComparisonClassTopK > queue;
-
     size_t n_cls = static_cast<size_t>(mNStateCls);
     TensorWrap2d<float> &cls_dat = static_cast<TensorWrap2d<float>&>(classes);
     TensorWrap2d<int32_t> &res_ind = static_cast<TensorWrap2d<int32_t>&>(indices);
     TensorWrap2d<float> &res_scores = static_cast<TensorWrap2d<float>&>(scores);
 
-    for (size_t i=0; i<batch_size; i++) {
-        float *p = cls_dat.example(i);
-        for (size_t j=0; j<n_cls; ++j, ++p) {
-            if (queue.size()<n_top || *p > queue.top().first) {
-                if (queue.size() == n_top)
-                    queue.pop();
-                queue.push( std::pair<float, size_t>(*p,j));
-            }
+    // Reuse vector storage across iterations to avoid dynamic heap re-allocations
+    std::vector<std::pair<float, int32_t>> items(n_cls);
+
+    for (size_t i = 0; i < batch_size; i++) {
+        const float *p = cls_dat.example(i);
+        for (size_t j = 0; j < n_cls; ++j) {
+            items[j] = {p[j], static_cast<int32_t>(j)};
         }
-        // Fill results in descending order (highest score first at index 0)
-        // Since we have a min-heap, we pop the smallest of the top-K first.
-        // We fill from index queue.size()-1 down to 0.
-        int j = static_cast<int>(queue.size()) - 1;
-        while( !queue.empty() ) {
-            res_ind.example(i)[j] = static_cast<int32_t>(queue.top().second);
-            res_scores.example(i)[j] = queue.top().first;
-            queue.pop();
-            --j;
+
+        // Quickselect O(N) to find top K largest elements
+        size_t k = std::min(n_top, n_cls);
+        std::nth_element(items.begin(), items.begin() + k, items.end(),
+                         [](const std::pair<float, int32_t> &a, const std::pair<float, int32_t> &b) {
+                             return a.first > b.first;
+                         });
+
+        // Sort only the top K elements in descending order
+        std::sort(items.begin(), items.begin() + k,
+                  [](const std::pair<float, int32_t> &a, const std::pair<float, int32_t> &b) {
+                      return a.first > b.first;
+                  });
+
+        // Store results in batch
+        int32_t *tidx = res_ind.example(i);
+        float *tstate = res_scores.example(i);
+        for (size_t r = 0; r < k; ++r) {
+            tstate[r] = items[r].first;
+            tidx[r] = items[r].second;
         }
     }
 }

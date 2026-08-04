@@ -110,7 +110,15 @@ SurfaceGraph::SurfaceGraph(QWidget *parent) : QWidget(parent)
     theme->setLabelBorderEnabled(false);
     theme->setLabelBackgroundEnabled(false);
 
+    // Tune 3D lighting to prevent top-down whiteout while keeping pure white light for color interpretation
+    theme->setLightStrength(3.0f);          // Reduce direct specular glare (prevents top-down whiteout)
+    theme->setAmbientLightStrength(0.5f);   // Increase ambient fill for clear texture details in shadows
+    theme->setLightColor(Qt::white);        // Pure white light to preserve accurate color interpretation
+
     m_graph->setActiveTheme(theme);
+
+    // Angled light position (45-degree angle) for topographic hillshading relief
+    m_graph->scene()->activeLight()->setPosition(QVector3D(100.0f, 100.0f, 100.0f));
 
     QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::targetChanged, this, &SurfaceGraph::cameraChanged);
     QObject::connect(m_graph->scene()->activeCamera(), &Q3DCamera::zoomLevelChanged, this, &SurfaceGraph::cameraChanged);

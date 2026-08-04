@@ -106,6 +106,8 @@ bool DNN::setupDNN(size_t aindex)
         mTopKGPUMode = true;
         mTopK_NClasses = settings.valueUInt("dnn.topK.N", 10);
         mOutputTensorNames = { topk_state_name, topk_prob_name, settings.valueString("dnn.restime.name") };
+        lg->info("DNN state: topK-mode, state: '{}', probabilities: '{}', N: {}",
+                 topk_state_name, topk_prob_name, mTopK_NClasses);
     } else {
         mTopKGPUMode = false;
         mTopK_NClasses = settings.valueUInt("dnn.topK.N", 10);

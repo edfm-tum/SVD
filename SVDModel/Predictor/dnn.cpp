@@ -371,8 +371,20 @@ Batch * DNN::run(Batch *abatch)
                         *tstate_prob++ = *prob_src++;
                         *tstate_id++ = static_cast<state_t>(*id_src++);
                     }
+                } else if (state_elem_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
+                    const float *id_src = output_tensors[mOutIndexTopKState].GetTensorMutableData<float>() + i * mTopK_NClasses;
+                    for (size_t r = 0; r < mTopK_NClasses; ++r) {
+                        *tstate_prob++ = *prob_src++;
+                        *tstate_id++ = static_cast<state_t>(*id_src++);
+                    }
+                } else if (state_elem_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_DOUBLE) {
+                    const double *id_src = output_tensors[mOutIndexTopKState].GetTensorMutableData<double>() + i * mTopK_NClasses;
+                    for (size_t r = 0; r < mTopK_NClasses; ++r) {
+                        *tstate_prob++ = *prob_src++;
+                        *tstate_id++ = static_cast<state_t>(*id_src++);
+                    }
                 } else {
-                    throw logic_error_fmt("Unsupported data type for GPU TopK State IDs tensor: {}", static_cast<int>(state_elem_type));
+                    throw logic_error_fmt("Unsupported data type for GPU TopK State IDs tensor (elem_type: {}). Check 'dnn.topK.state.name' vs 'dnn.topK.prob.name'.", static_cast<int>(state_elem_type));
                 }
 
                 const float *time_src = time_output_ptr + i * mNResTimeCls;

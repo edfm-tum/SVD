@@ -35,14 +35,3 @@ win32 {
         LIBONNXRUNTIME = -L$$ONNXRUNTIME_DIR/lib -lonnxruntime
     }
 }
-
-# OpenMP parallelization flags
-unix {
-    QMAKE_CXXFLAGS += -fopenmp
-    QMAKE_LFLAGS += -fopenmp
-}
-win32 {
-    QMAKE_CXXFLAGS += /openmp
-}
-
-

@@ -69,12 +69,15 @@ private:
     bool mDummyDNN; ///< if true, then the DNN components are not really used (for debug builds)
 
     bool mTopK_tf; ///< use framework for the state top k calculation (not supported by ORT currently)
+    bool mTopKGPUMode{false}; ///< if true, top k state results are directly output by ONNX GPU model
     size_t mTopK_NClasses; ///< number of classes used for the top k algorithm
     std::vector<std::string> mOutputTensorNames; ///< names of the output tensors (e.g. output/Softmax)
     size_t mNStateCls; ///< number of output classes for state
     size_t mNResTimeCls; ///< number of classes for residence time
-    size_t mOutIndexState; ///< index of state prediction result in output tensors
-    size_t mOutIndexRestime; ///< index oof residence time prediction result in output tensors
+    size_t mOutIndexState{0}; ///< index of state prediction result in output tensors (CPU mode)
+    size_t mOutIndexTopKState{0}; ///< index of top-k state IDs in output tensors (GPU mode)
+    size_t mOutIndexTopKProb{0}; ///< index of top-k state probabilities in output tensors (GPU mode)
+    size_t mOutIndexRestime{0}; ///< index of residence time prediction result in output tensors
 
     /// retrieve the top n classes in "classes" and store results in 'indices' and 'scores'.
     /// this function uses CPU

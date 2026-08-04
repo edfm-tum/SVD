@@ -80,14 +80,37 @@ bool DNN::setupDNN(size_t aindex)
     if (!lg)
         throw std::logic_error("DNN::setup: logging not available.");
     lg->info("Setup of DNN #{}", aindex);
-    settings.requiredKeys("dnn", {"file", "maxBatchQueue", "topKNClasses", "state.name", "state.N", "restime.name", "restime.N", "temperatureState", "temperatureRestime"});
+    settings.requiredKeys("dnn", {"file", "maxBatchQueue", "restime.name", "restime.N", "temperatureState", "temperatureRestime"});
 
     std::string file = Tools::path(settings.valueString("dnn.file"));
-    mTopK_tf = false; // Always false for now, as we use CPU top-k
-    mTopK_NClasses = settings.valueUInt("dnn.topKNClasses", 10);
-    
-    // Output tensor names from settings (optional, can also be detected from model)
-    mOutputTensorNames = { settings.valueString("dnn.state.name"), settings.valueString("dnn.restime.name")};
+    mTopK_tf = false; // Always false for now
+
+    std::string state_name = settings.valueString("dnn.state.name");
+    std::string topk_state_name = settings.valueString("dnn.topK.state.name");
+    std::string topk_prob_name = settings.valueString("dnn.topK.prob.name");
+
+    bool has_state = !state_name.empty();
+    bool has_topk = !topk_state_name.empty();
+
+    if (has_state && has_topk) {
+        throw std::logic_error("Configuration error in 'dnn': Both 'dnn.state.name' and 'dnn.topK.state.name' are specified. Choose either CPU mode ('dnn.state.name') or GPU TopK mode ('dnn.topK.state.name').");
+    }
+    if (!has_state && !has_topk) {
+        throw std::logic_error("Configuration error in 'dnn': Neither 'dnn.state.name' nor 'dnn.topK.state.name' is specified in settings.");
+    }
+
+    if (has_topk) {
+        if (topk_prob_name.empty()) {
+            throw std::logic_error("Configuration error in 'dnn': 'dnn.topK.state.name' is specified, but 'dnn.topK.prob.name' is missing or empty.");
+        }
+        mTopKGPUMode = true;
+        mTopK_NClasses = settings.valueUInt("dnn.topK.N", 10);
+        mOutputTensorNames = { topk_state_name, topk_prob_name, settings.valueString("dnn.restime.name") };
+    } else {
+        mTopKGPUMode = false;
+        mTopK_NClasses = settings.valueUInt("dnn.topKNClasses", 10);
+        mOutputTensorNames = { state_name, settings.valueString("dnn.restime.name") };
+    }
     
     mNStateCls = settings.valueUInt("dnn.state.N");
     if (mNStateCls==0)
@@ -95,7 +118,7 @@ bool DNN::setupDNN(size_t aindex)
 
     mNResTimeCls = settings.valueUInt("dnn.restime.N");
 
-    lg->info("DNN file: '{}'", file);
+    lg->info("DNN file: '{}', GPU TopK Mode: {}", file, mTopKGPUMode);
 
 
     std::string file_lower = lowercase(file);
@@ -307,52 +330,95 @@ Batch * DNN::run(Batch *abatch)
         timr.print("main inference");
 
         // Extract results
-        // We expect at least 2 outputs: State and Residence Time
         if (output_tensors.size() < 2) {
             throw std::logic_error("DNN returned less than 2 output tensors.");
         }
 
-        // We need to map the output tensors back to SVD structures.
-        // Assuming output_tensors[0] is State and output_tensors[1] is Residence Time based on metadata.
-        float* state_output_ptr = output_tensors[mOutIndexState].GetTensorMutableData<float>();
         float* time_output_ptr = output_tensors[mOutIndexRestime].GetTensorMutableData<float>();
-        if (state_output_ptr == nullptr || time_output_ptr == nullptr)
-            throw std::logic_error("DNN output does not contain data pointers");
+        if (time_output_ptr == nullptr)
+            throw std::logic_error("DNN residence time output does not contain data pointer");
 
-        // Wrap results for getTopClasses
-        TensorWrap2d<float> outputs_state_wrap(batch->batchSize(), mNStateCls);
-        memcpy(outputs_state_wrap.data(), state_output_ptr, batch->batchSize() * mNStateCls * sizeof(float));
-        
-        TensorWrap2d<float> outputs_time_wrap(batch->batchSize(), mNResTimeCls);
-        memcpy(outputs_time_wrap.data(), time_output_ptr, batch->batchSize() * mNResTimeCls * sizeof(float));
+        if (mTopKGPUMode) {
+            float* topk_prob_ptr = output_tensors[mOutIndexTopKProb].GetTensorMutableData<float>();
+            if (topk_prob_ptr == nullptr)
+                throw std::logic_error("DNN TopK probability output does not contain data pointer");
 
-        // use CPU to extract top-k results
-        TensorWrap2d<float> scores(batch->batchSize(), mTopK_NClasses);
-        TensorWrap2d<int32_t> indices(batch->batchSize(), mTopK_NClasses);
+            auto state_type_info = output_tensors[mOutIndexTopKState].GetTensorTypeAndShapeInfo();
+            ONNXTensorElementDataType state_elem_type = state_type_info.GetElementType();
 
-        if (lg->should_log(spdlog::level::trace))
-            lg->trace("Running Top-K for package {}:", abatch->packageId());
-        
-        getTopClasses(outputs_state_wrap, batch->batchSize(), mTopK_NClasses, indices, scores);
-        timr.print("topk cpu");
+            for (size_t i = 0; i < batch->usedSlots(); ++i) {
+                float *tstate_prob = batch->stateProbResult(i);
+                state_t *tstate_id = batch->stateResult(i);
+                float *ttime = batch->timeProbResult(i);
 
-        lg->debug("DNN result (#{}): package {}, {} slots.", mIndex, batch->packageId(), batch->usedSlots());
+                const float *prob_src = topk_prob_ptr + i * mTopK_NClasses;
 
-        // Copy the results of the TopK (states, probabilities, residence times) to the batch
-        for (size_t i=0; i<batch->usedSlots(); ++i) {
-            float *ostate = scores.example(i);
-            float *tstate = batch->stateProbResult(i);
-            int32_t *oidx = indices.example(i);
-            state_t *tidx = batch->stateResult(i);
-            for (size_t r=0;r<mTopK_NClasses;++r) {
-                *tstate++ = *ostate++;
-                *tidx++ = Model::instance()->states()->stateById(static_cast<state_t>(*oidx++)).id();
+                if (state_elem_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT16) {
+                    const int16_t *id_src = output_tensors[mOutIndexTopKState].GetTensorMutableData<int16_t>() + i * mTopK_NClasses;
+                    for (size_t r = 0; r < mTopK_NClasses; ++r) {
+                        *tstate_prob++ = *prob_src++;
+                        *tstate_id++ = static_cast<state_t>(*id_src++);
+                    }
+                } else if (state_elem_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32) {
+                    const int32_t *id_src = output_tensors[mOutIndexTopKState].GetTensorMutableData<int32_t>() + i * mTopK_NClasses;
+                    for (size_t r = 0; r < mTopK_NClasses; ++r) {
+                        *tstate_prob++ = *prob_src++;
+                        *tstate_id++ = static_cast<state_t>(*id_src++);
+                    }
+                } else if (state_elem_type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64) {
+                    const int64_t *id_src = output_tensors[mOutIndexTopKState].GetTensorMutableData<int64_t>() + i * mTopK_NClasses;
+                    for (size_t r = 0; r < mTopK_NClasses; ++r) {
+                        *tstate_prob++ = *prob_src++;
+                        *tstate_id++ = static_cast<state_t>(*id_src++);
+                    }
+                } else {
+                    throw logic_error_fmt("Unsupported data type for GPU TopK State IDs tensor: {}", static_cast<int>(state_elem_type));
+                }
+
+                const float *time_src = time_output_ptr + i * mNResTimeCls;
+                for (size_t r = 0; r < mNResTimeCls; ++r) {
+                    *ttime++ = *time_src++;
+                }
             }
+            timr.print("topk gpu copy");
+        } else {
+            // CPU TopK mode
+            float* state_output_ptr = output_tensors[mOutIndexState].GetTensorMutableData<float>();
+            if (state_output_ptr == nullptr)
+                throw std::logic_error("DNN state output does not contain data pointer");
 
-            float *otime = outputs_time_wrap.example(i);
-            float *ttime = batch->timeProbResult(i);
-            for (size_t r=0;r<mNResTimeCls;++r) {
-                *ttime++ = *otime++;
+            TensorWrap2d<float> outputs_state_wrap(batch->batchSize(), mNStateCls);
+            memcpy(outputs_state_wrap.data(), state_output_ptr, batch->batchSize() * mNStateCls * sizeof(float));
+
+            TensorWrap2d<float> outputs_time_wrap(batch->batchSize(), mNResTimeCls);
+            memcpy(outputs_time_wrap.data(), time_output_ptr, batch->batchSize() * mNResTimeCls * sizeof(float));
+
+            TensorWrap2d<float> scores(batch->batchSize(), mTopK_NClasses);
+            TensorWrap2d<int32_t> indices(batch->batchSize(), mTopK_NClasses);
+
+            if (lg->should_log(spdlog::level::trace))
+                lg->trace("Running Top-K for package {}:", abatch->packageId());
+
+            getTopClasses(outputs_state_wrap, batch->batchSize(), mTopK_NClasses, indices, scores);
+            timr.print("topk cpu");
+
+            lg->debug("DNN result (#{}): package {}, {} slots.", mIndex, batch->packageId(), batch->usedSlots());
+
+            for (size_t i=0; i<batch->usedSlots(); ++i) {
+                float *ostate = scores.example(i);
+                float *tstate = batch->stateProbResult(i);
+                int32_t *oidx = indices.example(i);
+                state_t *tidx = batch->stateResult(i);
+                for (size_t r=0;r<mTopK_NClasses;++r) {
+                    *tstate++ = *ostate++;
+                    *tidx++ = Model::instance()->states()->stateById(static_cast<state_t>(*oidx++)).id();
+                }
+
+                float *otime = outputs_time_wrap.example(i);
+                float *ttime = batch->timeProbResult(i);
+                for (size_t r=0;r<mNResTimeCls;++r) {
+                    *ttime++ = *otime++;
+                }
             }
         }
 
@@ -454,16 +520,35 @@ void DNN::setupInput()
     }
 
     // Verify Outputs
-    //size_t num_output_nodes = mSession->GetOutputCount();
-    int i_state = index_of(mOutputNames, Model::instance()->settings().valueString("dnn.state.name"));
     int i_restime = index_of(mOutputNames, Model::instance()->settings().valueString("dnn.restime.name"));
-    if (i_state < 0)
-        throw logic_error_fmt("Model check failed: Required output node ('dnn.state.name') '{}' not found in model", Model::instance()->settings().valueString("dnn.state.name"));
     if (i_restime < 0)
         throw logic_error_fmt("Model check failed: Required output node ('dnn.restime.name') '{}' not found in model", Model::instance()->settings().valueString("dnn.restime.name"));
+    mOutIndexRestime = static_cast<size_t>(i_restime);
 
-    mOutIndexState = i_state;
-    mOutIndexRestime = i_restime;
+    if (mTopKGPUMode) {
+        std::string topk_state_name = Model::instance()->settings().valueString("dnn.topK.state.name");
+        std::string topk_prob_name = Model::instance()->settings().valueString("dnn.topK.prob.name");
+
+        int i_topk_state = index_of(mOutputNames, topk_state_name);
+        int i_topk_prob = index_of(mOutputNames, topk_prob_name);
+
+        if (i_topk_state < 0)
+            throw logic_error_fmt("Model check failed: Required GPU TopK state node ('dnn.topK.state.name') '{}' not found in model output nodes.", topk_state_name);
+        if (i_topk_prob < 0)
+            throw logic_error_fmt("Model check failed: Required GPU TopK probability node ('dnn.topK.prob.name') '{}' not found in model output nodes.", topk_prob_name);
+
+        mOutIndexTopKState = static_cast<size_t>(i_topk_state);
+        mOutIndexTopKProb = static_cast<size_t>(i_topk_prob);
+        lg->info("GPU TopK Mode active: State IDs tensor='{}' (index {}), Probabilities tensor='{}' (index {}), N={}",
+                 topk_state_name, mOutIndexTopKState, topk_prob_name, mOutIndexTopKProb, mTopK_NClasses);
+    } else {
+        std::string state_name = Model::instance()->settings().valueString("dnn.state.name");
+        int i_state = index_of(mOutputNames, state_name);
+        if (i_state < 0)
+            throw logic_error_fmt("Model check failed: Required output node ('dnn.state.name') '{}' not found in model output nodes.", state_name);
+        mOutIndexState = static_cast<size_t>(i_state);
+        lg->info("CPU TopK Mode active: State tensor='{}' (index {}), N={}", state_name, mOutIndexState, mTopK_NClasses);
+    }
 
     lg->info("DNN model verification successful: All {} inputs synchronized and matched.", num_input_nodes);
 }
@@ -538,9 +623,8 @@ void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const s
 
     size_t k = std::min(n_top, static_cast<size_t>(64));
 
-#pragma omp parallel for schedule(static)
-    for (int64_t i = 0; i < static_cast<int64_t>(batch_size); i++) {
-        const float *p = cls_dat.example(static_cast<size_t>(i));
+    for (size_t i = 0; i < batch_size; i++) {
+        const float *p = cls_dat.example(i);
 
         // Fixed stack arrays for Top-K (zero heap allocation, lives in CPU registers / L1 cache)
         float top_s[64];
@@ -581,8 +665,8 @@ void DNN::getTopClasses(TensorWrapper &classes, const size_t batch_size, const s
         }
 
         // Copy directly to batch output
-        int32_t *tidx = res_ind.example(static_cast<size_t>(i));
-        float *tstate = res_scores.example(static_cast<size_t>(i));
+        int32_t *tidx = res_ind.example(i);
+        float *tstate = res_scores.example(i);
         for (size_t r = 0; r < k; ++r) {
             tstate[r] = top_s[r];
             tidx[r] = top_idx[r];

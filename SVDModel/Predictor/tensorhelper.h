@@ -46,9 +46,9 @@ public:
         if (mSize == 0)
             return;
 
-        size_t nbytes = mSize * sizeof(T);
 
 #if defined(HAS_CUDA_RUNTIME)
+        size_t nbytes = mSize * sizeof(T);
         cudaError_t err = cudaHostAlloc((void**)&mData, nbytes, cudaHostAllocDefault);
         if (err == cudaSuccess && mData != nullptr) {
             mIsPinned = true;

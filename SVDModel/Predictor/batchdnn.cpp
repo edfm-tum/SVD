@@ -38,8 +38,8 @@ BatchDNN::BatchDNN(size_t batch_size) : Batch(batch_size)
     mInferenceData.resize(mBatchSize);
     // reserve memory for the topK classes for target states and residence time
     const auto &settings = Model::instance()->settings();
-    settings.requiredKeys("dnn", {"topKNClasses", "restime.N", "allowStateChangeAtMaxTime", "temperatureState", "temperatureRestime"});
-    mNTopK = settings.valueUInt("dnn.topKNClasses", 10);
+    settings.requiredKeys("dnn", {"topK.N", "restime.N", "allowStateChangeAtMaxTime", "temperatureState", "temperatureRestime"});
+    mNTopK = settings.valueUInt("dnn.topK.N", 10);
     mNTimeClasses = settings.valueUInt("dnn.restime.N", 10);
     mAllowStateChangeAtMaxTime = settings.valueBool("dnn.allowStateChangeAtMaxTime", "false");
     mStateTemperature = settings.valueDouble("dnn.temperatureState");

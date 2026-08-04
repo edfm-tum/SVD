@@ -39,7 +39,7 @@ Grids are save to the location specified with the `path`property (`$year$` is re
 ## StateChange {#StateChange}
 Details for individual state changes from DNN (potentially a lot of output data!)
 
-The output contains for each cell the predicted states/probabilities (for `dnn.topKNClasses` classes), and the probabilities for the year of state change.
+The output contains for each cell the predicted states/probabilities (for `dnn.topK.N` classes), and the probabilities for the year of state change.
 
 ### Parameters
 

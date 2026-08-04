@@ -108,7 +108,7 @@ bool DNN::setupDNN(size_t aindex)
         mOutputTensorNames = { topk_state_name, topk_prob_name, settings.valueString("dnn.restime.name") };
     } else {
         mTopKGPUMode = false;
-        mTopK_NClasses = settings.valueUInt("dnn.topKNClasses", 10);
+        mTopK_NClasses = settings.valueUInt("dnn.topK.N", 10);
         mOutputTensorNames = { state_name, settings.valueString("dnn.restime.name") };
     }
     

@@ -25,7 +25,7 @@ StateChangeOut::StateChangeOut()
 {
     setName("StateChange");
     setDescription("Details for individual state changes from DNN (potentially a lot of output data!)\n\n" \
-                   "The output contains for each cell the predicted states/probabilities (for `dnn.topKNClasses` classes), " \
+                    "The output contains for each cell the predicted states/probabilities (for `dnn.topK.N` classes), " \
                    "and the probabilities for the year of state change.\n\n" \
                    "### Parameters\n" \
                    "* `filter`: a filter expression; output is written if the expression is true; available variables are: `state`, `restime`, `x`, `y`, `year`\n" \
@@ -52,7 +52,7 @@ void StateChangeOut::setup()
     mInterval = Model::instance()->settings().valueInt(key("interval"));
     mFilter.setExpression(Model::instance()->settings().valueString(key("filter")));
     int n_time = Model::instance()->settings().valueInt("dnn.restime.N");
-    int n_prob = Model::instance()->settings().valueInt("dnn.topKNClasses");
+    int n_prob = Model::instance()->settings().valueInt("dnn.topK.N", 10);
 
     openOutputFile("file", false); // false: do not write header
     std::string cap = "year,cellIndex,state,restime,nextState,nextTime";

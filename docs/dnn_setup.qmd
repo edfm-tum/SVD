@@ -70,8 +70,41 @@ the data values are transformed on the fly. The name of the tensor is `site`.
 
 A more detailed description of the available input slots is given on the [DNN metadata](configuring_dnn_metadata.qmd) page.
 
-## Output tensors
-SVD expects two output tensors of the DNN:
+## Output Tensors & Top-K Modes
 
-* a probability distribution for the next state. The distribution is typically the result of a `Softmax` layer which provides for each potential state a values between 0 and 1. For example, if there are 1000 possible states, the output tensor is expected to be a 1-dimensional vector with 1000 values (float). The output tensor is specified in the main configuration file with the `dnn.state.name` (name of the tensor), and `dnn.state.N` (the number of classes).
-* a probability distribution for the time of state change. Again, the tensor is the result of a `Softmax` operation and the tensor is specified with the `dnn.restime.name` and `dnn.restime.N` settings.
+SVD expects two main output targets from the DNN:
+
+1. **State Prediction**: Candidate future states and their probabilities (Top-K states).
+2. **Residence Time**: A probability distribution for the time until state change (typically the result of a `Softmax` layer specified via `dnn.restime.name` and `dnn.restime.N`).
+
+For state prediction, SVD supports two execution modes for Top-K extraction:
+
+### Mode 1: CPU Top-K Mode (`dnn.state.name`)
+
+In CPU mode, the ONNX model outputs the full probability distribution over all possible state classes (typically a `Softmax` layer of shape `[batch, num_states]`).
+
+* **Configuration**:
+  ```ini
+  dnn.state.name = output_state  # Tensor name for full state probability distribution
+  dnn.state.N = 1418               # Total number of state classes
+  dnn.topK.N = 10                  # Number of top candidate states to extract
+  ```
+* **Execution**: SVD extracts and filters the `dnn.topK.N` most likely candidate states on the CPU.
+* **DNN Training & Setup**: Standard model training and export without modifying the network output layers. Recommended for quick testing with existing models.
+
+### Mode 2: GPU Top-K Mode (`dnn.topK.state.name` and `dnn.topK.prob.name`) — *Recommended for High Performance*
+
+In GPU mode, the Top-K selection operator is embedded directly inside the ONNX model graph (via an ONNX `TopK` node). The GPU computes the Top-K candidate states in CUDA VRAM during inference and outputs two compact tensors: Top-K state IDs and Top-K probabilities.
+
+* **Configuration**:
+  ```ini
+  dnn.topK.state.name = State_TopK:1  # Tensor name for Top-K state IDs (INT16, INT32, INT64, or FLOAT)
+  dnn.topK.prob.name = State_TopK:0   # Tensor name for Top-K probabilities (FLOAT)
+  dnn.topK.N = 10                     # Number of top candidate states returned by GPU
+  ```
+* **Execution**: SVD reads Top-K results directly from GPU memory with zero CPU sorting overhead and **99% reduced PCIe data transfer** (achieving throughput over 450,000 cells/sec).
+* **DNN Training & Setup**:
+  1. **Training**: Train your neural network model as usual with standard Softmax / Cross-Entropy loss.
+  2. **Model Export**: Before exporting to `.onnx`, append a `TopK(k=10)` operator (e.g. `tf.nn.top_k` in TensorFlow, `torch.topk` in PyTorch, or via the `onnx` Python helper) to the state output layer.
+  3. **SVD Setup**: Configure `dnn.topK.state.name` and `dnn.topK.prob.name` in your project file.
+

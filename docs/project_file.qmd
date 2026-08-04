@@ -62,15 +62,20 @@ The path of the "frozen" Deep Neural Network. See TODO...
 #### `dnn.metadata` (filepath)
 Configuration file that describes the meta data of the DNN (input tensors). See the [configuration page](configuring_dnn_metadata.qmd) for details.
 
-#### `dnn.topKNClasses` (numeric)
-SVD select the `topKNClasses` most likely states from the probability distribution over all states (topK-algorithm). 
-See also: TODO
+#### `dnn.topK.N` (numeric)
+SVD selects the `dnn.topK.N` most likely states from the probability distribution over all states (topK-algorithm). Default: `10`.
 
 #### `dnn.state.name` (string)
-The name of the output tensor in the trained network for the future state of a cell.
+*CPU Top-K Mode*: The name of the output tensor in the trained network for the full future state probability distribution (e.g. `output_state`). Mutually exclusive with `dnn.topK.state.name`.
+
+#### `dnn.topK.state.name` (string)
+*GPU Top-K Mode*: The name of the output tensor in the trained network for the Top-K predicted state IDs (e.g. `State_TopK:1`). Mutually exclusive with `dnn.state.name`. Requires `dnn.topK.prob.name`.
+
+#### `dnn.topK.prob.name` (string)
+*GPU Top-K Mode*: The name of the output tensor in the trained network for the Top-K predicted state probabilities (e.g. `State_TopK:0`). Required when `dnn.topK.state.name` is specified.
 
 #### `dnn.state.N` (numeric)
-The number of classes (number of different states) in the output tensor for the future state of a cell.
+The total number of state classes (number of different states) in the output layer for the future state of a cell (used in CPU mode).
 
 #### `dnn.restime.name` (string)
 The name of the output tensor in the trained network for the remaining residence time.

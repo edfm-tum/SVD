@@ -721,17 +721,25 @@ ul.task-list li input[type="checkbox"] {
 <h4 class="anchored" data-anchor-id="dnn.metadata-filepath"><code>dnn.metadata</code> (filepath)</h4>
 <p>Configuration file that describes the meta data of the DNN (input tensors). See the <a href="./configuring_dnn_metadata.html">configuration page</a> for details.</p>
 </section>
-<section id="dnn.topknclasses-numeric" class="level4">
-<h4 class="anchored" data-anchor-id="dnn.topknclasses-numeric"><code>dnn.topKNClasses</code> (numeric)</h4>
-<p>SVD select the <code>topKNClasses</code> most likely states from the probability distribution over all states (topK-algorithm). See also: TODO</p>
+<section id="dnn.topk.n-numeric" class="level4">
+<h4 class="anchored" data-anchor-id="dnn.topk.n-numeric"><code>dnn.topK.N</code> (numeric)</h4>
+<p>SVD selects the <code>dnn.topK.N</code> most likely states from the probability distribution over all states (topK-algorithm). Default: <code>10</code>.</p>
 </section>
 <section id="dnn.state.name-string" class="level4">
 <h4 class="anchored" data-anchor-id="dnn.state.name-string"><code>dnn.state.name</code> (string)</h4>
-<p>The name of the output tensor in the trained network for the future state of a cell.</p>
+<p><em>CPU Top-K Mode</em>: The name of the output tensor in the trained network for the full future state probability distribution (e.g.&nbsp;<code>output_state</code>). Mutually exclusive with <code>dnn.topK.state.name</code>.</p>
+</section>
+<section id="dnn.topk.state.name-string" class="level4">
+<h4 class="anchored" data-anchor-id="dnn.topk.state.name-string"><code>dnn.topK.state.name</code> (string)</h4>
+<p><em>GPU Top-K Mode</em>: The name of the output tensor in the trained network for the Top-K predicted state IDs (e.g.&nbsp;<code>State_TopK:1</code>). Mutually exclusive with <code>dnn.state.name</code>. Requires <code>dnn.topK.prob.name</code>.</p>
+</section>
+<section id="dnn.topk.prob.name-string" class="level4">
+<h4 class="anchored" data-anchor-id="dnn.topk.prob.name-string"><code>dnn.topK.prob.name</code> (string)</h4>
+<p><em>GPU Top-K Mode</em>: The name of the output tensor in the trained network for the Top-K predicted state probabilities (e.g.&nbsp;<code>State_TopK:0</code>). Required when <code>dnn.topK.state.name</code> is specified.</p>
 </section>
 <section id="dnn.state.n-numeric" class="level4">
 <h4 class="anchored" data-anchor-id="dnn.state.n-numeric"><code>dnn.state.N</code> (numeric)</h4>
-<p>The number of classes (number of different states) in the output tensor for the future state of a cell.</p>
+<p>The total number of state classes (number of different states) in the output layer for the future state of a cell (used in CPU mode).</p>
 </section>
 <section id="dnn.restime.name-string" class="level4">
 <h4 class="anchored" data-anchor-id="dnn.restime.name-string"><code>dnn.restime.name</code> (string)</h4>
